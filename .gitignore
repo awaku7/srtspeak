@@ -1,0 +1,35 @@
+# secrets
+.env
+.env.*
+.env.sec
+.uagent.key
+*.pem
+
+# python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+
+# srtspeak outputs / work
+out/
+out_*/
+work/
+browser_downloads/
+build_*.log
+
+# editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

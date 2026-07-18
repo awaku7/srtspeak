@@ -1,0 +1,676 @@
+# Japanese translations for srtspeak.
+# Copyright (C) 2026 Hirofumi Ukawa
+# This file is distributed under the Apache License, Version 2.0.
+# Hirofumi Ukawa <hirofumi@ukawa.biz>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: srtspeak 0.1.0\n"
+"Report-Msgid-Bugs-To: hirofumi@ukawa.biz
+"
+"POT-Creation-Date: 2026-07-18 17:08+0900\n"
+"PO-Revision-Date: 2026-03-22 00:00+0900\n"
+"Last-Translator: Hirofumi Ukawa <hirofumi@ukawa.biz>
+"
+"Language: ja\n"
+"Language-Team: ja <hirofumi@ukawa.biz>
+"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: src/srtspeak/cli.py:127
+#, python-brace-format
+msgid "invalid --map (expected lang=path): {item}"
+msgstr "不正な --map です（形式: lang=path）: {item}"
+
+#: src/srtspeak/cli.py:142
+#, python-brace-format
+msgid "invalid --language-code (expected lang=code): {item}"
+msgstr "不正な --language-code です（形式: lang=code）: {item}"
+
+#: src/srtspeak/cli.py:166
+#, python-brace-format
+msgid "warning: voices API failed ({exc}); using builtin"
+msgstr "警告: 声一覧 API が失敗しました（{exc}）。組み込みを使用します"
+
+#: src/srtspeak/cli.py:188
+#, python-brace-format
+msgid "  source: {source}"
+msgstr "  取得元: {source}"
+
+#: src/srtspeak/cli.py:189
+#, python-brace-format
+msgid "  version: {version}"
+msgstr "  バージョン: {version}"
+
+#: src/srtspeak/cli.py:190
+msgid "(none)"
+msgstr "（なし）"
+
+#: src/srtspeak/cli.py:193
+#, python-brace-format
+msgid "ffmpeg: MISSING ({exc})"
+msgstr "ffmpeg: 見つかりません（{exc}）"
+
+#: src/srtspeak/cli.py:198
+msgid "available"
+msgstr "利用可能"
+
+#: src/srtspeak/cli.py:200
+msgid "not available (pip install -e \".[ja]\")"
+msgstr "利用不可（pip install -e \".[ja]\"）"
+
+#: src/srtspeak/cli.py:203
+#, python-brace-format
+msgid "kanjiconv: error ({exc})"
+msgstr "kanjiconv: エラー（{exc}）"
+
+#: src/srtspeak/cli.py:207
+msgid "PySide6: available"
+msgstr "PySide6: 利用可能"
+
+#: src/srtspeak/cli.py:209
+msgid "PySide6: not installed (optional extra [gui])"
+msgstr "PySide6: 未インストール（オプション extra [gui]）"
+
+#: src/srtspeak/cli.py:218
+#, python-brace-format
+msgid ""
+"GUI unavailable: {exc}\n"
+"Install with: pip install -e .[gui]"
+msgstr ""
+"GUI を利用できません: {exc}\n"
+"インストール: pip install -e .[gui]"
+
+#: src/srtspeak/cli.py:261
+#, python-brace-format
+msgid "unknown voice_id: {voice_id}"
+msgstr "不明な voice_id: {voice_id}"
+
+#: src/srtspeak/cli.py:266
+#, python-brace-format
+msgid "warning: voice_id {voice_id!r} not in builtin; will try API"
+msgstr "警告: voice_id {voice_id!r} は組み込みにありません。API で試行します"
+
+#: src/srtspeak/cli.py:281
+msgid "cancelled"
+msgstr "中止しました"
+
+#: src/srtspeak/cli.py:285
+#, python-brace-format
+msgid "TTS error: {exc}"
+msgstr "TTS エラー: {exc}"
+
+#: src/srtspeak/cli.py:289 src/srtspeak/cli.py:306 src/srtspeak/cli.py:381
+#, python-brace-format
+msgid "error: {exc}"
+msgstr "エラー: {exc}"
+
+#: src/srtspeak/cli.py:299
+#, python-brace-format
+msgid "SRT not found: {path}"
+msgstr "SRT が見つかりません: {path}"
+
+#: src/srtspeak/cli.py:318 src/srtspeak/cli.py:361
+msgid "XAI_API_KEY is not set"
+msgstr "XAI_API_KEY が設定されていません"
+
+#: src/srtspeak/cli.py:332
+#, python-brace-format
+msgid "status={status} lang={lang} cues={processed}/{total} track={track}"
+msgstr "状態={status} 言語={lang} キュー={processed}/{total} トラック={track}"
+
+#: src/srtspeak/cli.py:350
+msgid "build-all requires at least one --map lang=path"
+msgstr "build-all には --map lang=path が1つ以上必要です"
+
+#: src/srtspeak/cli.py:373
+#, python-brace-format
+msgid "SRT not found for {lang}: {path}"
+msgstr "{lang} の SRT が見つかりません: {path}"
+
+#: src/srtspeak/cli.py:409
+#, python-brace-format
+msgid "summary status={status} languages={languages}"
+msgstr "サマリー 状態={status} 言語={languages}"
+
+#: src/srtspeak/cli.py:428
+msgid "SRT multilingual TTS with forced cue-window timing (xAI Grok)"
+msgstr "SRT 多言語 TTS（キュー窓タイミング強制・xAI Grok）"
+
+#: src/srtspeak/cli.py:431
+msgid "verbose progress"
+msgstr "詳細な進捗表示"
+
+#: src/srtspeak/cli.py:432
+msgid "suppress progress"
+msgstr "進捗表示を抑制"
+
+#: src/srtspeak/cli.py:437
+msgid "UI locale (en/ja). Default: SRTSPEAK_LOCALE / system / en"
+msgstr "UI ロケール (en/ja)。既定: SRTSPEAK_LOCALE / システム / en"
+
+#: src/srtspeak/cli.py:447
+msgid "lang=path (repeatable)"
+msgstr "lang=path（繰り返し可）"
+
+#: src/srtspeak/cli.py:453
+msgid "lang=BCP47 (repeatable)"
+msgstr "lang=BCP47（繰り返し可）"
+
+#: src/srtspeak/cli.py:456
+msgid "input SRT path"
+msgstr "入力 SRT パス"
+
+#: src/srtspeak/cli.py:460
+msgid "internal lang key ja/en/pt"
+msgstr "内部言語キー ja/en/pt"
+
+#: src/srtspeak/cli.py:465
+msgid "BCP-47 language code override"
+msgstr "BCP-47 言語コードの上書き"
+
+#: src/srtspeak/cli.py:471
+msgid "output root directory (lang id always appended; default: out)"
+msgstr "出力ルート（言語 ID を必ず付与・既定: out）"
+
+#: src/srtspeak/cli.py:477
+msgid "work directory root"
+msgstr "作業ディレクトリのルート"
+
+#: src/srtspeak/cli.py:483
+msgid "voice id or lang=voice (repeatable)"
+msgstr "voice id または lang=voice（繰り返し可）"
+
+#: src/srtspeak/cli.py:489
+msgid "short cue fit mode (default: pad)"
+msgstr "短いキューの合わせ方（既定: pad）"
+
+#: src/srtspeak/cli.py:495
+msgid "process only the first N cues"
+msgstr "先頭 N 件のキューだけ処理"
+
+#: src/srtspeak/cli.py:500
+msgid "also write MP3 alongside WAV"
+msgstr "WAV に加えて MP3 も出力"
+
+#: src/srtspeak/cli.py:506
+msgid "extra silence after last cue (ms)"
+msgstr "最終キュー後の無音（ms）"
+
+#: src/srtspeak/cli.py:512
+msgid "maximum atempo speed factor"
+msgstr "atempo の最大速度係数"
+
+#: src/srtspeak/cli.py:517
+msgid "estimate only, no TTS"
+msgstr "見積もりのみ（TTS なし）"
+
+#: src/srtspeak/cli.py:523
+msgid "MVP must be 1"
+msgstr "MVP では 1 固定"
+
+#: src/srtspeak/cli.py:530
+msgid "JA only: convert kanji to hiragana via kanjiconv before TTS (default: on)"
+msgstr "日本語のみ: TTS 前に kanjiconv で漢字→ひらがな（既定: オン）"
+
+#: src/srtspeak/cli.py:535
+msgid "build one language"
+msgstr "1言語をビルド"
+
+#: src/srtspeak/cli.py:539
+msgid "build multiple languages"
+msgstr "複数言語をビルド"
+
+#: src/srtspeak/cli.py:543
+msgid "parse + cost estimate only"
+msgstr "解析とコスト見積もりのみ"
+
+#: src/srtspeak/cli.py:547
+msgid "list language options"
+msgstr "言語オプション一覧"
+
+#: src/srtspeak/cli.py:550
+msgid "list Grok voices"
+msgstr "Grok の声一覧"
+
+#: src/srtspeak/cli.py:554
+msgid "filter voices by id/name/tag"
+msgstr "id/名前/タグで声を絞り込み"
+
+#: src/srtspeak/cli.py:558
+msgid "environment check"
+msgstr "環境チェック"
+
+#: src/srtspeak/cli.py:561
+msgid "launch GUI"
+msgstr "GUI を起動"
+
+#: src/srtspeak/cli.py:592
+msgid "error: jobs must be 1 in MVP"
+msgstr "エラー: MVP では jobs は 1 である必要があります"
+
+#: src/srtspeak/core/languages.py:96
+#, python-brace-format
+msgid "unknown language code: {value}"
+msgstr "不明な言語コード: {value}"
+
+#: src/srtspeak/core/languages.py:109
+#, python-brace-format
+msgid "unknown lang key: {lang}"
+msgstr "不明な言語キー: {lang}"
+
+#: src/srtspeak/core/srt_parser.py:29
+msgid "unknown parse error"
+msgstr "不明な解析エラー"
+
+#: src/srtspeak/core/srt_parser.py:35
+#, python-brace-format
+msgid "SRT parse error: {detail}"
+msgstr "SRT解析エラー: {detail}"
+
+#: src/srtspeak/core/srt_parser.py:36
+msgid "SRT parse error: the following problems were found:"
+msgstr "SRT解析エラー: 以下の問題が見つかりました:"
+
+#: src/srtspeak/core/srt_parser.py:67
+#, python-brace-format
+msgid "invalid timestamp: {value} (expected HH:MM:SS,mmm or HH:MM:SS.mmm)"
+msgstr "タイムスタンプ形式が不正です: {value}（期待: HH:MM:SS,mmm または HH:MM:SS.mmm）"
+
+#: src/srtspeak/core/srt_parser.py:104
+#, python-brace-format
+msgid "block {block_no}: cue index is not a number: {value}"
+msgstr "ブロック{block_no}: キュー番号が数値ではありません: {value}"
+
+#: src/srtspeak/core/srt_parser.py:111
+#, python-brace-format
+msgid "cue {index}"
+msgstr "キュー {index}"
+
+#: src/srtspeak/core/srt_parser.py:115
+#, python-brace-format
+msgid "{label}: missing timing line"
+msgstr "{label}: タイミング行がありません"
+
+#: src/srtspeak/core/srt_parser.py:123
+#, python-brace-format
+msgid "{label}: invalid timing line: {timing} (expected start --> end)"
+msgstr "{label}: タイミング行が不正です: {timing}（期待: 開始 --> 終了）"
+
+#: src/srtspeak/core/srt_parser.py:137
+#, python-brace-format
+msgid "{label}: start {detail}"
+msgstr "{label}: 開始{detail}"
+
+#: src/srtspeak/core/srt_parser.py:146
+#, python-brace-format
+msgid "{label}: end {detail}"
+msgstr "{label}: 終了{detail}"
+
+#: src/srtspeak/core/srt_parser.py:152
+#, python-brace-format
+msgid ""
+"{label}: end time is not after start time ({start} → {end}, non-positive "
+"duration)"
+msgstr "{label}: 終了時刻が開始時刻以前です（{start} → {end}、長さ0以下）"
+
+#: src/srtspeak/core/srt_parser.py:166
+#, python-brace-format
+msgid "{label}: text is empty"
+msgstr "{label}: テキストが空です"
+
+#: src/srtspeak/core/srt_parser.py:169
+#, python-brace-format
+msgid "{label}: text exceeds 15000 characters ({n} characters)"
+msgstr "{label}: テキストが15000文字を超えています（{n}文字）"
+
+#: src/srtspeak/core/srt_parser.py:204
+msgid "no cues found in SRT (empty file or invalid format)"
+msgstr "SRTにキューが見つかりません（空ファイルまたは形式が不正です）"
+
+#: src/srtspeak/core/srt_parser.py:216
+#, python-brace-format
+msgid ""
+"cues {a} and {b} overlap in time: [{sa},{ea}) and [{sb},{eb}) (half-open "
+"[start,end); adjacent is allowed)"
+msgstr ""
+"キュー {a} と {b} が時間的に重なっています: [{sa},{ea}) と [{sb},{eb})（半開区間 "
+"[start,end)、隣接は可）"
+
+#: src/srtspeak/core/srt_parser.py:240
+msgid "limit must be >= 1"
+msgstr "limit は 1 以上である必要があります"
+
+#: src/srtspeak/core/voices.py:22
+msgid "Authoritative and strong"
+msgstr "威厳があり力強い"
+
+#: src/srtspeak/core/voices.py:23
+msgid "Confident and clear"
+msgstr "自信があり明瞭"
+
+#: src/srtspeak/core/voices.py:24
+msgid "Smooth and balanced"
+msgstr "滑らかでバランスが良い"
+
+#: src/srtspeak/core/voices.py:25
+msgid "Rich, cinematic, resonant"
+msgstr "豊かで映画的、響きがある"
+
+#: src/srtspeak/core/voices.py:29
+msgid "Strong, confident, trustworthy"
+msgstr "力強く自信があり信頼できる"
+
+#: src/srtspeak/core/voices.py:35
+msgid "Confident, commanding, reassuring"
+msgstr "自信があり堂々として安心感がある"
+
+#: src/srtspeak/core/voices.py:38
+msgid "Grounded, calm, quietly wise"
+msgstr "落ち着きがあり穏やかで静かな知恵"
+
+#: src/srtspeak/core/voices.py:39
+msgid "Powerful, dramatic"
+msgstr "力強くドラマチック"
+
+#: src/srtspeak/core/voices.py:40
+msgid "Bold, dynamic"
+msgstr "大胆でダイナミック"
+
+#: src/srtspeak/core/voices.py:41
+msgid "Inventive, charismatic"
+msgstr "独創的でカリスマ的"
+
+#: src/srtspeak/core/voices.py:42
+msgid "Precise, professional"
+msgstr "正確でプロフェッショナル"
+
+#: src/srtspeak/core/voices.py:43
+msgid "Charismatic, easygoing"
+msgstr "カリスマ的で気さく"
+
+#: src/srtspeak/core/voices.py:44
+msgid "Warm, thoughtful, wise"
+msgstr "温かく思慮深く賢い"
+
+#: src/srtspeak/core/voices.py:45
+msgid "Energetic and upbeat"
+msgstr "元気で明るい"
+
+#: src/srtspeak/core/voices.py:46
+msgid "Warm and friendly"
+msgstr "温かく親しみやすい"
+
+#: src/srtspeak/core/voices.py:47
+msgid "Soft, empathetic"
+msgstr "柔らかく共感的"
+
+#: src/srtspeak/core/voices.py:48
+msgid "Gentle, patient"
+msgstr "優しく忍耐強い"
+
+#: src/srtspeak/core/voices.py:49
+msgid "Friendly, upbeat"
+msgstr "親しみやすく明るい"
+
+#: src/srtspeak/core/voices.py:51 src/srtspeak/core/voices.py:52
+#: src/srtspeak/core/voices.py:53 src/srtspeak/core/voices.py:54
+#: src/srtspeak/core/voices.py:55 src/srtspeak/core/voices.py:56
+#: src/srtspeak/core/voices.py:57 src/srtspeak/core/voices.py:58
+msgid "Docs catalog voice"
+msgstr "ドキュメント掲載の声"
+
+#: src/srtspeak/gui/app.py:107
+msgid "SRT file"
+msgstr "SRTファイル"
+
+#: src/srtspeak/gui/app.py:109 src/srtspeak/gui/app.py:223
+msgid "Cues: —"
+msgstr "キュー数: —"
+
+#: src/srtspeak/gui/app.py:116
+#, python-brace-format
+msgid "{name} ({code})"
+msgstr "{name}（{code}）"
+
+#: src/srtspeak/gui/app.py:119
+msgid "Language"
+msgstr "言語"
+
+#: src/srtspeak/gui/app.py:130
+msgid "Voice"
+msgstr "声"
+
+#: src/srtspeak/gui/app.py:133
+msgid "Output folder"
+msgstr "出力フォルダ"
+
+#: src/srtspeak/gui/app.py:137
+msgid "all"
+msgstr "すべて"
+
+#: src/srtspeak/gui/app.py:141
+msgid "Process only the first N cues. 0 = all cues in the SRT."
+msgstr "先頭から N 件のキューだけ処理します。0 で SRT 内の全キュー。"
+
+#: src/srtspeak/gui/app.py:144
+msgid "Max cues (0 = all)"
+msgstr "最大キュー数（0=すべて）"
+
+#: src/srtspeak/gui/app.py:146
+msgid "Dry-run (estimate only, no TTS)"
+msgstr "ドライラン（見積もりのみ・TTSなし）"
+
+#: src/srtspeak/gui/app.py:149
+msgid "Japanese yomi (kanji → hiragana)"
+msgstr "日本語よみ（漢字→ひらがな）"
+
+#: src/srtspeak/gui/app.py:157
+msgid "API key (XAI_API_KEY)"
+msgstr "APIキー（XAI_API_KEY）"
+
+#: src/srtspeak/gui/app.py:164 src/srtspeak/gui/app.py:452
+msgid "Ready"
+msgstr "待機中"
+
+#: src/srtspeak/gui/app.py:169
+msgid "Start"
+msgstr "開始"
+
+#: src/srtspeak/gui/app.py:170 src/srtspeak/gui/app.py:327
+#: src/srtspeak/gui/app.py:450
+msgid "Cancel"
+msgstr "中止"
+
+#: src/srtspeak/gui/app.py:180
+msgid "Status: using environment variable"
+msgstr "状態: 環境変数を使用中"
+
+#: src/srtspeak/gui/app.py:181
+msgid "Status: not set (enter key above for this session)"
+msgstr "状態: 未設定（上の欄にキーを入力するとこのセッションで使用）"
+
+#: src/srtspeak/gui/app.py:202
+msgid "Open SRT"
+msgstr "SRTを開く"
+
+#: src/srtspeak/gui/app.py:204
+msgid "SRT files (*.srt);;All files (*.*)"
+msgstr "SRTファイル (*.srt);;すべてのファイル (*.*)"
+
+#: src/srtspeak/gui/app.py:227
+msgid "Cues: file not found"
+msgstr "キュー数: ファイルなし"
+
+#: src/srtspeak/gui/app.py:234
+#, python-brace-format
+msgid "Cues: parse error ({detail})"
+msgstr "キュー数: 解析エラー（{detail}）"
+
+#: src/srtspeak/gui/app.py:239
+#, python-brace-format
+msgid "Cues: read error ({detail})"
+msgstr "キュー数: 読み込みエラー（{detail}）"
+
+#: src/srtspeak/gui/app.py:244
+#, python-brace-format
+msgid "Cues in SRT: {count}"
+msgstr "SRT内キュー数: {count}"
+
+#: src/srtspeak/gui/app.py:272 src/srtspeak/gui/app.py:283
+#: src/srtspeak/gui/app.py:294 src/srtspeak/gui/app.py:471
+msgid "Error"
+msgstr "エラー"
+
+#: src/srtspeak/gui/app.py:273
+#, python-brace-format
+msgid ""
+"SRT file not found:\n"
+"{path}"
+msgstr ""
+"SRTファイルが見つかりません:\n"
+"{path}"
+
+#: src/srtspeak/gui/app.py:296
+msgid ""
+"XAI_API_KEY is not set.\n"
+"Set the environment variable or enter the key above."
+msgstr ""
+"XAI_API_KEY が設定されていません。\n"
+"環境変数を設定するか、上の欄にキーを入力してください。"
+
+#: src/srtspeak/gui/app.py:328
+msgid "Running…"
+msgstr "実行中…"
+
+#: src/srtspeak/gui/app.py:335
+msgid "Cancelling…"
+msgstr "中止しています…"
+
+#: src/srtspeak/gui/app.py:343
+#, python-brace-format
+msgid "{percent:.1f}%  {stage}  {current}/{total}  {message}"
+msgstr "{percent:.1f}%  {stage}  {current}/{total}  {message}"
+
+#: src/srtspeak/gui/app.py:364 src/srtspeak/gui/app.py:419
+#, python-brace-format
+msgid ""
+"Build finished.\n"
+"Status: {status}"
+msgstr ""
+"ビルドが完了しました。\n"
+"状態: {status}"
+
+#: src/srtspeak/gui/app.py:365 src/srtspeak/gui/app.py:416
+msgid "Done"
+msgstr "完了"
+
+#: src/srtspeak/gui/app.py:365 src/srtspeak/gui/app.py:417
+#, python-brace-format
+msgid "Finished: {status}"
+msgstr "完了: {status}"
+
+#: src/srtspeak/gui/app.py:389
+msgid "Dry-run result"
+msgstr "ドライラン結果"
+
+#: src/srtspeak/gui/app.py:391
+#, python-brace-format
+msgid "Dry-run: {cues} cues, {chars} chars, ~${cost} USD"
+msgstr "ドライラン: {cues} キュー、{chars} 文字、約 ${cost} USD"
+
+#: src/srtspeak/gui/app.py:394
+#, python-brace-format
+msgid ""
+"Dry-run complete (no TTS).\n"
+"\n"
+"Language: {lang} ({language_code})\n"
+"Voice: {voice_id}\n"
+"Cues: {cues}\n"
+"Characters: {chars}\n"
+"Estimated cost: ~${cost} USD\n"
+"Japanese yomi: {ja_yomi}\n"
+"\n"
+"Report:\n"
+"{report_path}"
+msgstr ""
+"ドライラン完了（TTSなし）。\n"
+"\n"
+"言語: {lang} ({language_code})\n"
+"声: {voice_id}\n"
+"キュー: {cues}\n"
+"文字数: {chars}\n"
+"推定コスト: 約 ${cost} USD\n"
+"日本語読み: {ja_yomi}\n"
+"\n"
+"レポート:\n"
+"{report_path}"
+
+#: src/srtspeak/gui/app.py:411
+msgid "on"
+msgstr "オン"
+
+#: src/srtspeak/gui/app.py:411
+msgid "off"
+msgstr "オフ"
+
+#: src/srtspeak/gui/app.py:412
+msgid "(unknown)"
+msgstr "（不明）"
+
+#: src/srtspeak/gui/app.py:421
+#, python-brace-format
+msgid "Language: {lang} ({language_code})"
+msgstr "言語: {lang} ({language_code})"
+
+#: src/srtspeak/gui/app.py:424
+#, python-brace-format
+msgid "Voice: {voice_id}"
+msgstr "声: {voice_id}"
+
+#: src/srtspeak/gui/app.py:425
+#, python-brace-format
+msgid "Cues: {processed}/{total}"
+msgstr "キュー: {processed}/{total}"
+
+#: src/srtspeak/gui/app.py:428
+#, python-brace-format
+msgid ""
+"Track:\n"
+"{path}"
+msgstr ""
+"トラック:\n"
+"{path}"
+
+#: src/srtspeak/gui/app.py:430
+#, python-brace-format
+msgid ""
+"Report:\n"
+"{path}"
+msgstr ""
+"レポート:\n"
+"{path}"
+
+#: src/srtspeak/gui/app.py:435
+#, python-brace-format
+msgid "Track duration: {ms:.0f} ms"
+msgstr "トラック長: {ms:.0f} ms"
+
+#: src/srtspeak/gui/app.py:439
+#, python-brace-format
+msgid "Duration error: {ms:.0f} ms"
+msgstr "尺誤差: {ms:.0f} ms"
+
+#: src/srtspeak/gui/app.py:463 src/srtspeak/gui/app.py:466
+msgid "Cancelled"
+msgstr "中止"
+
+#: src/srtspeak/gui/app.py:467
+msgid "Build was cancelled."
+msgstr "ビルドを中止しました。"
+
