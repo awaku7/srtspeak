@@ -192,15 +192,13 @@ def cmd_doctor(_args: argparse.Namespace) -> int:
     except FFmpegNotFoundError as exc:
         print(_("ffmpeg: MISSING ({exc})").format(exc=exc))
     try:
-        from srtspeak.core.ja_yomi import kanjiconv_available
+        from srtspeak.core.ja_yomi import apply_ja_yomi
 
-        if kanjiconv_available():
-            status = _("available")
-        else:
-            status = _('not available (pip install -e ".[ja]")')
-        print(f"kanjiconv: {status}")
+        print(
+            _("ja_yomi: grok-chat (Grok Chat API)").format()
+        )
     except Exception as exc:
-        print(_("kanjiconv: error ({exc})").format(exc=exc))
+        print(_("ja_yomi: error ({exc})").format(exc=exc))
     try:
         import PySide6  # type: ignore  # noqa: F401
 
@@ -250,6 +248,7 @@ def _build_one(
         work_dir=Path(args.work_dir) if args.work_dir else None,
         max_speed=args.max_speed,
         ja_yomi=bool(getattr(args, "ja_yomi", True)),
+        base_wav=Path(args.base_wav) if getattr(args, "base_wav", None) else None,
     )
     cfg.validate()
     # validate voice against builtin when dry-run or no live list
@@ -506,6 +505,12 @@ def build_parser() -> argparse.ArgumentParser:
             help=_("extra silence after last cue (ms)"),
         )
         sp.add_argument(
+            "--base-wav",
+            type=str,
+            default=None,
+            help=_("base WAV file to mix narration onto (default: silence)"),
+        )
+        sp.add_argument(
             "--max-speed",
             type=float,
             default=None,
@@ -527,7 +532,7 @@ def build_parser() -> argparse.ArgumentParser:
             action=argparse.BooleanOptionalAction,
             default=True,
             help=_(
-                "JA only: convert kanji to hiragana via kanjiconv before TTS "
+                "JA only: convert kanji to hiragana via Grok Chat API before TTS "
                 "(default: on)"
             ),
         )

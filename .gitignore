@@ -22,6 +22,7 @@ htmlcov/
 venv/
 
 # srtspeak outputs / work
+gui_settings.json
 out/
 out_*/
 work/
@@ -33,3 +34,6 @@ build_*.log
 .idea/
 .DS_Store
 Thumbs.db
+
+# local dev scripts
+run_gui2.bat

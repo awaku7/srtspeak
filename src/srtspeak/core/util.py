@@ -25,6 +25,7 @@ def wav_duration_ms(path: Path | str, *, sample_rate: int | None = None) -> floa
 
 
 def read_wav_pcm_mono_s16le(path: Path | str) -> tuple[bytes, int]:
+    """Read mono s16le WAV; raises on stereo or non-16bit."""
     with wave.open(str(path), "rb") as w:
         if w.getnchannels() != 1:
             raise ValueError(f"expected mono wav: {path}")
@@ -34,19 +35,73 @@ def read_wav_pcm_mono_s16le(path: Path | str) -> tuple[bytes, int]:
         return w.readframes(w.getnframes()), rate
 
 
-def write_wav_pcm_mono_s16le(
+def read_wav_as_mono_s16le(path: Path | str) -> tuple[bytes, int, int]:
+    """Read any WAV (mono/stereo) and return mono s16le PCM + sample_rate + original channels.
+
+    Stereo is downmixed (left+right)/2. Non-16bit raises ValueError.
+    """
+    with wave.open(str(path), "rb") as w:
+        channels = w.getnchannels()
+        sampwidth = w.getsampwidth()
+        rate = w.getframerate()
+        if sampwidth != 2:
+            raise ValueError(f"expected 16-bit wav: {path}, got {sampwidth*8}bit")
+        frames = w.readframes(w.getnframes())
+
+    if channels == 1:
+        return frames, rate, channels
+    if channels == 2:
+        # interleaved L,R,L,R,... → mono (L+R)/2
+        import struct
+
+        count = len(frames) // 4  # 2 samples * 2 bytes each
+        mono = bytearray(count * 2)
+        for i in range(count):
+            off = i * 4
+            l = int.from_bytes(frames[off : off + 2], "little", signed=True)
+            r = int.from_bytes(frames[off + 2 : off + 4], "little", signed=True)
+            m = (l + r) // 2
+            mono[i * 2 : i * 2 + 2] = m.to_bytes(2, "little", signed=True)
+        return bytes(mono), rate, channels
+    raise ValueError(f"unsupported channel count: {channels}")
+
+
+def read_wav_s16le(path: Path | str) -> tuple[bytes, int, int]:
+    """Read WAV (any channels), return raw PCM + sample_rate + channels.
+
+    Only 16-bit is supported. Channel count is preserved as-is.
+    """
+    with wave.open(str(path), "rb") as w:
+        channels = w.getnchannels()
+        sampwidth = w.getsampwidth()
+        rate = w.getframerate()
+        if sampwidth != 2:
+            raise ValueError(f"expected 16-bit wav: {path}, got {sampwidth*8}bit")
+        return w.readframes(w.getnframes()), rate, channels
+
+
+def write_wav_pcm_s16le(
     path: Path | str,
     pcm: bytes,
     *,
     sample_rate: int,
+    channels: int = 1,
 ) -> None:
+    """Write mono/stereo s16le WAV."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     with wave.open(str(path), "wb") as w:
-        w.setnchannels(1)
+        w.setnchannels(channels)
         w.setsampwidth(2)
         w.setframerate(sample_rate)
         w.writeframes(pcm)
+
+
+# backward compat alias for existing callers
+def write_wav_pcm_mono_s16le(
+    path: Path | str, pcm: bytes, *, sample_rate: int
+) -> None:
+    write_wav_pcm_s16le(path, pcm, sample_rate=sample_rate, channels=1)
 
 
 def ensure_dir(path: Path | str) -> Path:

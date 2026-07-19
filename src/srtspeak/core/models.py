@@ -30,6 +30,7 @@ class BuildConfig:
     ja_yomi: bool = True
     jobs: int = 1
     tail_pad_ms: int = 0
+    base_wav: Path | None = None
     work_dir: Path | None = None
 
     def validate(self) -> None:

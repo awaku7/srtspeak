@@ -12,6 +12,7 @@ if %ERRORLEVEL%==0 (
   exit /b %ERRORLEVEL%
 )
 
+set "PYTHONIOENCODING=utf-8"
 set "PYTHONPATH=%CD%\src;%PYTHONPATH%"
 python -m srtspeak gui %*
 exit /b %ERRORLEVEL%

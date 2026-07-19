@@ -33,12 +33,14 @@ def test_place_no_spill_into_next_cue(tmp_path: Path) -> None:
         Cue(index=1, start_ms=0, end_ms=100, text="a"),
         Cue(index=2, start_ms=100, end_ms=200, text="b"),
     ]
-    canvas = place_cues(
+    canvas, channels, sw = place_cues(
         cues=cues,
         fitted_paths={1: c1, 2: c2},
         sample_rate=sample_rate,
         tail_pad_ms=0,
     )
+    assert channels == 1
+    assert sw == 2
     # total duration 200ms
     assert len(canvas) == int(sample_rate * 0.2) * 2
     # first sample of cue2 region must be 2000, not overwritten by cue1

@@ -15,7 +15,7 @@ from srtspeak.core.fit import force_fit_wav
 from srtspeak.core.models import BuildConfig
 from srtspeak.core.progress import ProgressCallback, emit
 from srtspeak.core.report import estimate_cost_usd, track_filename, write_json
-from srtspeak.core.ja_yomi import apply_ja_yomi
+from srtspeak.core.ja_yomi import apply_ja_yomi, init_ja_yomi_log
 from srtspeak.core.srt_parser import Cue, apply_limit, parse_srt
 from srtspeak.core.timeline import write_timeline_wav
 from srtspeak.core.tts_xai import TtsError, synthesize_to_file
@@ -66,7 +66,14 @@ def _normalize_wav(
         raise RuntimeError(f"ffmpeg normalize failed: {err[:500]}")
 
 
-def _maybe_mp3(wav_path: Path, mp3_path: Path, *, ffmpeg: str) -> None:
+def _maybe_mp3(
+    wav_path: Path,
+    mp3_path: Path,
+    *,
+    ffmpeg: str,
+    sample_rate: int = 24000,
+    channels: int = 1,
+) -> None:
     args = [
         ffmpeg,
         "-y",
@@ -76,9 +83,9 @@ def _maybe_mp3(wav_path: Path, mp3_path: Path, *, ffmpeg: str) -> None:
         "-i",
         str(wav_path),
         "-ac",
-        "1",
+        str(channels),
         "-ar",
-        "24000",
+        str(sample_rate),
         "-c:a",
         "libmp3lame",
         "-b:a",
@@ -111,7 +118,8 @@ def dry_run_build(
 
     text = config.srt_path.read_text(encoding="utf-8-sig")
     cues = apply_limit(parse_srt(text), config.limit)
-    cues = apply_ja_yomi(cues, enabled=config.ja_yomi, lang=config.lang)
+    init_ja_yomi_log(_work_lang_dir(config))
+    cues = apply_ja_yomi(cues, enabled=config.ja_yomi, lang=config.lang, work_dir=_work_lang_dir(config))
     token.check()
     emit(
         progress_cb,
@@ -191,7 +199,10 @@ def run_build(
     if config.strip_emoticons:
         warnings.append("strip_emoticons is no-op in MVP")
     if config.ja_yomi and config.lang == "ja":
-        warnings.append("ja_yomi: kanji converted to hiragana via kanjiconv")
+        if api_key:
+            warnings.append("ja_yomi: kanji converted to hiragana via Grok Chat API")
+        else:
+            warnings.append("ja_yomi: enabled but no api_key; skipping conversion")
 
     voice_id = resolve_voice_id(config.voice_id)
     try:
@@ -211,7 +222,16 @@ def run_build(
 
     text = config.srt_path.read_text(encoding="utf-8-sig")
     cues = apply_limit(parse_srt(text), config.limit)
-    cues = apply_ja_yomi(cues, enabled=config.ja_yomi, lang=config.lang)
+    init_ja_yomi_log(_work_lang_dir(config))
+    cues = apply_ja_yomi(
+        cues,
+        enabled=config.ja_yomi,
+        lang=config.lang,
+        api_key=api_key,
+        work_dir=_work_lang_dir(config),
+        cancel_token=token,
+        progress_cb=progress_cb,
+    )
     emit(
         progress_cb,
         stage="parse",
@@ -225,6 +245,26 @@ def run_build(
     tools = resolve_ffmpeg()
     if tools.source == "imageio_ffmpeg":
         warnings.append("ffmpeg resolved via imageio-ffmpeg fallback")
+
+    if config.base_wav:
+        import wave as _wav
+
+        with _wav.open(str(config.base_wav), "rb") as _wf:
+            base_channels = _wf.getnchannels()
+            effective_sr = _wf.getframerate()
+            base_sampwidth = _wf.getsampwidth()
+        base_wav_used = config.base_wav
+        sw_label = {1: "u8", 2: "s16le", 3: "s24le", 4: "s32le"}.get(
+            base_sampwidth, f"{base_sampwidth*8}bit"
+        )
+        warnings.append(
+            f"base_wav: {config.base_wav.name} ({effective_sr} Hz, "
+            f"{base_channels}ch, {sw_label})"
+        )
+    else:
+        effective_sr = config.sample_rate
+        base_channels = 1
+        base_wav_used = None
 
     out_dir = ensure_dir(_out_lang_dir(config))
     work_dir = ensure_dir(_work_lang_dir(config))
@@ -287,11 +327,11 @@ def run_build(
                 )
                 shutil.copyfile(raw_path, cpath)
 
-            # normalize to mono s16le 24k for cues/
+            # normalize to mono s16le (base rate) for cues/
             _normalize_wav(
                 raw_path,
                 cue_out,
-                sample_rate=config.sample_rate,
+                sample_rate=effective_sr,
                 ffmpeg=tools.ffmpeg,
             )
             # keep normalized as cache/raw preferred
@@ -327,7 +367,7 @@ def run_build(
                 fitted_path,
                 window_ms=cue.window_ms,
                 short_mode=config.short_mode,
-                sample_rate=config.sample_rate,
+                sample_rate=effective_sr,
                 tolerance_ms=10,
                 ffmpeg_path=tools.ffmpeg,
                 max_speed=config.max_speed,
@@ -389,16 +429,20 @@ def run_build(
             out_path=track_path,
             cues=cues,
             fitted_paths=fitted_paths,
-            sample_rate=config.sample_rate,
+            sample_rate=effective_sr,
             tail_pad_ms=config.tail_pad_ms,
+            base_wav=base_wav_used,
         )
 
         if config.also_mp3:
             mp3_path = out_dir / track_filename(config.lang, mp3=True)
-            _maybe_mp3(track_path, mp3_path, ffmpeg=tools.ffmpeg)
+            _maybe_mp3(track_path, mp3_path, ffmpeg=tools.ffmpeg, sample_rate=effective_sr, channels=base_channels)
 
-        track_duration_ms = wav_duration_ms(track_path, sample_rate=config.sample_rate)
-        target_duration_ms = max(c.end_ms for c in cues) + max(0, config.tail_pad_ms)
+        track_duration_ms = wav_duration_ms(track_path, sample_rate=effective_sr)
+        if config.base_wav:
+            target_duration_ms = wav_duration_ms(base_wav_used, sample_rate=effective_sr)
+        else:
+            target_duration_ms = max(c.end_ms for c in cues) + max(0, config.tail_pad_ms)
         duration_error_ms = track_duration_ms - target_duration_ms
 
         emit(
@@ -419,9 +463,14 @@ def run_build(
         )
         track_path = out_dir / track_filename(config.lang)
         track_duration_ms = None
-        target_duration_ms = max((c.end_ms for c in cues), default=0) + max(
-            0, config.tail_pad_ms
-        )
+        if config.base_wav:
+            target_duration_ms = wav_duration_ms(
+                base_wav_used, sample_rate=effective_sr
+            )
+        else:
+            target_duration_ms = max((c.end_ms for c in cues), default=0) + max(
+                0, config.tail_pad_ms
+            )
         duration_error_ms = None
         # keep partial fitted if any
         if fitted_paths:
@@ -430,11 +479,12 @@ def run_build(
                     out_path=track_path,
                     cues=[c for c in cues if c.index in fitted_paths],
                     fitted_paths=fitted_paths,
-                    sample_rate=config.sample_rate,
+                    sample_rate=effective_sr,
                     tail_pad_ms=config.tail_pad_ms,
+                    base_wav=base_wav_used,
                 )
                 track_duration_ms = wav_duration_ms(
-                    track_path, sample_rate=config.sample_rate
+                    track_path, sample_rate=effective_sr
                 )
                 duration_error_ms = (
                     track_duration_ms - target_duration_ms
@@ -452,9 +502,10 @@ def run_build(
         "voice_id": voice_id,
         "provider": config.provider,
         "srt_path": str(config.srt_path),
-        "sample_rate": config.sample_rate,
+        "sample_rate": effective_sr,
         "short_mode": config.short_mode,
         "ja_yomi": bool(config.ja_yomi and config.lang == "ja"),
+        "base_wav": str(config.base_wav) if config.base_wav else None,
         "fit": config.fit,
         "limit": config.limit,
         "cue_count": total,

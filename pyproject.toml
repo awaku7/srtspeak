@@ -32,7 +32,6 @@ Repository = "https://github.com/awaku7/srtspeak"
 Issues = "https://github.com/awaku7/srtspeak/issues"
 
 [project.optional-dependencies]
-ja = ["kanjiconv"]
 gui = ["PySide6>=6.6"]
 ffmpeg = ["imageio-ffmpeg>=0.5"]
 dev = ["pytest>=8.0", "ruff>=0.6", "Babel>=2.14"]

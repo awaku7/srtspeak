@@ -81,7 +81,10 @@ def test_run_build_mocked_tts_writes_artifacts(tmp_path: Path) -> None:
     )
     cfg.validate()
 
-    with patch("srtspeak.core.pipeline.synthesize_to_file", side_effect=_fake_synthesize):
+    with (
+        patch("srtspeak.core.pipeline.synthesize_to_file", side_effect=_fake_synthesize),
+        patch("srtspeak.core.ja_yomi._call_chat_json", return_value={"cues": [{"index": 2, "text": "世界"}]}),
+    ):
         report = run_build(cfg, api_key="test-key-not-real")
 
     assert report["status"] == "ok"
@@ -142,7 +145,10 @@ def test_run_build_cache_hit_on_second_run(tmp_path: Path) -> None:
         calls.append(kwargs["text"])
         return _fake_synthesize(**kwargs)
 
-    with patch("srtspeak.core.pipeline.synthesize_to_file", side_effect=_counting_synth):
+    with (
+        patch("srtspeak.core.pipeline.synthesize_to_file", side_effect=_counting_synth),
+        patch("srtspeak.core.ja_yomi._call_chat_json", return_value={"cues": [{"index": 2, "text": "世界"}]}),
+    ):
         r1 = run_build(cfg, api_key="k")
         r2 = run_build(cfg, api_key="k")
 
@@ -175,7 +181,10 @@ def test_build_service_cancel_mid_tts(tmp_path: Path) -> None:
         return _fake_synthesize(**kwargs)
 
     svc = BuildService(cfg, api_key="k", cancel_token=token)
-    with patch("srtspeak.core.pipeline.synthesize_to_file", side_effect=_cancel_after_first):
+    with (
+        patch("srtspeak.core.pipeline.synthesize_to_file", side_effect=_cancel_after_first),
+        patch("srtspeak.core.ja_yomi._call_chat_json", return_value={"cues": [{"index": 2, "text": "世界"}]}),
+    ):
         try:
             report = svc.run()
         except BuildCancelled:
