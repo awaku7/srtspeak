@@ -2,7 +2,7 @@
 
 Multilingual SRT TTS. Forces each cue into its exact start/end window (xAI Grok TTS + ffmpeg).
 
-Authoritative design: `DESIGN.md`.
+Authoritative design: `DESIGN.md` (implementation-aligned).
 
 **Languages:** [English](README.md) | [日本語](README.ja.md)
 
@@ -13,7 +13,7 @@ Authoritative design: `DESIGN.md`.
 | OS | Windows / macOS / Linux (developed and verified on Windows) |
 | Python | 3.11+ |
 | ffmpeg / ffprobe | Prefer on `PATH`; optional fallback via `imageio-ffmpeg` |
-| API key | `XAI_API_KEY` only for real TTS (not needed for dry-run) |
+| API key | `XAI_API_KEY` only for real TTS (not needed for dry-run without ja_yomi API) |
 
 ## Install
 
@@ -41,6 +41,12 @@ Optional ffmpeg fallback via pip:
 python -m pip install -e ".[ffmpeg]"
 ```
 
+Combined example:
+
+```bat
+python -m pip install -e ".[gui,ffmpeg,dev]"
+```
+
 After editable install, the `srtspeak` command is available. Without install:
 
 ```bat
@@ -48,17 +54,7 @@ set PYTHONPATH=src
 python -m srtspeak --help
 ```
 
-Japanese yomi preprocess (kanji→hiragana via kanjiconv):
-
-```bat
-python -m pip install -e ".[ja]"
-```
-
-Combined extras example:
-
-```bat
-python -m pip install -e ".[gui,ja]"
-```
+There is **no** `[ja]` extra. Japanese kanji→hiragana preprocess (`ja_yomi`) uses the **Grok Chat API** with the same `XAI_API_KEY` (default on for `lang=ja`).
 
 ## Launch (Windows)
 
@@ -104,8 +100,8 @@ Resolution order (`core/ffmpeg_resolve.py`):
 |-----------|----------|
 | `srtspeak doctor` | Prints `ffmpeg: MISSING (...)`. Exit code **0** (diagnostics only) |
 | `dry-run` | ffmpeg **not required** (parse + char count + cost estimate only) |
-| Real `build` / `build-all` | Fails at fit stage. CLI: `error: ffmpeg not found on PATH and imageio-ffmpeg is unavailable`, exit code **2** |
-| `imageio-ffmpeg` only | Works, but `ffprobe` may be `(none)`. Full PATH ffmpeg build is **recommended** |
+| Real `build` / `build-all` | Fails at fit stage. CLI exit code **2** |
+| `imageio-ffmpeg` only | Works, but `ffprobe` may be `(none)`. Full PATH ffmpeg is **recommended** |
 
 ### Install examples (Windows)
 
@@ -134,7 +130,7 @@ srtspeak doctor
 
 ## xAI (Grok TTS) signup and API key
 
-TTS is **xAI Grok only** (`POST https://api.x.ai/v1/tts`). Create the key in the console.
+TTS is **xAI Grok only** (`POST https://api.x.ai/v1/tts`). Japanese yomi also uses Grok Chat (`/v1/chat/completions`). Create the key in the console.
 
 ### 1. Account
 
@@ -142,6 +138,7 @@ TTS is **xAI Grok only** (`POST https://api.x.ai/v1/tts`). Create the key in the
 2. Sign up / log in (xAI account)
 3. Accept terms and set up billing / credits as guided  
    - TTS is usage-based. dry-run estimate uses **$15 / 1M characters** (implementation unit price)
+   - ja_yomi Chat calls are additional usage when enabled
 
 ### 2. Create an API key
 
@@ -164,7 +161,7 @@ Official docs:
 | Variable | **`XAI_API_KEY` only** |
 | CLI flag | No `--api-key` (avoids shell history) |
 | Persistence | No `.env` read/write; never written to report/logs |
-| dry-run | Key optional |
+| dry-run | Key optional (ja_yomi API skipped if missing) |
 | Real TTS | env → (CLI) `getpass` prompt → else exit code 2 |
 | GUI | env first; masked session input if missing |
 
@@ -217,10 +214,10 @@ srtspeak dry-run --help
 
 | Command | Purpose |
 |---------|---------|
-| `doctor` | Check `XAI_API_KEY`, ffmpeg/ffprobe, PySide6 |
+| `doctor` | Check `XAI_API_KEY`, ffmpeg/ffprobe, ja_yomi backend, PySide6 |
 | `languages` | Language codes sendable to the API |
-| `voices` | Grok voices (API if key present, else builtin) |
-| `dry-run` | Parse + char count + cost estimate (no key, no ffmpeg) |
+| `voices` | Grok voices (API if key present, else builtin; male + female) |
+| `dry-run` | Parse + char count + cost estimate (no ffmpeg) |
 | `build` | Generate one language |
 | `build-all` | Generate multiple languages in sequence |
 | `gui` | PySide6 GUI |
@@ -245,13 +242,15 @@ srtspeak --verbose build --srt sample.srt --lang ja --dry-run
 
 ```text
 out/{lang}/
-  cues/                  per-cue audio
+  cues/                  per-cue audio (normalized)
   fitted/                duration-fitted audio
   GRAN_TENKU_{lang}.wav  final track (fixed name)
+  GRAN_TENKU_{lang}.mp3  if --also-mp3
   report.json
 work/{lang}/
   raw/
   cache/
+  ja_yomi_cache.json     when ja + ja_yomi
 ```
 
 - Default root: `out` → e.g. `out/ja/`
@@ -271,8 +270,9 @@ Before a real build you typically want:
 
 - `XAI_API_KEY: set (env)`
 - `ffmpeg:` path with `source: path` (or `imageio_ffmpeg`)
+- `ja_yomi: grok-chat (Grok Chat API)`
 
-### Cost estimate (no key, no ffmpeg)
+### Cost estimate (no ffmpeg)
 
 ```bat
 srtspeak dry-run --srt GRAN_TENKU_japan.srt --lang ja
@@ -297,12 +297,16 @@ Main options:
 | `--language-code` | BCP-47 sent to API | lang default (`pt`→`pt-BR`) |
 | `--out` | Output root (lang appended) | `out` |
 | `--work-dir` | Work root | `work` |
-| `--voice-id` | Voice ID | `leo` |
+| `--voice-id` | Voice ID (or `lang=id` for build-all) | `leo` |
 | `--short-mode` | `pad` / `stretch` | `pad` |
+| `--max-speed` | Cap on atempo product; over → hard_trim | none |
+| `--tail-pad-ms` | Silence after last cue end (no base_wav) | `0` |
+| `--base-wav` | Mix narration onto this WAV (keeps base rate/ch) | none |
+| `--ja-yomi` / `--no-ja-yomi` | JA kanji→hiragana via Grok Chat | **on** |
 | `--limit N` | First N cues only | all |
 | `--dry-run` | Estimate only | off |
-| `--also-mp3` | Also write mp3 | off |
-| `--jobs` | Parallelism (MVP: 1 only) | `1` |
+| `--also-mp3` | Also write mp3 of final track | off |
+| `--jobs` | Parallelism (MVP: **1** only) | `1` |
 
 Smoke a few cues:
 
@@ -314,6 +318,18 @@ Portuguese as pt-PT:
 
 ```bat
 srtspeak build --srt GRAN_TENKU_Portugus.srt --lang pt --language-code pt-PT --voice-id leo
+```
+
+Mix onto an existing bed:
+
+```bat
+srtspeak build --srt GRAN_TENKU_japan.srt --lang ja --base-wav bed.wav --voice-id leo
+```
+
+Disable Japanese yomi:
+
+```bat
+srtspeak build --srt GRAN_TENKU_japan.srt --lang ja --no-ja-yomi --voice-id leo
 ```
 
 ### Multi-language batch
@@ -343,17 +359,23 @@ python -m pip install -e ".[gui]"
 srtspeak gui
 ```
 
+- Language combo uses API BCP-47 codes; internal out-dir key is derived
 - Out field is the **root** (default `out`); lang is appended at run time
+- Base WAV, ja_yomi checkbox (default on), limit, dry-run
 - API key: env preferred; masked session input if unset
+- Non-secret settings may be stored in `gui.json` (never the key)
 
 ## Processing notes
 
+- Pipeline: parse → limit → **ja_yomi** (ja) → TTS/cache → normalize → fit → timeline → report
 - TTS: xAI Grok unary REST only (`speed` always 1.0)
+- ja_yomi: Grok Chat structured JSON, batch 5, cache under `work/{lang}/`
 - Fit: ffmpeg CLI only (`atempo` 0.5–2.0 multi-stage; short cues default to pad)
-- Timeline: silence canvas + PCM placement; half-open window `[start, end)`
-- Track length: aligned to last cue end (±50 ms)
-- Audio: mono s16le 24 kHz WAV
-- Cost estimate (dry-run): $15 / 1M chars
+- Timeline: silence canvas or base_wav; place in half-open `[start, end)`; **PCM add-mix** (clip ±32767)
+- Track length: last cue end + `tail_pad_ms`, or base_wav length when `--base-wav` is set
+- Audio (no base): mono s16le 24 kHz WAV; with base: base native rate/channels preserved
+- Cost estimate (dry-run): $15 / 1M chars (TTS text; Chat yomi not included in that figure)
+- Voices: builtin catalog includes male and female; default `leo`
 
 ## Exit codes
 
@@ -384,7 +406,7 @@ python scripts/update_i18n.py
 
 | File | lang | Notes |
 |------|------|-------|
-| `GRAN_TENKU_japan.srt` | `ja` | |
+| `GRAN_TENKU_japan.srt` | `ja` | ja_yomi default on |
 | `GRAN_TENKU_English.srt` | `en` | |
 | `GRAN_TENKU_Portugus.srt` | `pt` | API default `pt-BR` if unspecified |
 
