@@ -158,6 +158,52 @@ def test_run_build_cache_hit_on_second_run(tmp_path: Path) -> None:
     assert all(c["cache_hit"] is True for c in r2["cues"])
 
 
+def test_run_build_no_cache_bypasses_tts_cache(tmp_path: Path) -> None:
+    srt = tmp_path / "sample.srt"
+    _minimal_srt(srt)
+    out_dir = tmp_path / "out" / "ja"
+    work_dir = tmp_path / "work"
+    cfg1 = BuildConfig(
+        srt_path=srt,
+        lang="ja",
+        language_code="ja",
+        out_dir=out_dir,
+        work_dir=work_dir,
+        voice_id="leo",
+        limit=2,
+    )
+    cfg_nc = BuildConfig(
+        srt_path=srt,
+        lang="ja",
+        language_code="ja",
+        out_dir=out_dir,
+        work_dir=work_dir,
+        voice_id="leo",
+        limit=2,
+        no_cache=True,
+    )
+    calls: list[str] = []
+
+    def _counting_synth(**kwargs: Any) -> tuple[Path, dict[str, Any]]:
+        calls.append(kwargs["text"])
+        return _fake_synthesize(**kwargs)
+
+    with (
+        patch("srtspeak.core.pipeline.synthesize_to_file", side_effect=_counting_synth),
+        patch(
+            "srtspeak.core.ja_yomi._call_chat_json",
+            return_value={"cues": [{"index": 2, "text": "世界"}]},
+        ),
+    ):
+        r1 = run_build(cfg1, api_key="k")
+        r2 = run_build(cfg_nc, api_key="k")
+
+    assert r1["status"] == "ok"
+    assert r2["status"] == "ok"
+    assert len(calls) == 4  # second run re-hits API despite cache
+    assert all(c["cache_hit"] is False for c in r2["cues"])
+
+
 def test_build_service_cancel_mid_tts(tmp_path: Path) -> None:
     srt = tmp_path / "sample.srt"
     _minimal_srt(srt)

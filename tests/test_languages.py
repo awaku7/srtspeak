@@ -32,6 +32,14 @@ def test_guess_lang_from_filename() -> None:
     assert guess_lang_from_filename("GRAN_TENKU_English.srt") == "en"
     assert guess_lang_from_filename("GRAN_TENKU_Portugus.srt") == "pt"
     assert guess_lang_from_filename("unknown.srt") is None
+    # native-script / local labels
+    assert guess_lang_from_filename("GRAN_TENKU_日本語.srt") == "ja"
+    assert guess_lang_from_filename("GRAN_TENKU_ไทย.srt") == "th"
+    assert guess_lang_from_filename("GRAN_TENKU_中文.srt") == "zh"
+    # whole-token short codes only (no false positive on tenku)
+    assert guess_lang_from_filename("foo_en.srt") == "en"
+    assert guess_lang_from_filename("sample-ja.srt") == "ja"
+    assert guess_lang_from_filename("tenku.srt") is None
 
 
 def test_resolve_explicit_overrides_default() -> None:

@@ -56,3 +56,19 @@ def test_jobs_must_be_one_on_validate() -> None:
     )
     with pytest.raises(ValueError, match="jobs"):
         cfg.validate()
+
+
+def test_build_config_no_cache_default_false() -> None:
+    cfg = BuildConfig(
+        srt_path=Path("a.srt"),
+        lang="ja",
+        language_code="ja",
+        out_dir=Path("out"),
+    )
+    assert cfg.no_cache is False
+
+
+def test_build_config_no_cache_field_present() -> None:
+    names = {f.name for f in fields(BuildConfig)}
+    assert "no_cache" in names
+

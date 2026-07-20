@@ -134,6 +134,11 @@ def _(message: str) -> str:
     return _translations.gettext(message)
 
 
+def N_(message: str) -> str:
+    """Mark msgid for extraction without translating at call site (noop)."""
+    return message
+
+
 def ngettext(singular: str, plural: str, n: int) -> str:
     return _translations.ngettext(singular, plural, n)
 
@@ -146,6 +151,7 @@ __all__ = [
     "DOMAIN",
     "LOCALES_DIR",
     "_",
+    "N_",
     "available_locales",
     "get_locale",
     "locales_dir",

@@ -1,0 +1,158 @@
+{
+  "tone": "casual relaxed travel-vlog",
+  "do_not_translate": [
+    "GRAN",
+    "Genji"
+  ],
+  "terms": [
+    {
+      "source": "高野山",
+      "en": "Koyasan"
+    },
+    {
+      "source": "極楽橋",
+      "en": "Gokurakubashi"
+    },
+    {
+      "source": "極楽橋駅",
+      "en": "Gokurakubashi Station"
+    },
+    {
+      "source": "九度山駅",
+      "en": "Kudoyama Station"
+    },
+    {
+      "source": "九度山",
+      "en": "Kudoyama"
+    },
+    {
+      "source": "和歌山県",
+      "en": "Wakayama Prefecture"
+    },
+    {
+      "source": "南海沿線",
+      "en": "Nankai Line area"
+    },
+    {
+      "source": "GRAN",
+      "keep": "GRAN"
+    },
+    {
+      "source": "天空",
+      "en": "Tenku",
+      "note": "GRAN Tenku sightseeing train"
+    },
+    {
+      "source": "グランシート",
+      "en": "Gran Seat"
+    },
+    {
+      "source": "Genji",
+      "keep": "Genji"
+    },
+    {
+      "source": "ケーブル",
+      "en": "cable car"
+    },
+    {
+      "source": "コンコース",
+      "en": "concourse"
+    },
+    {
+      "source": "号車",
+      "en": "car"
+    },
+    {
+      "source": "ローストビーフ",
+      "en": "roast beef"
+    },
+    {
+      "source": "タルタルソース",
+      "en": "tartar sauce"
+    },
+    {
+      "source": "生山椒",
+      "en": "fresh sansho"
+    },
+    {
+      "source": "土瓶蒸",
+      "en": "dobin mushi"
+    },
+    {
+      "source": "極楽鳥",
+      "en": "bird of paradise"
+    },
+    {
+      "source": "伝統工芸",
+      "en": "traditional crafts"
+    },
+    {
+      "source": "阿波紙",
+      "en": "Awa washi"
+    },
+    {
+      "source": "和紙",
+      "en": "washi"
+    },
+    {
+      "source": "有田",
+      "en": "Arida"
+    },
+    {
+      "source": "モチーフ",
+      "en": "motif"
+    },
+    {
+      "source": "メニュー",
+      "en": "menu"
+    },
+    {
+      "source": "グルメ",
+      "en": "gourmet"
+    },
+    {
+      "source": "参拝",
+      "en": "pilgrimage visit"
+    },
+    {
+      "source": "俗世",
+      "en": "secular world"
+    },
+    {
+      "source": "冷製",
+      "en": "chilled"
+    },
+    {
+      "source": "名店",
+      "en": "renowned eatery"
+    },
+    {
+      "source": "味噌",
+      "en": "miso"
+    },
+    {
+      "source": "生姜",
+      "en": "ginger"
+    },
+    {
+      "source": "マグロ",
+      "en": "tuna"
+    },
+    {
+      "source": "プリン",
+      "en": "pudding"
+    },
+    {
+      "source": "サイダー",
+      "en": "cider"
+    },
+    {
+      "source": "ランチ",
+      "en": "lunch"
+    },
+    {
+      "source": "撤収",
+      "en": "retreat"
+    }
+  ]
+}

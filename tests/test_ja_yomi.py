@@ -101,3 +101,32 @@ def test_apply_ja_yomi_integration_via_chat() -> None:
 
     assert "高" not in out[0].text
     assert out[1].text == "こんにちは"
+
+
+def test_apply_ja_yomi_no_cache_ignores_file(tmp_path: Path) -> None:
+    cues = [Cue(1, 0, 1000, "高野山")]
+    work = tmp_path / "work"
+    work.mkdir()
+    # seed cache with wrong conversion to prove bypass
+    cache_path = work / "ja_yomi_cache.json"
+    import hashlib
+    import json
+
+    h = hashlib.sha256("|".join(c.text for c in cues).encode("utf-8")).hexdigest()[:16]
+    cache_path.write_text(
+        json.dumps({"_srt_hash": h, "1": "cached-wrong"}, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    mock_response = {"cues": [{"index": 1, "text": "こうやさん"}]}
+    with patch("srtspeak.core.ja_yomi._call_chat_json", return_value=mock_response) as m:
+        out = apply_ja_yomi(
+            cues,
+            enabled=True,
+            lang="ja",
+            api_key="k",
+            work_dir=work,
+            no_cache=True,
+        )
+    assert m.called
+    assert out[0].text == "こうやさん"
+

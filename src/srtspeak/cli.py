@@ -33,6 +33,7 @@ from srtspeak.core.voices import (
     validate_voice_id,
 )
 from srtspeak.i18n import _, setup_i18n
+from srtspeak.progress_i18n import localize_message, localize_stage
 
 
 class _CliState:
@@ -48,12 +49,14 @@ _CANCEL = CancellationToken()
 def _progress_printer(ev: ProgressEvent) -> None:
     if _STATE.quiet:
         return
+    stage = localize_stage(ev.stage)
+    msg = localize_message(ev.message) if ev.message else ""
     line = (
-        f"[{ev.percent:5.1f}%] {ev.stage:8s} "
+        f"[{ev.percent:5.1f}%] {stage:8s} "
         f"{ev.current}/{ev.total}"
         + (f"  {ev.lang}" if ev.lang else "")
         + (f"  cue={ev.cue_index}" if ev.cue_index is not None else "")
-        + (f"  {ev.message}" if ev.message and _STATE.verbose else "")
+        + (f"  {msg}" if msg else "")
     )
     if _STATE.verbose:
         print(line, flush=True)
@@ -151,7 +154,7 @@ def cmd_languages(_args: argparse.Namespace) -> int:
     for opt in list_language_options():
         aliases = ", ".join(opt.aliases) if opt.aliases else "-"
         label = _(opt.label)
-        print(f"{opt.code:8s}  {label:28s}  aliases={aliases}")
+        print(f"{opt.code:8s}  {label:28s}  {_('aliases={aliases}').format(aliases=aliases)}")
     return 0
 
 
@@ -180,25 +183,37 @@ def cmd_voices(args: argparse.Namespace) -> int:
 
 
 def cmd_doctor(_args: argparse.Namespace) -> int:
-    print(f"XAI_API_KEY: {api_key_status()}")
+    print(_("XAI_API_KEY: {status}").format(status=api_key_status()))
     try:
         tools = resolve_ffmpeg()
         ver = ffmpeg_version(tools.ffmpeg)
-        print(f"ffmpeg: {tools.ffmpeg}")
+        print(_("ffmpeg: {path}").format(path=tools.ffmpeg))
         print(_("  source: {source}").format(source=tools.source))
         print(_("  version: {version}").format(version=ver))
         none_label = _("(none)")
-        print(f"ffprobe: {tools.ffprobe or none_label}")
+        print(_("ffprobe: {path}").format(path=tools.ffprobe or none_label))
     except FFmpegNotFoundError as exc:
         print(_("ffmpeg: MISSING ({exc})").format(exc=exc))
     try:
-        from srtspeak.core.ja_yomi import apply_ja_yomi
+        from srtspeak.core.ja_yomi import apply_ja_yomi  # noqa: F401
 
         print(
             _("ja_yomi: grok-chat (Grok Chat API)").format()
         )
     except Exception as exc:
         print(_("ja_yomi: error ({exc})").format(exc=exc))
+    try:
+        from srtspeak.core.srt_translate import run_translate  # noqa: F401
+
+        print(_("translate: grok-chat (same XAI_API_KEY)"))
+    except Exception as exc:
+        print(_("translate: error ({exc})").format(exc=exc))
+    try:
+        from srtspeak.core.translate_glossary import suggest_glossary  # noqa: F401
+
+        print(_("glossary-suggest: grok-chat (same XAI_API_KEY)"))
+    except Exception as exc:
+        print(_("glossary-suggest: error ({exc})").format(exc=exc))
     try:
         import PySide6  # type: ignore  # noqa: F401
 
@@ -248,7 +263,9 @@ def _build_one(
         work_dir=Path(args.work_dir) if args.work_dir else None,
         max_speed=args.max_speed,
         ja_yomi=bool(getattr(args, "ja_yomi", True)),
+        strip_emoticons=bool(getattr(args, "strip_emoticons", True)),
         base_wav=Path(args.base_wav) if getattr(args, "base_wav", None) else None,
+        no_cache=bool(getattr(args, "no_cache", False)),
     )
     cfg.validate()
     # validate voice against builtin when dry-run or no live list
@@ -420,6 +437,230 @@ def cmd_dry_run(args: argparse.Namespace) -> int:
     return cmd_build(args)
 
 
+
+def _parse_to_list(values: list[str] | None) -> list[str]:
+    """Normalize --to repeats and comma-separated values into a list."""
+    if not values:
+        return []
+    out: list[str] = []
+    for v in values:
+        for part in str(v).split(","):
+            part = part.strip()
+            if part:
+                out.append(part)
+    return out
+
+
+def cmd_translate(args: argparse.Namespace) -> int:
+    from srtspeak.core.languages import normalize_language_code
+    from srtspeak.core.models import TranslateConfig
+    from srtspeak.core.srt_translate import TranslateError, run_translate
+
+    srt = Path(args.srt)
+    if not srt.is_file():
+        print(_("SRT not found: {path}").format(path=srt), file=sys.stderr)
+        return 2
+
+    source = args.source_lang or guess_lang_from_filename(srt) or "ja"
+    try:
+        source = normalize_language_code(source)
+    except ValueError as exc:
+        print(_("error: {exc}").format(exc=exc), file=sys.stderr)
+        return 2
+
+    targets = _parse_to_list(args.to)
+    if not targets:
+        print(_("translate requires at least one --to"), file=sys.stderr)
+        return 2
+
+    out_dir = Path(args.out) if args.out else Path("srt_gen")
+    work_dir = Path(args.work_dir) if args.work_dir else Path("work")
+    glossary = Path(args.glossary) if getattr(args, "glossary", None) else None
+
+    try:
+        cfg = TranslateConfig(
+            srt_path=srt,
+            source_lang=source,
+            targets=targets,
+            out_dir=out_dir,
+            work_dir=work_dir,
+            model=str(getattr(args, "model", None) or "grok-4.5"),
+            batch_size=int(getattr(args, "batch_size", 8) or 8),
+            glossary_path=glossary,
+            length_mode=str(getattr(args, "length_mode", "hint") or "hint"),
+            on_empty=str(getattr(args, "on_empty", "fail") or "fail"),
+            limit=(args.limit if args.limit not in (None, 0) else None),
+            dry_run=bool(args.dry_run),
+            fail_fast=bool(getattr(args, "fail_fast", False)),
+            naming=str(getattr(args, "naming", "stem") or "stem"),
+            no_cache=bool(getattr(args, "no_cache", False)),
+        )
+        cfg.validate()
+    except ValueError as exc:
+        print(_("error: {exc}").format(exc=exc), file=sys.stderr)
+        return 2
+
+    api_key = ""
+    if not cfg.dry_run:
+        resolved = resolve_api_key(prompt=True)
+        if not resolved:
+            print(_("XAI_API_KEY is not set"), file=sys.stderr)
+            return 2
+        api_key = resolved
+
+    try:
+        report = run_translate(
+            cfg,
+            api_key=api_key,
+            progress_cb=_progress_printer,
+            cancel_token=_CANCEL,
+        )
+    except BuildCancelled:
+        _finish_progress_line()
+        print(_("cancelled"), file=sys.stderr)
+        return 130
+    except TranslateError as exc:
+        _finish_progress_line()
+        print(_("translate error: {exc}").format(exc=exc), file=sys.stderr)
+        return 1
+    except (ValueError, FileNotFoundError, OSError) as exc:
+        _finish_progress_line()
+        print(_("error: {exc}").format(exc=exc), file=sys.stderr)
+        return 2
+    _finish_progress_line()
+
+    summary = report.get("summary") or {}
+    print(
+        _(
+            "translate status={status} ok={ok} failed={failed} skipped={skipped} warnings={warnings} report={report}"
+        ).format(
+            status=report.get("status"),
+            ok=summary.get("ok"),
+            failed=summary.get("failed"),
+            skipped=summary.get("skipped"),
+            warnings=summary.get("warnings", 0),
+            report=str(report.get("report_path") or (out_dir / "translate_report.json")),
+        )
+    )
+    targets = report.get("targets") or {}
+    if isinstance(targets, dict):
+        for tgt, info in targets.items():
+            if not isinstance(info, dict):
+                continue
+            for w in info.get("warnings") or []:
+                print(
+                    _("warning [{tgt}]: {msg}").format(tgt=tgt, msg=w),
+                    file=sys.stderr,
+                )
+            if not info.get("ok"):
+                for e in info.get("errors") or []:
+                    print(
+                        _("error [{tgt}]: {msg}").format(tgt=tgt, msg=e),
+                        file=sys.stderr,
+                    )
+    failed = int(summary.get("failed") or 0)
+    ok = int(summary.get("ok") or 0)
+    if failed and ok:
+        return 1
+    if failed and not ok:
+        return 1
+    return 0
+
+
+
+def cmd_glossary_suggest(args: argparse.Namespace) -> int:
+    from srtspeak.core.languages import normalize_language_code
+    from srtspeak.core.srt_parser import apply_limit, parse_srt, read_srt_text
+    from srtspeak.core.translate_glossary import (
+        GlossaryError,
+        load_glossary,
+        merge_glossary,
+        save_glossary,
+        suggest_glossary,
+    )
+
+    srt = Path(args.srt)
+    if not srt.is_file():
+        print(_("SRT not found: {path}").format(path=srt), file=sys.stderr)
+        return 2
+
+    source = args.source_lang or guess_lang_from_filename(srt) or "ja"
+    try:
+        source = normalize_language_code(source)
+    except ValueError as exc:
+        print(_("error: {exc}").format(exc=exc), file=sys.stderr)
+        return 2
+
+    raw_targets = _parse_to_list(args.to)
+    if not raw_targets:
+        print(_("glossary-suggest requires at least one --to"), file=sys.stderr)
+        return 2
+    targets: list[str] = []
+    seen_t: set[str] = set()
+    for t in raw_targets:
+        try:
+            code = normalize_language_code(t)
+        except ValueError as exc:
+            print(_("error: {exc}").format(exc=exc), file=sys.stderr)
+            return 2
+        if code in seen_t:
+            print(
+                _("error: duplicate target language: {code}").format(code=code),
+                file=sys.stderr,
+            )
+            return 2
+        seen_t.add(code)
+        targets.append(code)
+
+    out_path = Path(args.out) if args.out else Path("glossary.json")
+    api_key = resolve_api_key(prompt=True)
+    if not api_key:
+        print(_("XAI_API_KEY is not set"), file=sys.stderr)
+        return 2
+
+    limit = args.limit if getattr(args, "limit", None) not in (None, 0) else None
+
+    try:
+        cues = parse_srt(read_srt_text(srt)[0])
+        cues = apply_limit(cues, limit)
+        suggested = suggest_glossary(
+            cues,
+            source_lang=source,
+            targets=targets,
+            api_key=api_key,
+            model=str(getattr(args, "model", None) or "grok-4.5"),
+            min_count=max(1, int(getattr(args, "min_count", 2) or 2)),
+            progress_cb=_progress_printer,
+        )
+        if getattr(args, "merge", None):
+            base = load_glossary(Path(args.merge))
+            suggested = merge_glossary(base, suggested, prefer="base")
+        elif out_path.is_file() and not bool(getattr(args, "force", False)):
+            # default: merge into existing out if present
+            base = load_glossary(out_path)
+            if base:
+                suggested = merge_glossary(base, suggested, prefer="base")
+        save_glossary(out_path, suggested)
+    except BuildCancelled:
+        _finish_progress_line()
+        print(_("cancelled"), file=sys.stderr)
+        return 130
+    except GlossaryError as exc:
+        _finish_progress_line()
+        print(_("glossary error: {exc}").format(exc=exc), file=sys.stderr)
+        return 1
+    except (ValueError, OSError) as exc:
+        _finish_progress_line()
+        print(_("error: {exc}").format(exc=exc), file=sys.stderr)
+        return 2
+    _finish_progress_line()
+    n = len((suggested.get("terms") or []))
+    print(
+        _("glossary written: {path} terms={n}").format(path=out_path, n=n)
+    )
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="srtspeak",
@@ -536,6 +777,19 @@ def build_parser() -> argparse.ArgumentParser:
                 "(default: on)"
             ),
         )
+        sp.add_argument(
+            "--strip-emoticons",
+            action=argparse.BooleanOptionalAction,
+            default=True,
+            help=_(
+                "Strip kaomoji for TTS only; emoji kept; SRT unchanged (default: on)"
+            ),
+        )
+        sp.add_argument(
+            "--no-cache",
+            action="store_true",
+            help=_("ignore existing TTS/ja_yomi caches; still write fresh"),
+        )
 
     sp_build = sub.add_parser("build", help=_("build one language"))
     add_build_flags(sp_build, multi=False)
@@ -565,6 +819,136 @@ def build_parser() -> argparse.ArgumentParser:
 
     sp_gui = sub.add_parser("gui", help=_("launch GUI"))
     sp_gui.set_defaults(func=cmd_gui)
+
+    sp_tr = sub.add_parser("translate", help=_("translate SRT to other languages"))
+    sp_tr.add_argument("--srt", required=True, help=_("source SRT path"))
+    sp_tr.add_argument(
+        "--source-lang",
+        default=None,
+        help=_("source language (default: filename guess / ja)"),
+    )
+    sp_tr.add_argument(
+        "--to",
+        action="append",
+        required=True,
+        help=_("target language BCP-47 (repeatable or comma-separated)"),
+    )
+    sp_tr.add_argument(
+        "--out",
+        default="srt_gen",
+        help=_("output root directory (default: srt_gen)"),
+    )
+    sp_tr.add_argument(
+        "--work-dir",
+        default="work",
+        help=_("work directory root"),
+    )
+    sp_tr.add_argument(
+        "--glossary",
+        default=None,
+        help=_("glossary JSON path"),
+    )
+    sp_tr.add_argument(
+        "--length-mode",
+        choices=("off", "hint", "enforce", "report-only"),
+        default="hint",
+        help=_("length control mode (default: hint)"),
+    )
+    sp_tr.add_argument(
+        "--on-empty",
+        choices=("fail", "keep-source"),
+        default="fail",
+        help=_("empty translation policy (default: fail)"),
+    )
+    sp_tr.add_argument(
+        "--batch-size",
+        type=int,
+        default=8,
+        help=_("cues per Chat batch (default: 8)"),
+    )
+    sp_tr.add_argument(
+        "--model",
+        default="grok-4.5",
+        help=_("Grok Chat model id"),
+    )
+    sp_tr.add_argument(
+        "--limit",
+        type=int,
+        default=None,
+        help=_("process only the first N cues"),
+    )
+    sp_tr.add_argument(
+        "--dry-run",
+        action="store_true",
+        help=_("estimate only, no Chat API"),
+    )
+    sp_tr.add_argument(
+        "--fail-fast",
+        action="store_true",
+        help=_("stop on first target failure"),
+    )
+    sp_tr.add_argument(
+        "--no-cache",
+        action="store_true",
+        help=_("ignore existing translate caches; still write fresh"),
+    )
+    sp_tr.add_argument(
+        "--naming",
+        choices=("stem", "gran_tenku"),
+        default="stem",
+        help=_("output SRT naming (default: stem)"),
+    )
+    sp_tr.set_defaults(func=cmd_translate)
+
+    sp_gs = sub.add_parser(
+        "glossary-suggest",
+        help=_("suggest glossary JSON from SRT via Grok Chat"),
+    )
+    sp_gs.add_argument("--srt", required=True, help=_("source SRT path"))
+    sp_gs.add_argument(
+        "--source-lang",
+        default=None,
+        help=_("source language (default: filename guess / ja)"),
+    )
+    sp_gs.add_argument(
+        "--to",
+        action="append",
+        required=True,
+        help=_("target language BCP-47 (repeatable or comma-separated)"),
+    )
+    sp_gs.add_argument(
+        "--out",
+        default="glossary.json",
+        help=_("output glossary JSON path (default: glossary.json)"),
+    )
+    sp_gs.add_argument(
+        "--merge",
+        default=None,
+        help=_("existing glossary to merge (base wins on conflict)"),
+    )
+    sp_gs.add_argument(
+        "--force",
+        action="store_true",
+        help=_("overwrite --out without merging existing file"),
+    )
+    sp_gs.add_argument(
+        "--min-count",
+        type=int,
+        default=2,
+        help=_("min term frequency for local candidates (default: 2)"),
+    )
+    sp_gs.add_argument(
+        "--model",
+        default="grok-4.5",
+        help=_("Grok Chat model id"),
+    )
+    sp_gs.add_argument(
+        "--limit",
+        type=int,
+        default=None,
+        help=_("use only the first N cues"),
+    )
+    sp_gs.set_defaults(func=cmd_glossary_suggest)
 
     return p
 

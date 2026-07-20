@@ -155,7 +155,7 @@ def convert_cues_batch(cues, api_key):
     return out
 
 
-def apply_ja_yomi(cues, *, enabled, lang, api_key=None, progress_cb=None, cancel_token=None, work_dir=None):
+def apply_ja_yomi(cues, *, enabled, lang, api_key=None, progress_cb=None, cancel_token=None, work_dir=None, no_cache=False):
     """Return cues with ja_yomi applied, using cache for resumability."""
     if not should_apply_ja_yomi(enabled=enabled, lang=lang):
         return list(cues)
@@ -171,16 +171,17 @@ def apply_ja_yomi(cues, *, enabled, lang, api_key=None, progress_cb=None, cancel
     if work_dir:
         import os as _os
         cache_path = _os.path.join(str(work_dir), "ja_yomi_cache.json")
-        try:
-            with open(cache_path, "r", encoding="utf-8") as _f:
-                cache = _json.load(_f)
-                cache_hash = cache.pop("_srt_hash", "")
-                if cache_hash != input_hash:
-                    cache = {}
-                    _log("SRT changed, cache invalidated")
-            _log(f"Loaded {len(cache)} cached ja_yomi entries")
-        except (FileNotFoundError, _json.JSONDecodeError):
-            cache = {}
+        if not no_cache:
+            try:
+                with open(cache_path, "r", encoding="utf-8") as _f:
+                    cache = _json.load(_f)
+                    cache_hash = cache.pop("_srt_hash", "")
+                    if cache_hash != input_hash:
+                        cache = {}
+                        _log("SRT changed, cache invalidated")
+                _log(f"Loaded {len(cache)} cached ja_yomi entries")
+            except (FileNotFoundError, _json.JSONDecodeError):
+                cache = {}
 
     out = []
     pending = []  # cues that need API call (index, cue)

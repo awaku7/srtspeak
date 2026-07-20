@@ -16,9 +16,10 @@ from srtspeak.core.models import BuildConfig
 from srtspeak.core.progress import ProgressCallback, emit
 from srtspeak.core.report import estimate_cost_usd, track_filename, write_json
 from srtspeak.core.ja_yomi import apply_ja_yomi, init_ja_yomi_log
-from srtspeak.core.srt_parser import Cue, apply_limit, parse_srt
+from srtspeak.core.srt_parser import Cue, apply_limit, parse_srt, read_srt_text
 from srtspeak.core.timeline import write_timeline_wav
 from srtspeak.core.tts_xai import TtsError, synthesize_to_file
+from srtspeak.core.text_sanitize import tts_speak_text
 from srtspeak.core.util import ensure_dir, wav_duration_ms
 from srtspeak.core.voices import resolve_voice_id, validate_voice_id, builtin_voice_ids
 
@@ -116,7 +117,7 @@ def dry_run_build(
         lang=config.lang,
     )
 
-    text = config.srt_path.read_text(encoding="utf-8-sig")
+    text, srt_encoding = read_srt_text(config.srt_path)
     cues = apply_limit(parse_srt(text), config.limit)
     init_ja_yomi_log(_work_lang_dir(config))
     cues = apply_ja_yomi(cues, enabled=config.ja_yomi, lang=config.lang, work_dir=_work_lang_dir(config))
@@ -153,6 +154,7 @@ def dry_run_build(
         "provider": config.provider,
         "voice_id": voice_id,
         "srt_path": str(config.srt_path),
+        "source_encoding": srt_encoding,
         "out_dir": str(config.out_dir),
         "cue_count": len(cues),
         "processed_count": len(cues),
@@ -161,6 +163,7 @@ def dry_run_build(
         "sample_rate": config.sample_rate,
         "short_mode": config.short_mode,
         "ja_yomi": bool(config.ja_yomi and config.lang == "ja"),
+        "strip_emoticons": bool(config.strip_emoticons),
         "fit": config.fit,
         "limit": config.limit,
         "track": track_filename(config.lang),
@@ -197,7 +200,7 @@ def run_build(
     warnings: list[str] = []
 
     if config.strip_emoticons:
-        warnings.append("strip_emoticons is no-op in MVP")
+        warnings.append("strip_emoticons: kaomoji stripped for TTS only; emoji kept (SRT unchanged)")
     if config.ja_yomi and config.lang == "ja":
         if api_key:
             warnings.append("ja_yomi: kanji converted to hiragana via Grok Chat API")
@@ -220,7 +223,7 @@ def run_build(
     )
     token.check()
 
-    text = config.srt_path.read_text(encoding="utf-8-sig")
+    text, srt_encoding = read_srt_text(config.srt_path)
     cues = apply_limit(parse_srt(text), config.limit)
     init_ja_yomi_log(_work_lang_dir(config))
     cues = apply_ja_yomi(
@@ -231,6 +234,7 @@ def run_build(
         work_dir=_work_lang_dir(config),
         cancel_token=token,
         progress_cb=progress_cb,
+        no_cache=bool(config.no_cache),
     )
     emit(
         progress_cb,
@@ -295,11 +299,14 @@ def run_build(
                 lang=config.lang,
             )
 
+            speak_text = tts_speak_text(
+                cue.text, enabled=bool(config.strip_emoticons)
+            )
             key = cache_key_hex(
                 provider=config.provider,
                 voice_id=voice_id,
                 language_code=config.language_code,
-                text=cue.text,
+                text=speak_text,
                 sample_rate=config.sample_rate,
                 codec=config.codec,
                 tts_speed=config.tts_speed,
@@ -310,12 +317,16 @@ def run_build(
             cue_out = cues_dir / f"{cue.index:04d}.wav"
             fitted_path = fitted_dir / f"{cue.index:04d}.wav"
 
-            cache_hit = cpath.is_file() and cpath.stat().st_size > 0
+            cache_hit = (
+                (not config.no_cache)
+                and cpath.is_file()
+                and cpath.stat().st_size > 0
+            )
             if cache_hit:
                 shutil.copyfile(cpath, raw_path)
             else:
                 synthesize_to_file(
-                    text=cue.text,
+                    text=speak_text,
                     voice_id=voice_id,
                     language_code=config.language_code,
                     api_key=api_key,
@@ -502,9 +513,11 @@ def run_build(
         "voice_id": voice_id,
         "provider": config.provider,
         "srt_path": str(config.srt_path),
+        "source_encoding": srt_encoding,
         "sample_rate": effective_sr,
         "short_mode": config.short_mode,
         "ja_yomi": bool(config.ja_yomi and config.lang == "ja"),
+        "strip_emoticons": bool(config.strip_emoticons),
         "base_wav": str(config.base_wav) if config.base_wav else None,
         "fit": config.fit,
         "limit": config.limit,

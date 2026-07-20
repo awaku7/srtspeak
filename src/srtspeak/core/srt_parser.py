@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from pathlib import Path
 
 from srtspeak.i18n import _
 
@@ -37,6 +38,55 @@ class SrtParseError(ValueError):
         for i, issue in enumerate(self.issues, 1):
             lines.append(f"  {i}. {issue}")
         return "\n".join(lines)
+
+
+class SrtEncodingError(ValueError):
+    """SRT file could not be decoded with supported encodings."""
+
+
+# Decode order: UTF-8 first, then Japanese legacy (Windows SJIS ≈ cp932).
+SRT_TEXT_ENCODINGS: tuple[str, ...] = (
+    "utf-8-sig",
+    "utf-8",
+    "cp932",
+    "shift_jis",
+    "euc_jp",
+)
+
+
+def read_srt_text(path: str | Path) -> tuple[str, str]:
+    """Read SRT file bytes and decode with encoding fallback.
+
+    Order: ``utf-8-sig`` → ``utf-8`` → ``cp932`` → ``shift_jis`` → ``euc_jp``.
+    Returns ``(text, encoding_name)``. Writers stay UTF-8.
+
+    Raises:
+        FileNotFoundError: path missing
+        SrtEncodingError: no supported encoding worked
+    """
+    p = Path(path)
+    data = p.read_bytes()
+    if not data:
+        return "", "utf-8"
+
+    errors: list[str] = []
+    for enc in SRT_TEXT_ENCODINGS:
+        try:
+            text = data.decode(enc)
+        except UnicodeDecodeError as exc:
+            errors.append(f"{enc}: {exc}")
+            continue
+        return text, enc
+
+    detail = "; ".join(errors[:5])
+    raise SrtEncodingError(
+        _(
+            "cannot decode SRT as UTF-8/cp932/shift_jis/euc_jp: {path} ({detail})"
+        ).format(
+            path=str(p),
+            detail=detail or "unknown",
+        )
+    )
 
 
 @dataclass(frozen=True)
@@ -239,3 +289,30 @@ def apply_limit(cues: list[Cue], limit: int | None) -> list[Cue]:
     if limit < 1:
         raise ValueError(_("limit must be >= 1"))
     return list(cues[:limit])
+
+def format_timestamp_ms(ms: int) -> str:
+    """Format milliseconds as ``HH:MM:SS,mmm`` (SRT comma style)."""
+    return _ms_to_ts(ms)
+
+
+def format_srt(cues: list[Cue]) -> str:
+    """Serialize cues to SRT text (LF, trailing newline).
+
+    Timing values are taken only from ``Cue`` fields (language-only delta safe).
+    """
+    if not cues:
+        raise ValueError(_("no cues to format"))
+    blocks: list[str] = []
+    for cue in cues:
+        if not cue.text or not str(cue.text).strip():
+            raise ValueError(
+                _("cue {index}: text is empty").format(index=cue.index)
+            )
+        nl = chr(10)
+        block = (
+            f"{cue.index}{nl}"
+            f"{_ms_to_ts(cue.start_ms)} --> {_ms_to_ts(cue.end_ms)}{nl}"
+            f"{cue.text.strip()}{nl}"
+        )
+        blocks.append(block)
+    return (chr(10).join(blocks) + chr(10))

@@ -7,574 +7,1187 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: srtspeak 0.1.0\n"
-"Report-Msgid-Bugs-To: hirofumi@ukawa.biz
-"
-"POT-Creation-Date: 2026-07-18 17:08+0900\n"
+"Report-Msgid-Bugs-To: hirofumi@ukawa.biPOT-Creation-Date: 2026-07-18 "
+"17:08+0900\n"
+"POT-Creation-Date: 2026-07-20 13:18+0900\n"
 "PO-Revision-Date: 2026-03-22 00:00+0900\n"
-"Last-Translator: Hirofumi Ukawa <hirofumi@ukawa.biz>
-"
+"Last-Translator: Hirofumi Ukawa <hirofumi@ukawa.bizLanguage-Team: en "
+"<hirofumi@ukawa.bizPlural-Forms: nplurals=2; plural=(n != 1);\n"
 "Language: en\n"
-"Language-Team: en <hirofumi@ukawa.biz>
-"
+"Language-Team: en <hirofumi@ukawa.bizPlural-Forms: nplurals=2; plural=(n "
+"!= 1);\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: src/srtspeak/cli.py:127
+#: src/srtspeak/cli.py:130
 #, python-brace-format
 msgid "invalid --map (expected lang=path): {item}"
-msgstr ""
+msgstr "invalid --map (expected lang=path): {item}"
 
-#: src/srtspeak/cli.py:142
+#: src/srtspeak/cli.py:145
 #, python-brace-format
 msgid "invalid --language-code (expected lang=code): {item}"
-msgstr ""
+msgstr "invalid --language-code (expected lang=code): {item}"
 
-#: src/srtspeak/cli.py:166
+#: src/srtspeak/cli.py:157
+#, python-brace-format
+msgid "aliases={aliases}"
+msgstr "aliases={aliases}"
+
+#: src/srtspeak/cli.py:169
 #, python-brace-format
 msgid "warning: voices API failed ({exc}); using builtin"
-msgstr ""
+msgstr "warning: voices API failed ({exc}); using builtin"
 
-#: src/srtspeak/cli.py:188
+#: src/srtspeak/cli.py:186
 #, python-brace-format
-msgid "  source: {source}"
-msgstr ""
-
-#: src/srtspeak/cli.py:189
-#, python-brace-format
-msgid "  version: {version}"
-msgstr ""
+msgid "XAI_API_KEY: {status}"
+msgstr "XAI_API_KEY: {status}"
 
 #: src/srtspeak/cli.py:190
-msgid "(none)"
-msgstr ""
+#, python-brace-format
+msgid "ffmpeg: {path}"
+msgstr "ffmpeg: {path}"
 
-#: src/srtspeak/cli.py:193
+#: src/srtspeak/cli.py:191
+#, python-brace-format
+msgid "  source: {source}"
+msgstr "  source: {source}"
+
+#: src/srtspeak/cli.py:192
+#, python-brace-format
+msgid "  version: {version}"
+msgstr "  version: {version}"
+
+#: src/srtspeak/cli.py:193 src/srtspeak/gui/app.py:1279
+msgid "(none)"
+msgstr "(none)"
+
+#: src/srtspeak/cli.py:194
+#, python-brace-format
+msgid "ffprobe: {path}"
+msgstr "ffprobe: {path}"
+
+#: src/srtspeak/cli.py:196
 #, python-brace-format
 msgid "ffmpeg: MISSING ({exc})"
-msgstr ""
+msgstr "ffmpeg: MISSING ({exc})"
 
-#: src/srtspeak/cli.py:198
-msgid "available"
-msgstr ""
+#: src/srtspeak/cli.py:201
+msgid "ja_yomi: grok-chat (Grok Chat API)"
+msgstr "ja_yomi: grok-chat (Grok Chat API)"
 
-#: src/srtspeak/cli.py:200
-msgid "not available (pip install -e \".[ja]\")"
-msgstr ""
-
-#: src/srtspeak/cli.py:203
+#: src/srtspeak/cli.py:204
 #, python-brace-format
-msgid "kanjiconv: error ({exc})"
-msgstr ""
+msgid "ja_yomi: error ({exc})"
+msgstr "ja_yomi: error ({exc})"
 
-#: src/srtspeak/cli.py:207
+#: src/srtspeak/cli.py:208
+msgid "translate: grok-chat (same XAI_API_KEY)"
+msgstr "translate: grok-chat (same XAI_API_KEY)"
+
+#: src/srtspeak/cli.py:210
+#, python-brace-format
+msgid "translate: error ({exc})"
+msgstr "translate: error ({exc})"
+
+#: src/srtspeak/cli.py:214
+msgid "glossary-suggest: grok-chat (same XAI_API_KEY)"
+msgstr "glossary-suggest: grok-chat (same XAI_API_KEY)"
+
+#: src/srtspeak/cli.py:216
+#, python-brace-format
+msgid "glossary-suggest: error ({exc})"
+msgstr "glossary-suggest: error ({exc})"
+
+#: src/srtspeak/cli.py:220
 msgid "PySide6: available"
-msgstr ""
+msgstr "PySide6: available"
 
-#: src/srtspeak/cli.py:209
+#: src/srtspeak/cli.py:222
 msgid "PySide6: not installed (optional extra [gui])"
-msgstr ""
+msgstr "PySide6: not installed (optional extra [gui])"
 
-#: src/srtspeak/cli.py:218
+#: src/srtspeak/cli.py:231
 #, python-brace-format
 msgid ""
 "GUI unavailable: {exc}\n"
 "Install with: pip install -e .[gui]"
 msgstr ""
+"GUI unavailable: {exc}\n"
+"Install with: pip install -e .[gui]"
 
-#: src/srtspeak/cli.py:261
+#: src/srtspeak/cli.py:277
 #, python-brace-format
 msgid "unknown voice_id: {voice_id}"
-msgstr ""
+msgstr "unknown voice_id: {voice_id}"
 
-#: src/srtspeak/cli.py:266
+#: src/srtspeak/cli.py:282
 #, python-brace-format
 msgid "warning: voice_id {voice_id!r} not in builtin; will try API"
-msgstr ""
+msgstr "warning: voice_id {voice_id!r} not in builtin; will try API"
 
-#: src/srtspeak/cli.py:281
+#: src/srtspeak/cli.py:297 src/srtspeak/cli.py:520 src/srtspeak/cli.py:646
 msgid "cancelled"
-msgstr ""
+msgstr "cancelled"
 
-#: src/srtspeak/cli.py:285
+#: src/srtspeak/cli.py:301
 #, python-brace-format
 msgid "TTS error: {exc}"
-msgstr ""
+msgstr "TTS error: {exc}"
 
-#: src/srtspeak/cli.py:289 src/srtspeak/cli.py:306 src/srtspeak/cli.py:381
+#: src/srtspeak/cli.py:305 src/srtspeak/cli.py:322 src/srtspeak/cli.py:397
+#: src/srtspeak/cli.py:468 src/srtspeak/cli.py:500 src/srtspeak/cli.py:528
+#: src/srtspeak/cli.py:591 src/srtspeak/cli.py:604 src/srtspeak/cli.py:654
 #, python-brace-format
 msgid "error: {exc}"
-msgstr ""
+msgstr "error: {exc}"
 
-#: src/srtspeak/cli.py:299
+#: src/srtspeak/cli.py:315 src/srtspeak/cli.py:461 src/srtspeak/cli.py:584
 #, python-brace-format
 msgid "SRT not found: {path}"
-msgstr ""
+msgstr "SRT not found: {path}"
 
-#: src/srtspeak/cli.py:318 src/srtspeak/cli.py:361
+#: src/srtspeak/cli.py:334 src/srtspeak/cli.py:377 src/srtspeak/cli.py:507
+#: src/srtspeak/cli.py:618
 msgid "XAI_API_KEY is not set"
-msgstr ""
+msgstr "XAI_API_KEY is not set"
 
-#: src/srtspeak/cli.py:332
+#: src/srtspeak/cli.py:348
 #, python-brace-format
 msgid "status={status} lang={lang} cues={processed}/{total} track={track}"
-msgstr ""
+msgstr "status={status} lang={lang} cues={processed}/{total} track={track}"
 
-#: src/srtspeak/cli.py:350
+#: src/srtspeak/cli.py:366
 msgid "build-all requires at least one --map lang=path"
-msgstr ""
+msgstr "build-all requires at least one --map lang=path"
 
-#: src/srtspeak/cli.py:373
+#: src/srtspeak/cli.py:389
 #, python-brace-format
 msgid "SRT not found for {lang}: {path}"
-msgstr ""
+msgstr "SRT not found for {lang}: {path}"
 
-#: src/srtspeak/cli.py:409
+#: src/srtspeak/cli.py:425
 #, python-brace-format
 msgid "summary status={status} languages={languages}"
-msgstr ""
+msgstr "summary status={status} languages={languages}"
 
-#: src/srtspeak/cli.py:428
-msgid "SRT multilingual TTS with forced cue-window timing (xAI Grok)"
-msgstr ""
+#: src/srtspeak/cli.py:473
+msgid "translate requires at least one --to"
+msgstr "translate requires at least one --to"
 
-#: src/srtspeak/cli.py:431
-msgid "verbose progress"
-msgstr ""
-
-#: src/srtspeak/cli.py:432
-msgid "suppress progress"
-msgstr ""
-
-#: src/srtspeak/cli.py:437
-msgid "UI locale (en/ja). Default: SRTSPEAK_LOCALE / system / en"
-msgstr ""
-
-#: src/srtspeak/cli.py:447
-msgid "lang=path (repeatable)"
-msgstr ""
-
-#: src/srtspeak/cli.py:453
-msgid "lang=BCP47 (repeatable)"
-msgstr ""
-
-#: src/srtspeak/cli.py:456
-msgid "input SRT path"
-msgstr ""
-
-#: src/srtspeak/cli.py:460
-msgid "internal lang key ja/en/pt"
-msgstr ""
-
-#: src/srtspeak/cli.py:465
-msgid "BCP-47 language code override"
-msgstr ""
-
-#: src/srtspeak/cli.py:471
-msgid "output root directory (lang id always appended; default: out)"
-msgstr ""
-
-#: src/srtspeak/cli.py:477
-msgid "work directory root"
-msgstr ""
-
-#: src/srtspeak/cli.py:483
-msgid "voice id or lang=voice (repeatable)"
-msgstr ""
-
-#: src/srtspeak/cli.py:489
-msgid "short cue fit mode (default: pad)"
-msgstr ""
-
-#: src/srtspeak/cli.py:495
-msgid "process only the first N cues"
-msgstr ""
-
-#: src/srtspeak/cli.py:500
-msgid "also write MP3 alongside WAV"
-msgstr ""
-
-#: src/srtspeak/cli.py:506
-msgid "extra silence after last cue (ms)"
-msgstr ""
-
-#: src/srtspeak/cli.py:512
-msgid "maximum atempo speed factor"
-msgstr ""
-
-#: src/srtspeak/cli.py:517
-msgid "estimate only, no TTS"
-msgstr ""
-
-#: src/srtspeak/cli.py:523
-msgid "MVP must be 1"
-msgstr ""
-
-#: src/srtspeak/cli.py:530
-msgid "JA only: convert kanji to hiragana via kanjiconv before TTS (default: on)"
-msgstr ""
+#: src/srtspeak/cli.py:524
+#, python-brace-format
+msgid "translate error: {exc}"
+msgstr "translate error: {exc}"
 
 #: src/srtspeak/cli.py:535
-msgid "build one language"
+#, python-brace-format
+msgid ""
+"translate status={status} ok={ok} failed={failed} skipped={skipped} "
+"warnings={warnings} report={report}"
 msgstr ""
+"translate status={status} ok={ok} failed={failed} skipped={skipped} "
+"warnings={warnings} report={report}"
 
-#: src/srtspeak/cli.py:539
-msgid "build multiple languages"
-msgstr ""
-
-#: src/srtspeak/cli.py:543
-msgid "parse + cost estimate only"
-msgstr ""
-
-#: src/srtspeak/cli.py:547
-msgid "list language options"
-msgstr ""
-
-#: src/srtspeak/cli.py:550
-msgid "list Grok voices"
-msgstr ""
-
-#: src/srtspeak/cli.py:554
-msgid "filter voices by id/name/tag"
-msgstr ""
+#: src/srtspeak/cli.py:552
+#, python-brace-format
+msgid "warning [{tgt}]: {msg}"
+msgstr "warning [{tgt}]: {msg}"
 
 #: src/srtspeak/cli.py:558
+#, python-brace-format
+msgid "error [{tgt}]: {msg}"
+msgstr "error [{tgt}]: {msg}"
+
+#: src/srtspeak/cli.py:596
+msgid "glossary-suggest requires at least one --to"
+msgstr "glossary-suggest requires at least one --to"
+
+#: src/srtspeak/cli.py:608
+#, python-brace-format
+msgid "error: duplicate target language: {code}"
+msgstr "error: duplicate target language: {code}"
+
+#: src/srtspeak/cli.py:650
+#, python-brace-format
+msgid "glossary error: {exc}"
+msgstr "glossary error: {exc}"
+
+#: src/srtspeak/cli.py:659
+#, python-brace-format
+msgid "glossary written: {path} terms={n}"
+msgstr "glossary written: {path} terms={n}"
+
+#: src/srtspeak/cli.py:668
+msgid "SRT multilingual TTS with forced cue-window timing (xAI Grok)"
+msgstr "SRT multilingual TTS with forced cue-window timing (xAI Grok)"
+
+#: src/srtspeak/cli.py:671
+msgid "verbose progress"
+msgstr "verbose progress"
+
+#: src/srtspeak/cli.py:672
+msgid "suppress progress"
+msgstr "suppress progress"
+
+#: src/srtspeak/cli.py:677
+msgid "UI locale (en/ja). Default: SRTSPEAK_LOCALE / system / en"
+msgstr "UI locale (en/ja). Default: SRTSPEAK_LOCALE / system / en"
+
+#: src/srtspeak/cli.py:687
+msgid "lang=path (repeatable)"
+msgstr "lang=path (repeatable)"
+
+#: src/srtspeak/cli.py:693
+msgid "lang=BCP47 (repeatable)"
+msgstr "lang=BCP47 (repeatable)"
+
+#: src/srtspeak/cli.py:696
+msgid "input SRT path"
+msgstr "input SRT path"
+
+#: src/srtspeak/cli.py:700
+msgid "internal lang key ja/en/pt"
+msgstr "internal lang key ja/en/pt"
+
+#: src/srtspeak/cli.py:705
+msgid "BCP-47 language code override"
+msgstr "BCP-47 language code override"
+
+#: src/srtspeak/cli.py:711
+msgid "output root directory (lang id always appended; default: out)"
+msgstr "output root directory (lang id always appended; default: out)"
+
+#: src/srtspeak/cli.py:717 src/srtspeak/cli.py:844
+msgid "work directory root"
+msgstr "work directory root"
+
+#: src/srtspeak/cli.py:723
+msgid "voice id or lang=voice (repeatable)"
+msgstr "voice id or lang=voice (repeatable)"
+
+#: src/srtspeak/cli.py:729
+msgid "short cue fit mode (default: pad)"
+msgstr "short cue fit mode (default: pad)"
+
+#: src/srtspeak/cli.py:735 src/srtspeak/cli.py:878
+msgid "process only the first N cues"
+msgstr "process only the first N cues"
+
+#: src/srtspeak/cli.py:740
+msgid "also write MP3 alongside WAV"
+msgstr "also write MP3 alongside WAV"
+
+#: src/srtspeak/cli.py:746
+msgid "extra silence after last cue (ms)"
+msgstr "extra silence after last cue (ms)"
+
+#: src/srtspeak/cli.py:752
+msgid "base WAV file to mix narration onto (default: silence)"
+msgstr "base WAV file to mix narration onto (default: silence)"
+
+#: src/srtspeak/cli.py:758
+msgid "maximum atempo speed factor"
+msgstr "maximum atempo speed factor"
+
+#: src/srtspeak/cli.py:763
+msgid "estimate only, no TTS"
+msgstr "estimate only, no TTS"
+
+#: src/srtspeak/cli.py:769
+msgid "MVP must be 1"
+msgstr "MVP must be 1"
+
+#: src/srtspeak/cli.py:776
+msgid ""
+"JA only: convert kanji to hiragana via Grok Chat API before TTS (default:"
+" on)"
+msgstr ""
+"JA only: convert kanji to hiragana via Grok Chat API before TTS (default:"
+" on)"
+
+#: src/srtspeak/cli.py:785
+msgid "Strip kaomoji for TTS only; emoji kept; SRT unchanged (default: on)"
+msgstr "Strip kaomoji for TTS only; emoji kept; SRT unchanged (default: on)"
+
+#: src/srtspeak/cli.py:791
+msgid "ignore existing TTS/ja_yomi caches; still write fresh"
+msgstr "ignore existing TTS/ja_yomi caches; still write fresh"
+
+#: src/srtspeak/cli.py:794
+msgid "build one language"
+msgstr "build one language"
+
+#: src/srtspeak/cli.py:798
+msgid "build multiple languages"
+msgstr "build multiple languages"
+
+#: src/srtspeak/cli.py:802
+msgid "parse + cost estimate only"
+msgstr "parse + cost estimate only"
+
+#: src/srtspeak/cli.py:806
+msgid "list language options"
+msgstr "list language options"
+
+#: src/srtspeak/cli.py:809
+msgid "list Grok voices"
+msgstr "list Grok voices"
+
+#: src/srtspeak/cli.py:813
+msgid "filter voices by id/name/tag"
+msgstr "filter voices by id/name/tag"
+
+#: src/srtspeak/cli.py:817
 msgid "environment check"
-msgstr ""
+msgstr "environment check"
 
-#: src/srtspeak/cli.py:561
+#: src/srtspeak/cli.py:820
 msgid "launch GUI"
-msgstr ""
+msgstr "launch GUI"
 
-#: src/srtspeak/cli.py:592
+#: src/srtspeak/cli.py:823
+msgid "translate SRT to other languages"
+msgstr "translate SRT to other languages"
+
+#: src/srtspeak/cli.py:824 src/srtspeak/cli.py:907
+msgid "source SRT path"
+msgstr "source SRT path"
+
+#: src/srtspeak/cli.py:828 src/srtspeak/cli.py:911
+msgid "source language (default: filename guess / ja)"
+msgstr "source language (default: filename guess / ja)"
+
+#: src/srtspeak/cli.py:834 src/srtspeak/cli.py:917
+msgid "target language BCP-47 (repeatable or comma-separated)"
+msgstr "target language BCP-47 (repeatable or comma-separated)"
+
+#: src/srtspeak/cli.py:839
+msgid "output root directory (default: srt_gen)"
+msgstr "output root directory (default: srt_gen)"
+
+#: src/srtspeak/cli.py:849
+msgid "glossary JSON path"
+msgstr "glossary JSON path"
+
+#: src/srtspeak/cli.py:855
+msgid "length control mode (default: hint)"
+msgstr "length control mode (default: hint)"
+
+#: src/srtspeak/cli.py:861
+msgid "empty translation policy (default: fail)"
+msgstr "empty translation policy (default: fail)"
+
+#: src/srtspeak/cli.py:867
+msgid "cues per Chat batch (default: 8)"
+msgstr "cues per Chat batch (default: 8)"
+
+#: src/srtspeak/cli.py:872 src/srtspeak/cli.py:943
+msgid "Grok Chat model id"
+msgstr "Grok Chat model id"
+
+#: src/srtspeak/cli.py:883
+msgid "estimate only, no Chat API"
+msgstr "estimate only, no Chat API"
+
+#: src/srtspeak/cli.py:888
+msgid "stop on first target failure"
+msgstr "stop on first target failure"
+
+#: src/srtspeak/cli.py:893
+msgid "ignore existing translate caches; still write fresh"
+msgstr "ignore existing translate caches; still write fresh"
+
+#: src/srtspeak/cli.py:899
+msgid "output SRT naming (default: stem)"
+msgstr "output SRT naming (default: stem)"
+
+#: src/srtspeak/cli.py:905
+msgid "suggest glossary JSON from SRT via Grok Chat"
+msgstr "suggest glossary JSON from SRT via Grok Chat"
+
+#: src/srtspeak/cli.py:922
+msgid "output glossary JSON path (default: glossary.json)"
+msgstr "output glossary JSON path (default: glossary.json)"
+
+#: src/srtspeak/cli.py:927
+msgid "existing glossary to merge (base wins on conflict)"
+msgstr "existing glossary to merge (base wins on conflict)"
+
+#: src/srtspeak/cli.py:932
+msgid "overwrite --out without merging existing file"
+msgstr "overwrite --out without merging existing file"
+
+#: src/srtspeak/cli.py:938
+msgid "min term frequency for local candidates (default: 2)"
+msgstr "min term frequency for local candidates (default: 2)"
+
+#: src/srtspeak/cli.py:949
+msgid "use only the first N cues"
+msgstr "use only the first N cues"
+
+#: src/srtspeak/cli.py:981
 msgid "error: jobs must be 1 in MVP"
-msgstr ""
+msgstr "error: jobs must be 1 in MVP"
+
+#: src/srtspeak/progress_i18n.py:17
+msgid "parse"
+msgstr "parse"
+
+#: src/srtspeak/progress_i18n.py:19 src/srtspeak/progress_i18n.py:55
+msgid "tts"
+msgstr "tts"
+
+#: src/srtspeak/progress_i18n.py:21 src/srtspeak/progress_i18n.py:61
+msgid "fit"
+msgstr "fit"
+
+#: src/srtspeak/progress_i18n.py:23 src/srtspeak/progress_i18n.py:65
+msgid "timeline"
+msgstr "timeline"
+
+#: src/srtspeak/progress_i18n.py:25
+msgid "report"
+msgstr "report"
+
+#: src/srtspeak/progress_i18n.py:27
+msgid "translate"
+msgstr "translate"
+
+#: src/srtspeak/progress_i18n.py:29
+msgid "translate_compress"
+msgstr "translate_compress"
+
+#: src/srtspeak/progress_i18n.py:31
+msgid "translate_write"
+msgstr "translate_write"
+
+#: src/srtspeak/progress_i18n.py:33
+msgid "glossary"
+msgstr "glossary"
+
+#: src/srtspeak/progress_i18n.py:35
+msgid "ja_yomi"
+msgstr "ja_yomi"
+
+#: src/srtspeak/progress_i18n.py:49
+msgid "parse srt"
+msgstr "parse srt"
+
+#: src/srtspeak/progress_i18n.py:51
+msgid "parsed"
+msgstr "parsed"
+
+#: src/srtspeak/progress_i18n.py:53
+msgid "dry_run done"
+msgstr "dry_run done"
+
+#: src/srtspeak/progress_i18n.py:57
+msgid "tts done"
+msgstr "tts done"
+
+#: src/srtspeak/progress_i18n.py:59
+msgid "tts api"
+msgstr "tts api"
+
+#: src/srtspeak/progress_i18n.py:63
+msgid "fit done"
+msgstr "fit done"
+
+#: src/srtspeak/progress_i18n.py:67
+msgid "timeline done"
+msgstr "timeline done"
+
+#: src/srtspeak/progress_i18n.py:69
+msgid "report done"
+msgstr "report done"
+
+#: src/srtspeak/progress_i18n.py:71
+msgid "start"
+msgstr "start"
+
+#: src/srtspeak/progress_i18n.py:73
+msgid "done"
+msgstr "done"
+
+#: src/srtspeak/progress_i18n.py:75
+msgid "extract candidates"
+msgstr "extract candidates"
+
+#: src/srtspeak/progress_i18n.py:77
+msgid "chat suggest"
+msgstr "chat suggest"
+
+#: src/srtspeak/progress_i18n.py:79
+msgid "finalize glossary"
+msgstr "finalize glossary"
+
+#: src/srtspeak/progress_i18n.py:83
+#, python-brace-format
+msgid "cache hit {current}/{total}"
+msgstr "cache hit {current}/{total}"
+
+#: src/srtspeak/progress_i18n.py:90
+#, python-brace-format
+msgid "hiragana batch {current}/{total}"
+msgstr "hiragana batch {current}/{total}"
+
+#: src/srtspeak/progress_i18n.py:96
+#, python-brace-format
+msgid "{target} batch {current}/{total} waiting chat... {seconds}s"
+msgstr "{target} batch {current}/{total} waiting chat... {seconds}s"
+
+#: src/srtspeak/progress_i18n.py:105
+#, python-brace-format
+msgid "{target} batch {current}/{total} done"
+msgstr "{target} batch {current}/{total} done"
+
+#: src/srtspeak/progress_i18n.py:111
+#, python-brace-format
+msgid "{target} batch {current}/{total}"
+msgstr "{target} batch {current}/{total}"
+
+#: src/srtspeak/progress_i18n.py:117
+#, python-brace-format
+msgid "{target} compress index {index}"
+msgstr "{target} compress index {index}"
+
+#: src/srtspeak/progress_i18n.py:123
+#, python-brace-format
+msgid "waiting chat... {seconds}s"
+msgstr "waiting chat... {seconds}s"
+
+#: src/srtspeak/progress_i18n.py:127
+#, python-brace-format
+msgid "candidates={count}"
+msgstr "candidates={count}"
+
+#: src/srtspeak/progress_i18n.py:131
+#, python-brace-format
+msgid "write {name}"
+msgstr "write {name}"
+
+#: src/srtspeak/progress_i18n.py:135
+#, python-brace-format
+msgid "{target} finished"
+msgstr "{target} finished"
+
+#: src/srtspeak/progress_i18n.py:139
+#, python-brace-format
+msgid "{target} dry-run"
+msgstr "{target} dry-run"
+
+#: src/srtspeak/core/languages.py:19
+msgid "Japanese"
+msgstr "Japanese"
+
+#: src/srtspeak/core/languages.py:20
+msgid "English"
+msgstr "English"
+
+#: src/srtspeak/core/languages.py:21
+msgid "Portuguese (Brazil)"
+msgstr "Portuguese (Brazil)"
+
+#: src/srtspeak/core/languages.py:22
+msgid "Portuguese (Portugal)"
+msgstr "Portuguese (Portugal)"
+
+#: src/srtspeak/core/languages.py:23
+msgid "Spanish"
+msgstr "Spanish"
+
+#: src/srtspeak/core/languages.py:24
+msgid "French"
+msgstr "French"
+
+#: src/srtspeak/core/languages.py:25
+msgid "German"
+msgstr "German"
+
+#: src/srtspeak/core/languages.py:26
+msgid "Italian"
+msgstr "Italian"
+
+#: src/srtspeak/core/languages.py:27
+msgid "Korean"
+msgstr "Korean"
+
+#: src/srtspeak/core/languages.py:28
+msgid "Chinese"
+msgstr "Chinese"
+
+#: src/srtspeak/core/languages.py:29
+msgid "Hindi"
+msgstr "Hindi"
+
+#: src/srtspeak/core/languages.py:30
+msgid "Arabic"
+msgstr "Arabic"
+
+#: src/srtspeak/core/languages.py:31
+msgid "Russian"
+msgstr "Russian"
+
+#: src/srtspeak/core/languages.py:32
+msgid "Turkish"
+msgstr "Turkish"
+
+#: src/srtspeak/core/languages.py:33
+msgid "Dutch"
+msgstr "Dutch"
+
+#: src/srtspeak/core/languages.py:34
+msgid "Polish"
+msgstr "Polish"
+
+#: src/srtspeak/core/languages.py:35
+msgid "Swedish"
+msgstr "Swedish"
+
+#: src/srtspeak/core/languages.py:36
+msgid "Indonesian"
+msgstr "Indonesian"
+
+#: src/srtspeak/core/languages.py:37
+msgid "Vietnamese"
+msgstr "Vietnamese"
+
+#: src/srtspeak/core/languages.py:38
+msgid "Thai"
+msgstr "Thai"
 
 #: src/srtspeak/core/languages.py:96
 #, python-brace-format
 msgid "unknown language code: {value}"
-msgstr ""
+msgstr "unknown language code: {value}"
 
 #: src/srtspeak/core/languages.py:109
 #, python-brace-format
 msgid "unknown lang key: {lang}"
-msgstr ""
+msgstr "unknown lang key: {lang}"
 
-#: src/srtspeak/core/srt_parser.py:29
+#: src/srtspeak/core/srt_parser.py:30
 msgid "unknown parse error"
-msgstr ""
-
-#: src/srtspeak/core/srt_parser.py:35
-#, python-brace-format
-msgid "SRT parse error: {detail}"
-msgstr ""
+msgstr "unknown parse error"
 
 #: src/srtspeak/core/srt_parser.py:36
-msgid "SRT parse error: the following problems were found:"
-msgstr ""
+#, python-brace-format
+msgid "SRT parse error: {detail}"
+msgstr "SRT parse error: {detail}"
 
-#: src/srtspeak/core/srt_parser.py:67
+#: src/srtspeak/core/srt_parser.py:37
+msgid "SRT parse error: the following problems were found:"
+msgstr "SRT parse error: the following problems were found:"
+
+#: src/srtspeak/core/srt_parser.py:84
+#, python-brace-format
+msgid "cannot decode SRT as UTF-8/cp932/shift_jis/euc_jp: {path} ({detail})"
+msgstr "cannot decode SRT as UTF-8/cp932/shift_jis/euc_jp: {path} ({detail})"
+
+#: src/srtspeak/core/srt_parser.py:117
 #, python-brace-format
 msgid "invalid timestamp: {value} (expected HH:MM:SS,mmm or HH:MM:SS.mmm)"
-msgstr ""
+msgstr "invalid timestamp: {value} (expected HH:MM:SS,mmm or HH:MM:SS.mmm)"
 
-#: src/srtspeak/core/srt_parser.py:104
+#: src/srtspeak/core/srt_parser.py:154
 #, python-brace-format
 msgid "block {block_no}: cue index is not a number: {value}"
-msgstr ""
+msgstr "block {block_no}: cue index is not a number: {value}"
 
-#: src/srtspeak/core/srt_parser.py:111
+#: src/srtspeak/core/srt_parser.py:161
 #, python-brace-format
 msgid "cue {index}"
-msgstr ""
+msgstr "cue {index}"
 
-#: src/srtspeak/core/srt_parser.py:115
+#: src/srtspeak/core/srt_parser.py:165
 #, python-brace-format
 msgid "{label}: missing timing line"
-msgstr ""
+msgstr "{label}: missing timing line"
 
-#: src/srtspeak/core/srt_parser.py:123
+#: src/srtspeak/core/srt_parser.py:173
 #, python-brace-format
 msgid "{label}: invalid timing line: {timing} (expected start --> end)"
-msgstr ""
+msgstr "{label}: invalid timing line: {timing} (expected start --> end)"
 
-#: src/srtspeak/core/srt_parser.py:137
+#: src/srtspeak/core/srt_parser.py:187
 #, python-brace-format
 msgid "{label}: start {detail}"
-msgstr ""
+msgstr "{label}: start {detail}"
 
-#: src/srtspeak/core/srt_parser.py:146
+#: src/srtspeak/core/srt_parser.py:196
 #, python-brace-format
 msgid "{label}: end {detail}"
-msgstr ""
+msgstr "{label}: end {detail}"
 
-#: src/srtspeak/core/srt_parser.py:152
+#: src/srtspeak/core/srt_parser.py:202
 #, python-brace-format
 msgid ""
 "{label}: end time is not after start time ({start} → {end}, non-positive "
 "duration)"
 msgstr ""
-
-#: src/srtspeak/core/srt_parser.py:166
-#, python-brace-format
-msgid "{label}: text is empty"
-msgstr ""
-
-#: src/srtspeak/core/srt_parser.py:169
-#, python-brace-format
-msgid "{label}: text exceeds 15000 characters ({n} characters)"
-msgstr ""
-
-#: src/srtspeak/core/srt_parser.py:204
-msgid "no cues found in SRT (empty file or invalid format)"
-msgstr ""
+"{label}: end time is not after start time ({start} → {end}, non-positive "
+"duration)"
 
 #: src/srtspeak/core/srt_parser.py:216
+#, python-brace-format
+msgid "{label}: text is empty"
+msgstr "{label}: text is empty"
+
+#: src/srtspeak/core/srt_parser.py:219
+#, python-brace-format
+msgid "{label}: text exceeds 15000 characters ({n} characters)"
+msgstr "{label}: text exceeds 15000 characters ({n} characters)"
+
+#: src/srtspeak/core/srt_parser.py:254
+msgid "no cues found in SRT (empty file or invalid format)"
+msgstr "no cues found in SRT (empty file or invalid format)"
+
+#: src/srtspeak/core/srt_parser.py:266
 #, python-brace-format
 msgid ""
 "cues {a} and {b} overlap in time: [{sa},{ea}) and [{sb},{eb}) (half-open "
 "[start,end); adjacent is allowed)"
 msgstr ""
+"cues {a} and {b} overlap in time: [{sa},{ea}) and [{sb},{eb}) (half-open "
+"[start,end); adjacent is allowed)"
 
-#: src/srtspeak/core/srt_parser.py:240
+#: src/srtspeak/core/srt_parser.py:290
 msgid "limit must be >= 1"
-msgstr ""
+msgstr "limit must be >= 1"
+
+#: src/srtspeak/core/srt_parser.py:304
+msgid "no cues to format"
+msgstr "no cues to format"
+
+#: src/srtspeak/core/srt_parser.py:309
+#, python-brace-format
+msgid "cue {index}: text is empty"
+msgstr "cue {index}: text is empty"
 
 #: src/srtspeak/core/voices.py:22
 msgid "Authoritative and strong"
-msgstr ""
+msgstr "Authoritative and strong"
 
 #: src/srtspeak/core/voices.py:23
 msgid "Confident and clear"
-msgstr ""
+msgstr "Confident and clear"
 
 #: src/srtspeak/core/voices.py:24
 msgid "Smooth and balanced"
-msgstr ""
+msgstr "Smooth and balanced"
 
 #: src/srtspeak/core/voices.py:25
 msgid "Rich, cinematic, resonant"
-msgstr ""
+msgstr "Rich, cinematic, resonant"
 
 #: src/srtspeak/core/voices.py:29
 msgid "Strong, confident, trustworthy"
-msgstr ""
+msgstr "Strong, confident, trustworthy"
 
 #: src/srtspeak/core/voices.py:35
 msgid "Confident, commanding, reassuring"
-msgstr ""
+msgstr "Confident, commanding, reassuring"
 
 #: src/srtspeak/core/voices.py:38
 msgid "Grounded, calm, quietly wise"
-msgstr ""
+msgstr "Grounded, calm, quietly wise"
 
 #: src/srtspeak/core/voices.py:39
 msgid "Powerful, dramatic"
-msgstr ""
+msgstr "Powerful, dramatic"
 
 #: src/srtspeak/core/voices.py:40
 msgid "Bold, dynamic"
-msgstr ""
+msgstr "Bold, dynamic"
 
 #: src/srtspeak/core/voices.py:41
 msgid "Inventive, charismatic"
-msgstr ""
+msgstr "Inventive, charismatic"
 
 #: src/srtspeak/core/voices.py:42
 msgid "Precise, professional"
-msgstr ""
+msgstr "Precise, professional"
 
 #: src/srtspeak/core/voices.py:43
 msgid "Charismatic, easygoing"
-msgstr ""
+msgstr "Charismatic, easygoing"
 
 #: src/srtspeak/core/voices.py:44
 msgid "Warm, thoughtful, wise"
-msgstr ""
+msgstr "Warm, thoughtful, wise"
 
 #: src/srtspeak/core/voices.py:45
 msgid "Energetic and upbeat"
-msgstr ""
+msgstr "Energetic and upbeat"
 
 #: src/srtspeak/core/voices.py:46
 msgid "Warm and friendly"
-msgstr ""
+msgstr "Warm and friendly"
 
 #: src/srtspeak/core/voices.py:47
 msgid "Soft, empathetic"
-msgstr ""
+msgstr "Soft, empathetic"
 
 #: src/srtspeak/core/voices.py:48
 msgid "Gentle, patient"
-msgstr ""
+msgstr "Gentle, patient"
 
 #: src/srtspeak/core/voices.py:49
 msgid "Friendly, upbeat"
-msgstr ""
+msgstr "Friendly, upbeat"
 
 #: src/srtspeak/core/voices.py:51 src/srtspeak/core/voices.py:52
 #: src/srtspeak/core/voices.py:53 src/srtspeak/core/voices.py:54
 #: src/srtspeak/core/voices.py:55 src/srtspeak/core/voices.py:56
 #: src/srtspeak/core/voices.py:57 src/srtspeak/core/voices.py:58
 msgid "Docs catalog voice"
-msgstr ""
+msgstr "Docs catalog voice"
 
-#: src/srtspeak/gui/app.py:107
+#: src/srtspeak/gui/app.py:250
+msgid "API key (XAI_API_KEY)"
+msgstr "API key (XAI_API_KEY)"
+
+#: src/srtspeak/gui/app.py:263
+msgid "Build"
+msgstr "Build"
+
+#: src/srtspeak/gui/app.py:264 src/srtspeak/gui/app.py:300
+msgid "Translate"
+msgstr "Translate"
+
+#: src/srtspeak/gui/app.py:272 src/srtspeak/gui/app.py:1317
+msgid "Ready"
+msgstr "Ready"
+
+#: src/srtspeak/gui/app.py:277 src/srtspeak/gui/app.py:302
+msgid "Start"
+msgstr "Start"
+
+#: src/srtspeak/gui/app.py:278 src/srtspeak/gui/app.py:1089
+#: src/srtspeak/gui/app.py:1314
+msgid "Cancel"
+msgstr "Cancel"
+
+#: src/srtspeak/gui/app.py:292
+msgid "Status: using environment variable"
+msgstr "Status: using environment variable"
+
+#: src/srtspeak/gui/app.py:293
+msgid "Status: not set (enter key above for this session)"
+msgstr "Status: not set (enter key above for this session)"
+
+#: src/srtspeak/gui/app.py:318
 msgid "SRT file"
-msgstr ""
+msgstr "SRT file"
 
-#: src/srtspeak/gui/app.py:109 src/srtspeak/gui/app.py:223
+#: src/srtspeak/gui/app.py:320 src/srtspeak/gui/app.py:403
+#: src/srtspeak/gui/app.py:813
 msgid "Cues: —"
-msgstr ""
+msgstr "Cues: —"
 
-#: src/srtspeak/gui/app.py:116
+#: src/srtspeak/gui/app.py:325 src/srtspeak/gui/app.py:408
+#: src/srtspeak/gui/app.py:425
 #, python-brace-format
 msgid "{name} ({code})"
-msgstr ""
+msgstr "{name} ({code})"
 
-#: src/srtspeak/gui/app.py:119
+#: src/srtspeak/gui/app.py:328 src/srtspeak/gui/app.py:411
+msgid "Detect"
+msgstr "Detect"
+
+#: src/srtspeak/gui/app.py:335
 msgid "Language"
-msgstr ""
+msgstr "Language"
 
-#: src/srtspeak/gui/app.py:130
+#: src/srtspeak/gui/app.py:345
 msgid "Voice"
-msgstr ""
+msgstr "Voice"
 
-#: src/srtspeak/gui/app.py:133
+#: src/srtspeak/gui/app.py:348 src/srtspeak/gui/app.py:446
 msgid "Output folder"
-msgstr ""
+msgstr "Output folder"
 
-#: src/srtspeak/gui/app.py:137
+#: src/srtspeak/gui/app.py:358
+msgid "Base WAV (mix onto)"
+msgstr "Base WAV (mix onto)"
+
+#: src/srtspeak/gui/app.py:362 src/srtspeak/gui/app.py:477
 msgid "all"
-msgstr ""
+msgstr "all"
 
-#: src/srtspeak/gui/app.py:141
+#: src/srtspeak/gui/app.py:365
 msgid "Process only the first N cues. 0 = all cues in the SRT."
-msgstr ""
+msgstr "Process only the first N cues. 0 = all cues in the SRT."
 
-#: src/srtspeak/gui/app.py:144
+#: src/srtspeak/gui/app.py:367 src/srtspeak/gui/app.py:479
 msgid "Max cues (0 = all)"
-msgstr ""
+msgstr "Max cues (0 = all)"
 
-#: src/srtspeak/gui/app.py:146
+#: src/srtspeak/gui/app.py:369
 msgid "Dry-run (estimate only, no TTS)"
-msgstr ""
+msgstr "Dry-run (estimate only, no TTS)"
 
-#: src/srtspeak/gui/app.py:149
+#: src/srtspeak/gui/app.py:371
 msgid "Japanese yomi (kanji → hiragana)"
-msgstr ""
+msgstr "Japanese yomi (kanji → hiragana)"
 
-#: src/srtspeak/gui/app.py:157
-msgid "API key (XAI_API_KEY)"
-msgstr ""
+#: src/srtspeak/gui/app.py:375
+msgid "Ignore existing TTS/ja_yomi caches (still write fresh)"
+msgstr "Ignore existing TTS/ja_yomi caches (still write fresh)"
 
-#: src/srtspeak/gui/app.py:164 src/srtspeak/gui/app.py:452
-msgid "Ready"
-msgstr ""
+#: src/srtspeak/gui/app.py:379
+msgid "Strip kaomoji for TTS only (emoji kept; SRT unchanged)"
+msgstr "Strip kaomoji for TTS only (emoji kept; SRT unchanged)"
 
-#: src/srtspeak/gui/app.py:169
-msgid "Start"
-msgstr ""
+#: src/srtspeak/gui/app.py:401
+msgid "Source SRT"
+msgstr "Source SRT"
 
-#: src/srtspeak/gui/app.py:170 src/srtspeak/gui/app.py:327
-#: src/srtspeak/gui/app.py:450
-msgid "Cancel"
-msgstr ""
+#: src/srtspeak/gui/app.py:418
+msgid "Source language"
+msgstr "Source language"
 
-#: src/srtspeak/gui/app.py:180
-msgid "Status: using environment variable"
-msgstr ""
+#: src/srtspeak/gui/app.py:420
+msgid "Target languages"
+msgstr "Target languages"
 
-#: src/srtspeak/gui/app.py:181
-msgid "Status: not set (enter key above for this session)"
-msgstr ""
+#: src/srtspeak/gui/app.py:436
+msgid "Select all"
+msgstr "Select all"
 
-#: src/srtspeak/gui/app.py:202
+#: src/srtspeak/gui/app.py:437
+msgid "Clear"
+msgstr "Clear"
+
+#: src/srtspeak/gui/app.py:451
+msgid "Suggest"
+msgstr "Suggest"
+
+#: src/srtspeak/gui/app.py:453
+msgid "Generate glossary from source SRT via Grok Chat"
+msgstr "Generate glossary from source SRT via Grok Chat"
+
+#: src/srtspeak/gui/app.py:462
+msgid "Glossary (JSON)"
+msgstr "Glossary (JSON)"
+
+#: src/srtspeak/gui/app.py:466
+msgid "Off"
+msgstr "Off"
+
+#: src/srtspeak/gui/app.py:467
+msgid "Hint (default)"
+msgstr "Hint (default)"
+
+#: src/srtspeak/gui/app.py:468
+msgid "Enforce (2nd pass)"
+msgstr "Enforce (2nd pass)"
+
+#: src/srtspeak/gui/app.py:469
+msgid "Report only"
+msgstr "Report only"
+
+#: src/srtspeak/gui/app.py:473
+msgid "Length mode"
+msgstr "Length mode"
+
+#: src/srtspeak/gui/app.py:484
+msgid "Batch size"
+msgstr "Batch size"
+
+#: src/srtspeak/gui/app.py:486
+msgid "Dry-run (estimate only, no Chat)"
+msgstr "Dry-run (estimate only, no Chat)"
+
+#: src/srtspeak/gui/app.py:488
+msgid "Fail fast (stop on first target error)"
+msgstr "Fail fast (stop on first target error)"
+
+#: src/srtspeak/gui/app.py:491
+msgid "Ignore existing translate caches (still write fresh)"
+msgstr "Ignore existing translate caches (still write fresh)"
+
+#: src/srtspeak/gui/app.py:496
+#, python-brace-format
+msgid "{stem}_{lang}.srt"
+msgstr "{stem}_{lang}.srt"
+
+#: src/srtspeak/gui/app.py:498
+msgid "File naming"
+msgstr "File naming"
+
+#: src/srtspeak/gui/app.py:655 src/srtspeak/gui/app.py:673
 msgid "Open SRT"
-msgstr ""
+msgstr "Open SRT"
 
-#: src/srtspeak/gui/app.py:204
+#: src/srtspeak/gui/app.py:657 src/srtspeak/gui/app.py:675
 msgid "SRT files (*.srt);;All files (*.*)"
-msgstr ""
+msgstr "SRT files (*.srt);;All files (*.*)"
 
-#: src/srtspeak/gui/app.py:227
+#: src/srtspeak/gui/app.py:691
+msgid "Select base WAV"
+msgstr "Select base WAV"
+
+#: src/srtspeak/gui/app.py:693
+msgid "WAV files (*.wav);;All files (*.*)"
+msgstr "WAV files (*.wav);;All files (*.*)"
+
+#: src/srtspeak/gui/app.py:701
+msgid "Select glossary JSON"
+msgstr "Select glossary JSON"
+
+#: src/srtspeak/gui/app.py:703
+msgid "JSON files (*.json);;All files (*.*)"
+msgstr "JSON files (*.json);;All files (*.*)"
+
+#: src/srtspeak/gui/app.py:717 src/srtspeak/gui/app.py:722
+#: src/srtspeak/gui/app.py:727 src/srtspeak/gui/app.py:740
+#: src/srtspeak/gui/app.py:751 src/srtspeak/gui/app.py:800
+#: src/srtspeak/gui/app.py:861 src/srtspeak/gui/app.py:870
+#: src/srtspeak/gui/app.py:876 src/srtspeak/gui/app.py:886
+#: src/srtspeak/gui/app.py:949 src/srtspeak/gui/app.py:960
+#: src/srtspeak/gui/app.py:971 src/srtspeak/gui/app.py:1006
+#: src/srtspeak/gui/app.py:1015 src/srtspeak/gui/app.py:1021
+#: src/srtspeak/gui/app.py:1032 src/srtspeak/gui/app.py:1059
+#: src/srtspeak/gui/app.py:1300
+msgid "Error"
+msgstr "Error"
+
+#: src/srtspeak/gui/app.py:717
+msgid "SRT file not found."
+msgstr "SRT file not found."
+
+#: src/srtspeak/gui/app.py:728
+#, python-brace-format
+msgid "Cannot read SRT: {e}"
+msgstr "Cannot read SRT: {e}"
+
+#: src/srtspeak/gui/app.py:740
+msgid "No text found in SRT."
+msgstr "No text found in SRT."
+
+#: src/srtspeak/gui/app.py:752
+msgid "API key required for language detection."
+msgstr "API key required for language detection."
+
+#: src/srtspeak/gui/app.py:801
+#, python-brace-format
+msgid "Detection failed: {e}"
+msgstr "Detection failed: {e}"
+
+#: src/srtspeak/gui/app.py:817
 msgid "Cues: file not found"
-msgstr ""
+msgstr "Cues: file not found"
 
-#: src/srtspeak/gui/app.py:234
+#: src/srtspeak/gui/app.py:824
+#, python-brace-format
+msgid "Cues: encoding error ({detail})"
+msgstr "Cues: encoding error ({detail})"
+
+#: src/srtspeak/gui/app.py:829
 #, python-brace-format
 msgid "Cues: parse error ({detail})"
-msgstr ""
+msgstr "Cues: parse error ({detail})"
 
-#: src/srtspeak/gui/app.py:239
+#: src/srtspeak/gui/app.py:834
 #, python-brace-format
 msgid "Cues: read error ({detail})"
-msgstr ""
+msgstr "Cues: read error ({detail})"
 
-#: src/srtspeak/gui/app.py:244
+#: src/srtspeak/gui/app.py:837
 #, python-brace-format
 msgid "Cues in SRT: {count}"
-msgstr ""
+msgstr "Cues in SRT: {count}"
 
-#: src/srtspeak/gui/app.py:272 src/srtspeak/gui/app.py:283
-#: src/srtspeak/gui/app.py:294 src/srtspeak/gui/app.py:471
-msgid "Error"
-msgstr ""
-
-#: src/srtspeak/gui/app.py:273
+#: src/srtspeak/gui/app.py:862 src/srtspeak/gui/app.py:950
+#: src/srtspeak/gui/app.py:1007
 #, python-brace-format
 msgid ""
 "SRT file not found:\n"
 "{path}"
 msgstr ""
+"SRT file not found:\n"
+"{path}"
 
-#: src/srtspeak/gui/app.py:296
+#: src/srtspeak/gui/app.py:877 src/srtspeak/gui/app.py:1022
+msgid "Select at least one target language."
+msgstr "Select at least one target language."
+
+#: src/srtspeak/gui/app.py:888 src/srtspeak/gui/app.py:973
+#: src/srtspeak/gui/app.py:1034
 msgid ""
 "XAI_API_KEY is not set.\n"
 "Set the environment variable or enter the key above."
 msgstr ""
+"XAI_API_KEY is not set.\n"
+"Set the environment variable or enter the key above."
 
-#: src/srtspeak/gui/app.py:328
-msgid "Running…"
-msgstr ""
+#: src/srtspeak/gui/app.py:903
+msgid "Merge glossary?"
+msgstr "Merge glossary?"
 
-#: src/srtspeak/gui/app.py:335
-msgid "Cancelling…"
-msgstr ""
-
-#: src/srtspeak/gui/app.py:343
+#: src/srtspeak/gui/app.py:905
 #, python-brace-format
-msgid "{percent:.1f}%  {stage}  {current}/{total}  {message}"
+msgid ""
+"Glossary file already exists:\n"
+"{path}\n"
+"\n"
+"Yes = merge (existing entries win)\n"
+"No = overwrite with new suggestions"
 msgstr ""
+"Glossary file already exists:\n"
+"{path}\n"
+"\n"
+"Yes = merge (existing entries win)\n"
+"No = overwrite with new suggestions"
 
-#: src/srtspeak/gui/app.py:364 src/srtspeak/gui/app.py:419
+#: src/srtspeak/gui/app.py:1090
+msgid "Running…"
+msgstr "Running…"
+
+#: src/srtspeak/gui/app.py:1099
+msgid "Cancelling…"
+msgstr "Cancelling…"
+
+#: src/srtspeak/gui/app.py:1116
+#, python-brace-format
+msgid "{percent:.1f}%  {stage}  {lang}{current}/{total}  {message}"
+msgstr "{percent:.1f}%  {stage}  {lang}{current}/{total}  {message}"
+
+#: src/srtspeak/gui/app.py:1138 src/srtspeak/gui/app.py:1193
 #, python-brace-format
 msgid ""
 "Build finished.\n"
 "Status: {status}"
 msgstr ""
+"Build finished.\n"
+"Status: {status}"
 
-#: src/srtspeak/gui/app.py:365 src/srtspeak/gui/app.py:416
+#: src/srtspeak/gui/app.py:1139 src/srtspeak/gui/app.py:1190
+#: src/srtspeak/gui/app.py:1220 src/srtspeak/gui/app.py:1264
 msgid "Done"
-msgstr ""
+msgstr "Done"
 
-#: src/srtspeak/gui/app.py:365 src/srtspeak/gui/app.py:417
+#: src/srtspeak/gui/app.py:1139 src/srtspeak/gui/app.py:1191
 #, python-brace-format
 msgid "Finished: {status}"
-msgstr ""
+msgstr "Finished: {status}"
 
-#: src/srtspeak/gui/app.py:389
+#: src/srtspeak/gui/app.py:1163
 msgid "Dry-run result"
-msgstr ""
+msgstr "Dry-run result"
 
-#: src/srtspeak/gui/app.py:391
+#: src/srtspeak/gui/app.py:1165
 #, python-brace-format
 msgid "Dry-run: {cues} cues, {chars} chars, ~${cost} USD"
-msgstr ""
+msgstr "Dry-run: {cues} cues, {chars} chars, ~${cost} USD"
 
-#: src/srtspeak/gui/app.py:394
+#: src/srtspeak/gui/app.py:1168
 #, python-brace-format
 msgid ""
 "Dry-run complete (no TTS).\n"
@@ -589,65 +1202,157 @@ msgid ""
 "Report:\n"
 "{report_path}"
 msgstr ""
+"Dry-run complete (no TTS).\n"
+"\n"
+"Language: {lang} ({language_code})\n"
+"Voice: {voice_id}\n"
+"Cues: {cues}\n"
+"Characters: {chars}\n"
+"Estimated cost: ~${cost} USD\n"
+"Japanese yomi: {ja_yomi}\n"
+"\n"
+"Report:\n"
+"{report_path}"
 
-#: src/srtspeak/gui/app.py:411
+#: src/srtspeak/gui/app.py:1185
 msgid "on"
-msgstr ""
+msgstr "on"
 
-#: src/srtspeak/gui/app.py:411
+#: src/srtspeak/gui/app.py:1185
 msgid "off"
-msgstr ""
+msgstr "off"
 
-#: src/srtspeak/gui/app.py:412
+#: src/srtspeak/gui/app.py:1186 src/srtspeak/gui/app.py:1258
 msgid "(unknown)"
-msgstr ""
+msgstr "(unknown)"
 
-#: src/srtspeak/gui/app.py:421
+#: src/srtspeak/gui/app.py:1195
 #, python-brace-format
 msgid "Language: {lang} ({language_code})"
-msgstr ""
+msgstr "Language: {lang} ({language_code})"
 
-#: src/srtspeak/gui/app.py:424
+#: src/srtspeak/gui/app.py:1198
 #, python-brace-format
 msgid "Voice: {voice_id}"
-msgstr ""
+msgstr "Voice: {voice_id}"
 
-#: src/srtspeak/gui/app.py:425
+#: src/srtspeak/gui/app.py:1199
 #, python-brace-format
 msgid "Cues: {processed}/{total}"
-msgstr ""
+msgstr "Cues: {processed}/{total}"
 
-#: src/srtspeak/gui/app.py:428
+#: src/srtspeak/gui/app.py:1202
 #, python-brace-format
 msgid ""
 "Track:\n"
 "{path}"
 msgstr ""
+"Track:\n"
+"{path}"
 
-#: src/srtspeak/gui/app.py:430
+#: src/srtspeak/gui/app.py:1204 src/srtspeak/gui/app.py:1258
 #, python-brace-format
 msgid ""
 "Report:\n"
 "{path}"
 msgstr ""
+"Report:\n"
+"{path}"
 
-#: src/srtspeak/gui/app.py:435
+#: src/srtspeak/gui/app.py:1209
 #, python-brace-format
 msgid "Track duration: {ms:.0f} ms"
-msgstr ""
+msgstr "Track duration: {ms:.0f} ms"
 
-#: src/srtspeak/gui/app.py:439
+#: src/srtspeak/gui/app.py:1213
 #, python-brace-format
 msgid "Duration error: {ms:.0f} ms"
-msgstr ""
+msgstr "Duration error: {ms:.0f} ms"
 
-#: src/srtspeak/gui/app.py:463 src/srtspeak/gui/app.py:466
+#: src/srtspeak/gui/app.py:1219
+msgid "Translate finished."
+msgstr "Translate finished."
+
+#: src/srtspeak/gui/app.py:1226
+msgid "Translate result"
+msgstr "Translate result"
+
+#: src/srtspeak/gui/app.py:1228
+#, python-brace-format
+msgid "Translate: {status}  ok={ok} failed={failed} skipped={skipped}"
+msgstr "Translate: {status}  ok={ok} failed={failed} skipped={skipped}"
+
+#: src/srtspeak/gui/app.py:1231
+#, python-brace-format
+msgid ""
+"Translate finished.\n"
+"Status: {status}"
+msgstr ""
+"Translate finished.\n"
+"Status: {status}"
+
+#: src/srtspeak/gui/app.py:1233
+#, python-brace-format
+msgid "Source: {lang}"
+msgstr "Source: {lang}"
+
+#: src/srtspeak/gui/app.py:1234
+#, python-brace-format
+msgid "Cues: {count}"
+msgstr "Cues: {count}"
+
+#: src/srtspeak/gui/app.py:1235
+#, python-brace-format
+msgid "OK: {ok}  Failed: {failed}  Skipped: {skipped}"
+msgstr "OK: {ok}  Failed: {failed}  Skipped: {skipped}"
+
+#: src/srtspeak/gui/app.py:1246
+msgid "(dry-run)"
+msgstr "(dry-run)"
+
+#: src/srtspeak/gui/app.py:1263
+msgid "Glossary finished."
+msgstr "Glossary finished."
+
+#: src/srtspeak/gui/app.py:1268
+msgid "Glossary result"
+msgstr "Glossary result"
+
+#: src/srtspeak/gui/app.py:1269
+#, python-brace-format
+msgid "Glossary: {n} terms → {path}"
+msgstr "Glossary: {n} terms → {path}"
+
+#: src/srtspeak/gui/app.py:1271
+#, python-brace-format
+msgid ""
+"Glossary written.\n"
+"\n"
+"Terms: {n}\n"
+"Tone: {tone}\n"
+"\n"
+"Path:\n"
+"{path}\n"
+"\n"
+"Review and edit before translate."
+msgstr ""
+"Glossary written.\n"
+"\n"
+"Terms: {n}\n"
+"Tone: {tone}\n"
+"\n"
+"Path:\n"
+"{path}\n"
+"\n"
+"Review and edit before translate."
+
+#: src/srtspeak/gui/app.py:1296 src/srtspeak/gui/app.py:1338
 msgid "Cancelled"
-msgstr ""
+msgstr "Cancelled"
 
-#: src/srtspeak/gui/app.py:467
-msgid "Build was cancelled."
-msgstr ""
+#: src/srtspeak/gui/app.py:1297
+msgid "Operation was cancelled."
+msgstr "Operation was cancelled."
 
 #~ msgid "Japanese"
 #~ msgstr ""
@@ -708,4 +1413,24 @@ msgstr ""
 
 #~ msgid "Thai"
 #~ msgstr ""
+
+#~ msgid "available"
+#~ msgstr ""
+
+#~ msgid "not available (pip install -e \".[ja]\")"
+#~ msgstr ""
+
+#~ msgid "kanjiconv: error ({exc})"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "JA only: convert kanji to hiragana "
+#~ "via kanjiconv before TTS (default: on)"
+#~ msgstr ""
+
+#~ msgid "Build was cancelled."
+#~ msgstr ""
+
+#~ msgid "{percent:.1f}%  {stage}  {current}/{total}  {message}"
+#~ msgstr "{percent:.1f}%  {stage}  {current}/{total}  {message}"
 
