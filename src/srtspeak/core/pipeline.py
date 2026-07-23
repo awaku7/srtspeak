@@ -61,7 +61,7 @@ def _normalize_wav(
         "pcm_s16le",
         str(dst),
     ]
-    proc = subprocess.run(args, capture_output=True, text=True, check=False)
+    proc = subprocess.run(args, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
     if proc.returncode != 0:
         err = (proc.stderr or proc.stdout or "").strip()
         raise RuntimeError(f"ffmpeg normalize failed: {err[:500]}")
@@ -93,7 +93,7 @@ def _maybe_mp3(
         "128k",
         str(mp3_path),
     ]
-    proc = subprocess.run(args, capture_output=True, text=True, check=False)
+    proc = subprocess.run(args, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
     if proc.returncode != 0:
         err = (proc.stderr or proc.stdout or "").strip()
         raise RuntimeError(f"ffmpeg mp3 failed: {err[:500]}")

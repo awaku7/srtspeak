@@ -79,6 +79,8 @@ def _run_ffmpeg(args: list[str]) -> None:
         args,
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="replace",
         check=False,
     )
     if proc.returncode != 0:

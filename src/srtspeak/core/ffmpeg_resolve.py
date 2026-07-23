@@ -42,6 +42,8 @@ def ffmpeg_version(ffmpeg_path: str) -> str:
             [ffmpeg_path, "-version"],
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             timeout=15,
             check=False,
         )
