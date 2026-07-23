@@ -18,41 +18,54 @@ Translate design: `docs/SRT_TRANSLATE_DESIGN.md`.
 | ffmpeg / ffprobe | Prefer on `PATH`; optional fallback via `imageio-ffmpeg` |
 | API key | `XAI_API_KEY` only for real TTS / translate / glossary / ja_yomi (not needed for dry-run without Chat) |
 
-Package version: **0.1.3** (`pyproject.toml`).
+Package version: **0.1.4** (`pyproject.toml`).
 
 ## Install
 
-From the repository root:
+From [PyPI](https://pypi.org/project/srtspeak/):
 
 ```bat
-python -m pip install -e .
+python -m pip install srtspeak
 ```
 
-With GUI:
+With GUI (PySide6 + keyring):
 
 ```bat
-python -m pip install -e ".[gui]"
-```
-
-Dev extras (pytest / ruff / Babel):
-
-```bat
-python -m pip install -e ".[dev]"
+python -m pip install "srtspeak[gui]"
 ```
 
 Optional ffmpeg fallback via pip:
 
 ```bat
-python -m pip install -e ".[ffmpeg]"
+python -m pip install "srtspeak[ffmpeg]"
 ```
 
-Combined example:
+Combined:
 
 ```bat
+python -m pip install "srtspeak[gui,ffmpeg]"
+```
+
+After install, the `srtspeak` command is available:
+
+```bat
+srtspeak --help
+srtspeak doctor
+```
+
+### From source (development)
+
+Clone the repository, then editable install from the repo root:
+
+```bat
+git clone https://github.com/awaku7/srtspeak.git
+cd srtspeak
 python -m pip install -e ".[gui,ffmpeg,dev]"
 ```
 
-After editable install, the `srtspeak` command is available. Without install:
+Dev extras (`[dev]`): pytest / ruff / Babel / keyring.
+
+Without install (repo checkout only):
 
 ```bat
 set PYTHONPATH=src
@@ -61,9 +74,24 @@ python -m srtspeak --help
 
 There is **no** `[ja]` extra. Japanese kanji→hiragana preprocess (`ja_yomi`) uses the **Grok Chat API** with the same `XAI_API_KEY` (default on for `lang=ja`).
 
-## Launch (Windows)
+## Launch
 
-Double-click or run from the repo root:
+After `pip install` (PyPI or editable), use the `srtspeak` entry point:
+
+```bat
+srtspeak gui
+srtspeak doctor
+srtspeak --help
+srtspeak dry-run --srt GRAN_TENKU_japan.srt --lang ja
+```
+
+```bat
+python -m srtspeak gui
+```
+
+### Windows helper scripts (repository checkout only)
+
+Double-click or run from the **repo root** (not shipped on PyPI):
 
 | Script | Action |
 |--------|--------|
@@ -71,20 +99,10 @@ Double-click or run from the repo root:
 | `run_doctor.bat` | Environment check |
 | `run_srtspeak.bat …` | CLI passthrough (same args as `srtspeak`) |
 
-Examples:
-
 ```bat
 run_gui.bat
 run_doctor.bat
 run_srtspeak.bat --help
-run_srtspeak.bat dry-run --srt GRAN_TENKU_japan.srt --lang ja
-```
-
-Equivalent without bat:
-
-```bat
-srtspeak gui
-python -m srtspeak gui
 ```
 
 Notes:
@@ -128,7 +146,7 @@ srtspeak doctor
 If you prefer not to change PATH:
 
 ```bat
-python -m pip install -e ".[ffmpeg]"
+python -m pip install "srtspeak[ffmpeg]"
 srtspeak doctor
 ```
 
@@ -171,7 +189,7 @@ Official docs:
 | Resolve order | env → session → **OS keyring** → legacy Windows DPAPI (migrate) → CLI `getpass` / GUI mask |
 | dry-run | Key optional (Chat APIs skipped if missing) |
 | Real TTS / translate / glossary | resolve chain; missing → exit code 2 |
-| GUI | **Save on this PC** / **Clear saved** via keyring (`pip install -e ".[gui]"`) |
+| GUI | **Save on this PC** / **Clear saved** via keyring (`pip install "srtspeak[gui]"`) |
 
 Windows cmd (current window only):
 
@@ -476,7 +494,7 @@ If `--out` already exists and `--force` is not set, new suggestions are merged w
 ### GUI
 
 ```bat
-python -m pip install -e ".[gui]"
+python -m pip install "srtspeak[gui]"
 srtspeak gui
 ```
 
@@ -525,7 +543,9 @@ srtspeak gui
 ## Development
 
 ```bat
-python -m pip install -e ".[dev]"
+git clone https://github.com/awaku7/srtspeak.git
+cd srtspeak
+python -m pip install -e ".[dev,gui,ffmpeg]"
 set PYTHONPATH=src
 python -m pytest -q
 python -m ruff check src tests

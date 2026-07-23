@@ -1,6 +1,6 @@
 # srtspeak 設計書（実装準拠）
 
-**状態:** 実装済み（パッケージ版 `0.1.3`）。本ドキュメントはコードと同期した仕様の正本。  
+**状態:** 実装済み（パッケージ版 `0.1.4`）。本ドキュメントはコードと同期した仕様の正本。  
 **目的:** 多言語 SRT を xAI Grok TTS で音声化し、各キューの開始・終了時刻へ **強制フィット** したナレーション WAV を生成する。加えて SRT→SRT 翻訳と用語集提案を Grok Chat で提供する。
 
 関連:
@@ -507,7 +507,7 @@ srtspeak [--locale en|ja] [--verbose|--quiet] <command>
 - Browse / パス確定: ファイル名から言語推定 → Build Language / Translate 元言語
 - 進捗: 下部共有ラベル + `QProgressBar`（0–1000）+ Cancel（`CancellationToken`）+ progress queue
 - 非シークレットを **`gui_settings.json`** に保存。**キー平文は保存しない**
-- extra: `pip install -e ".[gui]"`（PySide6 + keyring）
+- extra: `pip install "srtspeak[gui]"`（PySide6 + keyring）。開発時は `pip install -e ".[gui]"`
 
 ---
 
@@ -641,3 +641,4 @@ optional extras（`pyproject.toml`）:
 | 0.1.x 同期 | 実装反映: 多言語、男女 voice、ja_yomi（Grok Chat）、base_wav、CLI 全フラグ、out ルート解決、timeline 加算ミックス、extras 修正 |
 | 0.1.2 同期 | 版番号 0.1.2。strip_emoticons 実装（既定オン）。no_cache。TranslateConfig / translate / glossary-suggest。GUI Build+Translate タブ。gui_settings.json。doctor 拡張。パッケージ構成更新 |
 | 0.1.3 同期 | 版番号 0.1.3。API キー OS 資格情報保存（keyring + Windows DPAPI 移行）。ファイル名から元言語推定強化。glossary 薄型化。translate cache を `work/translate/by_out/`（出力 SRT ファイル名キー + out SRT シード）に再設計 |
+| 0.1.4 同期 | 版番号 0.1.4。`__version__` を pyproject と同期 |

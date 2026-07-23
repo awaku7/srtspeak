@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.1.4] - 2026-07-23
+
+### Changed
+- Package version bump to 0.1.4.
+- Align `src/srtspeak/__init__.py` `__version__` with `pyproject.toml` (was 0.1.1).
+
 ## [0.1.3] - 2026-03-22
 
 ### Added

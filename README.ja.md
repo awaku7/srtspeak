@@ -18,41 +18,54 @@ SRT 多言語 TTS。各キューの開始・終了時刻へ音声を強制フィ
 | ffmpeg / ffprobe | PATH 上を推奨。無ければ optional `imageio-ffmpeg` |
 | API キー | 実 TTS / 翻訳 / 用語集 / ja_yomi 時のみ `XAI_API_KEY`（Chat を使わない dry-run なら不要） |
 
-パッケージ版: **0.1.3**（`pyproject.toml`）。
+パッケージ版: **0.1.4**（`pyproject.toml`）。
 
 ## インストール
 
-リポジトリ直下で:
+[PyPI](https://pypi.org/project/srtspeak/) から:
 
 ```bat
-python -m pip install -e .
+python -m pip install srtspeak
 ```
 
-GUI も使う場合:
+GUI 付き（PySide6 + keyring）:
 
 ```bat
-python -m pip install -e ".[gui]"
-```
-
-開発用（pytest / ruff / Babel）:
-
-```bat
-python -m pip install -e ".[dev]"
+python -m pip install "srtspeak[gui]"
 ```
 
 ffmpeg を pip 経由で補う場合（任意・フォールバック）:
 
 ```bat
-python -m pip install -e ".[ffmpeg]"
+python -m pip install "srtspeak[ffmpeg]"
 ```
 
-まとめて入れる例:
+まとめて:
 
 ```bat
+python -m pip install "srtspeak[gui,ffmpeg]"
+```
+
+インストール後は `srtspeak` コマンドが使える:
+
+```bat
+srtspeak --help
+srtspeak doctor
+```
+
+### ソースから（開発）
+
+リポジトリを clone し、直下で editable インストール:
+
+```bat
+git clone https://github.com/awaku7/srtspeak.git
+cd srtspeak
 python -m pip install -e ".[gui,ffmpeg,dev]"
 ```
 
-editable インストール後は `srtspeak` コマンドが使える。未インストールなら:
+開発用 extra（`[dev]`）: pytest / ruff / Babel / keyring。
+
+未インストール（checkout のみ）:
 
 ```bat
 set PYTHONPATH=src
@@ -61,9 +74,24 @@ python -m srtspeak --help
 
 **`[ja]` extra は無い。** 日本語よみ前処理（`ja_yomi`、漢字→ひらがな）は **Grok Chat API** を同じ `XAI_API_KEY` で使う（`lang=ja` のとき既定オン）。
 
-## 起動（Windows）
+## 起動
 
-リポジトリ直下でダブルクリック、またはコマンド実行:
+`pip install`（PyPI または editable）後は entry point `srtspeak` を使う:
+
+```bat
+srtspeak gui
+srtspeak doctor
+srtspeak --help
+srtspeak dry-run --srt GRAN_TENKU_japan.srt --lang ja
+```
+
+```bat
+python -m srtspeak gui
+```
+
+### Windows 補助スクリプト（リポジトリ checkout のみ）
+
+**リポジトリ直下**でダブルクリック、またはコマンド実行（PyPI パッケージには含まれない）:
 
 | スクリプト | 内容 |
 |------------|------|
@@ -71,20 +99,10 @@ python -m srtspeak --help
 | `run_doctor.bat` | 環境診断 |
 | `run_srtspeak.bat …` | CLI 透過（`srtspeak` と同じ引数） |
 
-例:
-
 ```bat
 run_gui.bat
 run_doctor.bat
 run_srtspeak.bat --help
-run_srtspeak.bat dry-run --srt GRAN_TENKU_japan.srt --lang ja
-```
-
-bat を使わない場合:
-
-```bat
-srtspeak gui
-python -m srtspeak gui
 ```
 
 注意:
@@ -128,7 +146,7 @@ srtspeak doctor
 PATH を変えたくない場合:
 
 ```bat
-python -m pip install -e ".[ffmpeg]"
+python -m pip install "srtspeak[ffmpeg]"
 srtspeak doctor
 ```
 
@@ -171,7 +189,7 @@ TTS は **xAI Grok のみ**（`POST https://api.x.ai/v1/tts`）。
 | 解決順 | env → セッション → **OS keyring** → 旧 Windows DPAPI（移行） → CLI `getpass` / GUI マスク |
 | dry-run | キー任意（Chat API はスキップ） |
 | 実 TTS / 翻訳 / 用語集 | 解決チェーン。無ければ終了コード 2 |
-| GUI | **Save on this PC** / **Clear saved**（keyring。`pip install -e ".[gui]"`） |
+| GUI | **Save on this PC** / **Clear saved**（keyring。`pip install "srtspeak[gui]"`） |
 
 Windows cmd（現在のウィンドウのみ）:
 
@@ -476,7 +494,7 @@ srtspeak glossary-suggest ^
 ### GUI
 
 ```bat
-python -m pip install -e ".[gui]"
+python -m pip install "srtspeak[gui]"
 srtspeak gui
 ```
 
@@ -525,7 +543,9 @@ srtspeak gui
 ## 開発
 
 ```bat
-python -m pip install -e ".[dev]"
+git clone https://github.com/awaku7/srtspeak.git
+cd srtspeak
+python -m pip install -e ".[dev,gui,ffmpeg]"
 set PYTHONPATH=src
 python -m pytest -q
 python -m ruff check src tests
