@@ -24,7 +24,10 @@ classifiers = [
   "Topic :: Multimedia :: Sound/Audio :: Speech",
   "Topic :: Multimedia :: Video",
 ]
-dependencies = []
+dependencies = [
+  "PySide6>=6.6",
+  "keyring>=25",
+]
 
 [project.urls]
 Homepage = "https://github.com/awaku7/srtspeak"
@@ -32,7 +35,6 @@ Repository = "https://github.com/awaku7/srtspeak"
 Issues = "https://github.com/awaku7/srtspeak/issues"
 
 [project.optional-dependencies]
-gui = ["PySide6>=6.6", "keyring>=25"]
 ffmpeg = ["imageio-ffmpeg>=0.5"]
 dev = ["pytest>=8.0", "ruff>=0.6", "Babel>=2.14", "keyring>=25"]
 

@@ -28,6 +28,13 @@ _STORE_FILENAME = "xai_api_key.dpapi"
 _STORE_DIRNAME = "srtspeak"
 
 
+def normalize_api_key(value: str | None) -> str:
+    """Strip surrounding and internal whitespace (newlines, spaces, tabs)."""
+    if value is None:
+        return ""
+    return "".join(str(value).split())
+
+
 # ----- paths / availability -------------------------------------------------
 
 def default_key_store_path() -> Path:
@@ -78,7 +85,7 @@ def secure_store_backend_label() -> str:
 # ----- keyring --------------------------------------------------------------
 
 def save_api_key_keyring(key: str) -> None:
-    text = (key or "").strip()
+    text = normalize_api_key(key)
     if not text:
         raise ValueError("api key is empty")
     if not keyring_available():
@@ -104,7 +111,7 @@ def load_api_key_keyring() -> str | None:
         return None
     if val is None:
         return None
-    text = str(val).strip()
+    text = normalize_api_key(val)
     return text or None
 
 
@@ -215,7 +222,7 @@ def save_api_key_dpapi(
     protect_fn: Callable[[bytes], bytes] | None = None,
 ) -> Path:
     """Encrypt and store API key via DPAPI file. Returns store path."""
-    text = (key or "").strip()
+    text = normalize_api_key(key)
     if not text:
         raise ValueError("api key is empty")
     store = Path(path) if path is not None else default_key_store_path()
@@ -245,7 +252,7 @@ def load_api_key_dpapi(
         blob = base64.b64decode(b64.encode("ascii"))
         fn = unprotect_fn or _dpapi_unprotect
         raw = fn(blob)
-        text = raw.decode("utf-8").strip()
+        text = normalize_api_key(raw.decode("utf-8"))
         return text or None
     except (OSError, ValueError, UnicodeError):
         return None
@@ -275,7 +282,7 @@ def save_api_key_secure(key: str) -> str:
     Returns a short backend id: ``keyring`` or ``dpapi``.
     Prefers keyring; on success also removes legacy DPAPI file if present.
     """
-    text = (key or "").strip()
+    text = normalize_api_key(key)
     if not text:
         raise ValueError("api key is empty")
 
@@ -342,11 +349,12 @@ def resolve_api_key(
     if use_dpapi is not None:
         use_secure_store = use_dpapi
 
-    env_val = os.environ.get(env_name)
-    if env_val is not None and env_val.strip():
-        return env_val.strip()
-    if session_key is not None and session_key.strip():
-        return session_key.strip()
+    env_val = normalize_api_key(os.environ.get(env_name))
+    if env_val:
+        return env_val
+    session_val = normalize_api_key(session_key)
+    if session_val:
+        return session_val
     if use_secure_store:
         stored = load_api_key_secure(
             dpapi_path=dpapi_path, unprotect_fn=unprotect_fn
@@ -355,9 +363,9 @@ def resolve_api_key(
             return stored
     if prompt:
         fn = prompt_fn or (lambda: getpass.getpass("XAI_API_KEY: "))
-        typed = fn()
-        if typed is not None and typed.strip():
-            return typed.strip()
+        typed = normalize_api_key(fn())
+        if typed:
+            return typed
     return None
 
 
@@ -367,8 +375,7 @@ def api_key_status(
     dpapi_path: Path | None = None,
 ) -> str:
     """Presence only: set (env) / set (keyring) / set (dpapi) / missing."""
-    val = os.environ.get(env_name)
-    if val is not None and val.strip():
+    if normalize_api_key(os.environ.get(env_name)):
         return "set (env)"
     if has_api_key_keyring():
         return "set (keyring)"

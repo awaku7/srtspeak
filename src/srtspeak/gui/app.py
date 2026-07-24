@@ -10,6 +10,8 @@ from pathlib import Path
 
 
 def main() -> int:
+    os.environ.setdefault("PYTHONUTF8", "1")
+    os.environ.setdefault("PYTHONIOENCODING", "utf-8")
     try:
         from PySide6.QtCore import QObject, Qt, QThread, QTimer, Signal, Slot
         from PySide6.QtWidgets import (
@@ -52,6 +54,7 @@ def main() -> int:
         api_key_status,
         clear_api_key_secure,
         has_api_key_secure,
+        normalize_api_key,
         resolve_api_key,
         save_api_key_secure,
         secure_store_available,
@@ -311,6 +314,7 @@ def main() -> int:
             self._pending_result: tuple[str, object] | None = None
             self._job_kind: str | None = None
             self._last_result_kind: str = "build"
+            self._result_boxes: list[QMessageBox] = []
             self._latest_progress: ProgressEvent | None = None
             self._progress_seen: bool = False
             self._progress_q: queue.SimpleQueue = queue.SimpleQueue()
@@ -323,13 +327,13 @@ def main() -> int:
             outer = QVBoxLayout(root)
 
             # Shared API key row
+            key_box = QVBoxLayout()
             key_row = QHBoxLayout()
             key_row.addWidget(QLabel(_("API key (XAI_API_KEY)")))
             self.key_edit = QLineEdit()
             self.key_edit.setEchoMode(QLineEdit.EchoMode.Password)
-            key_row.addWidget(self.key_edit)
-            self.key_status = QLabel(self._key_status_text())
-            key_row.addWidget(self.key_status)
+            self.key_edit.setMinimumWidth(280)
+            key_row.addWidget(self.key_edit, 1)
             self.save_key_btn = QPushButton(_("Save on this PC"))
             self.save_key_btn.setEnabled(secure_store_available())
             self.save_key_btn.setToolTip(
@@ -353,7 +357,11 @@ def main() -> int:
             self.clear_key_btn.clicked.connect(self._clear_api_key_secure)
             key_row.addWidget(self.save_key_btn)
             key_row.addWidget(self.clear_key_btn)
-            outer.addLayout(key_row)
+            key_box.addLayout(key_row)
+            self.key_status = QLabel(self._key_status_text())
+            self.key_status.setWordWrap(True)
+            key_box.addWidget(self.key_status)
+            outer.addLayout(key_box)
 
             self.tabs = QTabWidget()
             outer.addWidget(self.tabs)
@@ -394,12 +402,14 @@ def main() -> int:
         def _key_status_text(self) -> str:
             st = api_key_status()
             if st == "set (env)":
-                return _("Status: using environment variable")
+                return _("API key ready (from environment)")
             if st == "set (keyring)":
-                return _("Status: saved on this PC (keyring)")
+                return _("API key ready (from keyring)")
             if st == "set (dpapi)":
-                return _("Status: saved on this PC (DPAPI)")
-            return _("Status: not set (enter key above for this session)")
+                return _("API key ready (from DPAPI)")
+            if self._session_key:
+                return _("API key ready (this session)")
+            return _("No API key yet — paste above")
 
         def _refresh_key_ui(self) -> None:
             self.key_status.setText(self._key_status_text())
@@ -408,6 +418,24 @@ def main() -> int:
                 self.save_key_btn.setEnabled(avail)
             if hasattr(self, "clear_key_btn"):
                 self.clear_key_btn.setEnabled(avail and has_api_key_secure())
+            st = api_key_status()
+            if st == "set (env)":
+                ph = _("Already set via env — typing optional")
+            elif st == "set (keyring)":
+                ph = _("Already loaded — typing optional")
+            elif st == "set (dpapi)":
+                ph = _("Already loaded — typing optional")
+            elif self._session_key:
+                ph = _("Session key ready — typing optional")
+            else:
+                ph = _("Paste API key here")
+            self.key_edit.setPlaceholderText(ph)
+
+        def _current_api_key(self) -> str:
+            """Resolve key for GUI actions: field > session > env/keyring/dpapi."""
+            typed = normalize_api_key(self.key_edit.text())
+            self._session_key = typed or self._session_key
+            return resolve_api_key(prompt=False, session_key=self._session_key) or ""
 
         def _save_api_key_secure(self) -> None:
             if not secure_store_available():
@@ -420,8 +448,7 @@ def main() -> int:
                     ),
                 )
                 return
-            typed = self.key_edit.text().strip()
-            key = typed or resolve_api_key(prompt=False, session_key=self._session_key)
+            key = self._current_api_key()
             if not key:
                 QMessageBox.warning(
                     self,
@@ -524,8 +551,15 @@ def main() -> int:
                 self.voice_combo.setCurrentIndex(idx)
             form.addRow(_("Voice"), self.voice_combo)
 
-            self.out_edit = QLineEdit("out")
-            form.addRow(_("Output folder"), self.out_edit)
+            self.out_edit = QLineEdit(str((Path.cwd() / "out").resolve()))
+            browse_out = QPushButton("…")
+            browse_out.clicked.connect(self._browse_out_dir)
+            row_out = QHBoxLayout()
+            row_out.addWidget(self.out_edit, 1)
+            row_out.addWidget(browse_out)
+            wrap_out = QWidget()
+            wrap_out.setLayout(row_out)
+            form.addRow(_("Output folder"), wrap_out)
 
             self.base_wav_edit = QLineEdit()
             browse_bw = QPushButton("…")
@@ -622,8 +656,15 @@ def main() -> int:
             tgt_layout.addLayout(btn_row)
             form.addRow(tgt_box)
 
-            self.tr_out_edit = QLineEdit("srt_gen")
-            form.addRow(_("Output folder"), self.tr_out_edit)
+            self.tr_out_edit = QLineEdit(str((Path.cwd() / "srt_gen").resolve()))
+            browse_tr_out = QPushButton("…")
+            browse_tr_out.clicked.connect(self._browse_tr_out_dir)
+            row_tr_out = QHBoxLayout()
+            row_tr_out.addWidget(self.tr_out_edit, 1)
+            row_tr_out.addWidget(browse_tr_out)
+            wrap_tr_out = QWidget()
+            wrap_tr_out.setLayout(row_tr_out)
+            form.addRow(_("Output folder"), wrap_tr_out)
 
             self.tr_glossary_edit = QLineEdit()
             browse_g = QPushButton("…")
@@ -739,7 +780,7 @@ def main() -> int:
                 if idx >= 0:
                     self.voice_combo.setCurrentIndex(idx)
             if s.get("out_dir"):
-                self.out_edit.setText(s["out_dir"])
+                self.out_edit.setText(self._abs_dir_text(str(s["out_dir"]), "out"))
             if s.get("base_wav"):
                 self.base_wav_edit.setText(s["base_wav"])
             if "limit" in s:
@@ -769,7 +810,9 @@ def main() -> int:
                 for t in targets:
                     self._set_target_checked(str(t), True)
             if s.get("tr_out_dir"):
-                self.tr_out_edit.setText(s["tr_out_dir"])
+                self.tr_out_edit.setText(
+                    self._abs_dir_text(str(s["tr_out_dir"]), "srt_gen")
+                )
             if s.get("tr_glossary"):
                 self.tr_glossary_edit.setText(s["tr_glossary"])
             lm = s.get("tr_length_mode", "")
@@ -801,7 +844,7 @@ def main() -> int:
                 "srt_path": self.srt_edit.text().strip(),
                 "language_code": self._current_code(self.lang_combo),
                 "voice_id": self.voice_combo.currentData() or "",
-                "out_dir": self.out_edit.text().strip(),
+                "out_dir": self._abs_dir_text(self.out_edit.text(), "out"),
                 "base_wav": self.base_wav_edit.text().strip(),
                 "limit": self.limit_spin.value(),
                 "dry_run": self.dry_run_cb.isChecked(),
@@ -811,7 +854,7 @@ def main() -> int:
                 "tr_srt_path": self.tr_srt_edit.text().strip(),
                 "tr_source_lang": self._current_code(self.tr_source_combo),
                 "tr_targets": self._selected_targets(),
-                "tr_out_dir": self.tr_out_edit.text().strip(),
+                "tr_out_dir": self._abs_dir_text(self.tr_out_edit.text(), "srt_gen"),
                 "tr_glossary": self.tr_glossary_edit.text().strip(),
                 "tr_length_mode": self.tr_length_combo.currentData() or "hint",
                 "tr_limit": self.tr_limit_spin.value(),
@@ -885,6 +928,30 @@ def main() -> int:
             if path:
                 self.tr_glossary_edit.setText(path)
 
+        def _abs_dir_text(self, text: str, default_name: str) -> str:
+            raw = (text or "").strip() or default_name
+            return str(Path(raw).expanduser().resolve())
+
+        def _browse_out_dir(self) -> None:
+            start = self.out_edit.text().strip() or str(Path.cwd())
+            path = QFileDialog.getExistingDirectory(
+                self,
+                _("Select output folder"),
+                start,
+            )
+            if path:
+                self.out_edit.setText(str(Path(path).resolve()))
+
+        def _browse_tr_out_dir(self) -> None:
+            start = self.tr_out_edit.text().strip() or str(Path.cwd())
+            path = QFileDialog.getExistingDirectory(
+                self,
+                _("Select output folder"),
+                start,
+            )
+            if path:
+                self.tr_out_edit.setText(str(Path(path).resolve()))
+
         def _detect_language_build(self) -> None:
             self._detect_into(self.srt_edit, self.lang_combo)
 
@@ -919,12 +986,7 @@ def main() -> int:
             if not sample:
                 QMessageBox.warning(self, _("Error"), _("No text found in SRT."))
                 return
-            typed = self.key_edit.text().strip() or None
-            api_key = (
-                typed
-                or os.environ.get("XAI_API_KEY")
-                or os.environ.get("UAGENT_GROK_API_KEY")
-            )
+            api_key = self._current_api_key()
             if not api_key:
                 QMessageBox.warning(
                     self,
@@ -1063,9 +1125,7 @@ def main() -> int:
                     _("Select at least one target language."),
                 )
                 return
-            typed = self.key_edit.text().strip()
-            self._session_key = typed or self._session_key
-            api_key = resolve_api_key(prompt=False, session_key=self._session_key) or ""
+            api_key = self._current_api_key()
             if not api_key:
                 QMessageBox.critical(
                     self,
@@ -1149,9 +1209,7 @@ def main() -> int:
             voice_id = self.voice_combo.currentData() or DEFAULT_VOICE_ID
             limit = self.limit_spin.value() or None
             dry = self.dry_run_cb.isChecked()
-            typed = self.key_edit.text().strip()
-            self._session_key = typed or self._session_key
-            api_key = resolve_api_key(prompt=False, session_key=self._session_key)
+            api_key = self._current_api_key()
             if not dry and not api_key:
                 QMessageBox.critical(
                     self,
@@ -1166,7 +1224,9 @@ def main() -> int:
                 srt_path=srt,
                 lang=lang,
                 language_code=language_code,
-                out_dir=resolve_out_dir(self.out_edit.text().strip() or None, lang),
+                out_dir=resolve_out_dir(
+                    self._abs_dir_text(self.out_edit.text(), "out"), lang
+                ),
                 voice_id=str(voice_id),
                 limit=limit,
                 dry_run=dry,
@@ -1210,9 +1270,7 @@ def main() -> int:
                 )
                 return
             dry = self.tr_dry_run_cb.isChecked()
-            typed = self.key_edit.text().strip()
-            self._session_key = typed or self._session_key
-            api_key = resolve_api_key(prompt=False, session_key=self._session_key) or ""
+            api_key = self._current_api_key()
             if not dry and not api_key:
                 QMessageBox.critical(
                     self,
@@ -1230,7 +1288,7 @@ def main() -> int:
                     srt_path=srt,
                     source_lang=source_lang,
                     targets=targets,
-                    out_dir=Path(self.tr_out_edit.text().strip() or "srt_gen"),
+                    out_dir=Path(self._abs_dir_text(self.tr_out_edit.text(), "srt_gen")),
                     work_dir=Path("work"),
                     batch_size=int(self.tr_batch_spin.value()),
                     glossary_path=Path(gloss) if gloss else None,
@@ -1515,6 +1573,7 @@ def main() -> int:
             return title, label, body
 
         def _show_pending_dialog(self, kind: str, payload: object) -> None:
+            # Keep the main window open; completion must never quit the app.
             if kind == "ok":
                 if self._last_result_kind == "glossary":
                     title, _label, body = self._format_glossary_summary(payload)
@@ -1522,17 +1581,43 @@ def main() -> int:
                     title, _label, body = self._format_translate_summary(payload)
                 else:
                     title, _label, body = self._format_build_summary(payload)
-                QMessageBox.information(self, title, body)
+                box = QMessageBox(self)
+                box.setIcon(QMessageBox.Icon.Information)
+                box.setWindowTitle(title)
+                box.setText(body)
+                box.setStandardButtons(QMessageBox.StandardButton.Ok)
+                box.setAttribute(Qt.WidgetAttribute.WA_QuitOnClose, False)
+                box.setModal(False)
+                box.finished.connect(lambda *_a, b=box: self._drop_result_box(b))
+                self._result_boxes.append(box)
+                box.show()
+                box.raise_()
+                box.activateWindow()
                 return
             msg = str(payload)
+            box = QMessageBox(self)
+            box.setAttribute(Qt.WidgetAttribute.WA_QuitOnClose, False)
+            box.setModal(False)
             if msg == "cancelled":
-                QMessageBox.warning(
-                    self,
-                    _("Cancelled"),
-                    _("Operation was cancelled."),
-                )
+                box.setIcon(QMessageBox.Icon.Warning)
+                box.setWindowTitle(_("Cancelled"))
+                box.setText(_("Operation was cancelled."))
             else:
-                QMessageBox.critical(self, _("Error"), msg)
+                box.setIcon(QMessageBox.Icon.Critical)
+                box.setWindowTitle(_("Error"))
+                box.setText(msg)
+            box.setStandardButtons(QMessageBox.StandardButton.Ok)
+            box.finished.connect(lambda *_a, b=box: self._drop_result_box(b))
+            self._result_boxes.append(box)
+            box.show()
+            box.raise_()
+            box.activateWindow()
+
+        def _drop_result_box(self, box: QMessageBox) -> None:
+            try:
+                self._result_boxes.remove(box)
+            except ValueError:
+                pass
 
         @Slot()
         def _on_thread_finished(self) -> None:
@@ -1592,7 +1677,9 @@ def main() -> int:
             super().closeEvent(event)
 
     app = QApplication(sys.argv)
+    app.setQuitOnLastWindowClosed(True)
     win = MainWindow()
+    win.setAttribute(Qt.WidgetAttribute.WA_QuitOnClose, True)
     win.resize(640, 720)
     win.show()
     return int(app.exec())

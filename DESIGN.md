@@ -545,8 +545,6 @@ src/srtspeak/
     util.py
 ```
 
-Windows: `run_gui.bat` / `run_doctor.bat` / `run_srtspeak.bat`
-
 optional extras（`pyproject.toml`）:
 
 - `gui` → PySide6 + keyring

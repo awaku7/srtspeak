@@ -89,28 +89,6 @@ srtspeak dry-run --srt GRAN_TENKU_japan.srt --lang ja
 python -m srtspeak gui
 ```
 
-### Windows 補助スクリプト（リポジトリ checkout のみ）
-
-**リポジトリ直下**でダブルクリック、またはコマンド実行（PyPI パッケージには含まれない）:
-
-| スクリプト | 内容 |
-|------------|------|
-| `run_gui.bat` | GUI 起動 |
-| `run_doctor.bat` | 環境診断 |
-| `run_srtspeak.bat …` | CLI 透過（`srtspeak` と同じ引数） |
-
-```bat
-run_gui.bat
-run_doctor.bat
-run_srtspeak.bat --help
-```
-
-注意:
-
-- スクリプトはリポジトリ直下へ `cd` する
-- `srtspeak` が PATH に無い場合は `PYTHONPATH=src` と `python -m srtspeak` を使う
-- `XAI_API_KEY` 未設定かつ `UAGENT_GROK_API_KEY` がある場合、セッションのみコピー（永続化しない）
-
 ## ffmpeg が無いとき
 
 解決順（`core/ffmpeg_resolve.py`）:

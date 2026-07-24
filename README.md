@@ -89,28 +89,6 @@ srtspeak dry-run --srt GRAN_TENKU_japan.srt --lang ja
 python -m srtspeak gui
 ```
 
-### Windows helper scripts (repository checkout only)
-
-Double-click or run from the **repo root** (not shipped on PyPI):
-
-| Script | Action |
-|--------|--------|
-| `run_gui.bat` | Start GUI |
-| `run_doctor.bat` | Environment check |
-| `run_srtspeak.bat …` | CLI passthrough (same args as `srtspeak`) |
-
-```bat
-run_gui.bat
-run_doctor.bat
-run_srtspeak.bat --help
-```
-
-Notes:
-
-- Scripts `cd` to the repo root automatically.
-- If `srtspeak` is not on `PATH`, they set `PYTHONPATH=src` and use `python -m srtspeak`.
-- If `XAI_API_KEY` is unset and `UAGENT_GROK_API_KEY` is set, it is copied for the session only (not persisted).
-
 ## When ffmpeg is missing
 
 Resolution order (`core/ffmpeg_resolve.py`):

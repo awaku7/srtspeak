@@ -9,13 +9,13 @@ msgstr ""
 "Project-Id-Version: srtspeak 0.1.0\n"
 "Report-Msgid-Bugs-To: hirofumi@ukawa.biPOT-Creation-Date: 2026-07-18 "
 "17:08+0900\n"
-"POT-Creation-Date: 2026-07-20 13:18+0900\n"
+"POT-Creation-Date: 2026-07-25 00:33+0900\n"
 "PO-Revision-Date: 2026-03-22 00:00+0900\n"
 "Last-Translator: Hirofumi Ukawa <hirofumi@ukawa.bizLanguage-Team: en "
 "<hirofumi@ukawa.bizPlural-Forms: nplurals=2; plural=(n != 1);\n"
 "Language: en\n"
-"Language-Team: en <hirofumi@ukawa.bizPlural-Forms: nplurals=2; plural=(n "
-"!= 1);\n"
+"Language-Team: en <hirofumi@ukawa.bizPlural-Forms: nplurals=2; plural=(n != "
+"1);\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
@@ -62,7 +62,7 @@ msgstr "  source: {source}"
 msgid "  version: {version}"
 msgstr "  version: {version}"
 
-#: src/srtspeak/cli.py:193 src/srtspeak/gui/app.py:1279
+#: src/srtspeak/cli.py:193 src/srtspeak/gui/app.py:1569
 msgid "(none)"
 msgstr "(none)"
 
@@ -303,12 +303,8 @@ msgid "MVP must be 1"
 msgstr "MVP must be 1"
 
 #: src/srtspeak/cli.py:776
-msgid ""
-"JA only: convert kanji to hiragana via Grok Chat API before TTS (default:"
-" on)"
-msgstr ""
-"JA only: convert kanji to hiragana via Grok Chat API before TTS (default:"
-" on)"
+msgid "JA only: convert kanji to hiragana via Grok Chat API before TTS (default: on)"
+msgstr "JA only: convert kanji to hiragana via Grok Chat API before TTS (default: on)"
 
 #: src/srtspeak/cli.py:785
 msgid "Strip kaomoji for TTS only; emoji kept; SRT unchanged (default: on)"
@@ -434,149 +430,154 @@ msgstr "use only the first N cues"
 msgid "error: jobs must be 1 in MVP"
 msgstr "error: jobs must be 1 in MVP"
 
-#: src/srtspeak/progress_i18n.py:17
+#: src/srtspeak/progress_i18n.py:40
+#, python-brace-format
+msgid "{percent:.1f}%  {stage}  {lang}{current}/{total}  {message}"
+msgstr "{percent:.1f}%  {stage}  {lang}{current}/{total}  {message}"
+
+#: src/srtspeak/progress_i18n.py:54
 msgid "parse"
 msgstr "parse"
 
-#: src/srtspeak/progress_i18n.py:19 src/srtspeak/progress_i18n.py:55
+#: src/srtspeak/progress_i18n.py:56 src/srtspeak/progress_i18n.py:92
 msgid "tts"
 msgstr "tts"
 
-#: src/srtspeak/progress_i18n.py:21 src/srtspeak/progress_i18n.py:61
+#: src/srtspeak/progress_i18n.py:58 src/srtspeak/progress_i18n.py:98
 msgid "fit"
 msgstr "fit"
 
-#: src/srtspeak/progress_i18n.py:23 src/srtspeak/progress_i18n.py:65
+#: src/srtspeak/progress_i18n.py:60 src/srtspeak/progress_i18n.py:102
 msgid "timeline"
 msgstr "timeline"
 
-#: src/srtspeak/progress_i18n.py:25
+#: src/srtspeak/progress_i18n.py:62
 msgid "report"
 msgstr "report"
 
-#: src/srtspeak/progress_i18n.py:27
+#: src/srtspeak/progress_i18n.py:64
 msgid "translate"
 msgstr "translate"
 
-#: src/srtspeak/progress_i18n.py:29
+#: src/srtspeak/progress_i18n.py:66
 msgid "translate_compress"
 msgstr "translate_compress"
 
-#: src/srtspeak/progress_i18n.py:31
+#: src/srtspeak/progress_i18n.py:68
 msgid "translate_write"
 msgstr "translate_write"
 
-#: src/srtspeak/progress_i18n.py:33
+#: src/srtspeak/progress_i18n.py:70
 msgid "glossary"
 msgstr "glossary"
 
-#: src/srtspeak/progress_i18n.py:35
+#: src/srtspeak/progress_i18n.py:72
 msgid "ja_yomi"
 msgstr "ja_yomi"
 
-#: src/srtspeak/progress_i18n.py:49
+#: src/srtspeak/progress_i18n.py:86
 msgid "parse srt"
 msgstr "parse srt"
 
-#: src/srtspeak/progress_i18n.py:51
+#: src/srtspeak/progress_i18n.py:88
 msgid "parsed"
 msgstr "parsed"
 
-#: src/srtspeak/progress_i18n.py:53
+#: src/srtspeak/progress_i18n.py:90
 msgid "dry_run done"
 msgstr "dry_run done"
 
-#: src/srtspeak/progress_i18n.py:57
+#: src/srtspeak/progress_i18n.py:94
 msgid "tts done"
 msgstr "tts done"
 
-#: src/srtspeak/progress_i18n.py:59
+#: src/srtspeak/progress_i18n.py:96
 msgid "tts api"
 msgstr "tts api"
 
-#: src/srtspeak/progress_i18n.py:63
+#: src/srtspeak/progress_i18n.py:100
 msgid "fit done"
 msgstr "fit done"
 
-#: src/srtspeak/progress_i18n.py:67
+#: src/srtspeak/progress_i18n.py:104
 msgid "timeline done"
 msgstr "timeline done"
 
-#: src/srtspeak/progress_i18n.py:69
+#: src/srtspeak/progress_i18n.py:106
 msgid "report done"
 msgstr "report done"
 
-#: src/srtspeak/progress_i18n.py:71
+#: src/srtspeak/progress_i18n.py:108
 msgid "start"
 msgstr "start"
 
-#: src/srtspeak/progress_i18n.py:73
+#: src/srtspeak/progress_i18n.py:110
 msgid "done"
 msgstr "done"
 
-#: src/srtspeak/progress_i18n.py:75
+#: src/srtspeak/progress_i18n.py:112
 msgid "extract candidates"
 msgstr "extract candidates"
 
-#: src/srtspeak/progress_i18n.py:77
+#: src/srtspeak/progress_i18n.py:114
 msgid "chat suggest"
 msgstr "chat suggest"
 
-#: src/srtspeak/progress_i18n.py:79
+#: src/srtspeak/progress_i18n.py:116
 msgid "finalize glossary"
 msgstr "finalize glossary"
 
-#: src/srtspeak/progress_i18n.py:83
+#: src/srtspeak/progress_i18n.py:120
 #, python-brace-format
 msgid "cache hit {current}/{total}"
 msgstr "cache hit {current}/{total}"
 
-#: src/srtspeak/progress_i18n.py:90
+#: src/srtspeak/progress_i18n.py:127
 #, python-brace-format
 msgid "hiragana batch {current}/{total}"
 msgstr "hiragana batch {current}/{total}"
 
-#: src/srtspeak/progress_i18n.py:96
+#: src/srtspeak/progress_i18n.py:133
 #, python-brace-format
 msgid "{target} batch {current}/{total} waiting chat... {seconds}s"
 msgstr "{target} batch {current}/{total} waiting chat... {seconds}s"
 
-#: src/srtspeak/progress_i18n.py:105
+#: src/srtspeak/progress_i18n.py:142
 #, python-brace-format
 msgid "{target} batch {current}/{total} done"
 msgstr "{target} batch {current}/{total} done"
 
-#: src/srtspeak/progress_i18n.py:111
+#: src/srtspeak/progress_i18n.py:148
 #, python-brace-format
 msgid "{target} batch {current}/{total}"
 msgstr "{target} batch {current}/{total}"
 
-#: src/srtspeak/progress_i18n.py:117
+#: src/srtspeak/progress_i18n.py:154
 #, python-brace-format
 msgid "{target} compress index {index}"
 msgstr "{target} compress index {index}"
 
-#: src/srtspeak/progress_i18n.py:123
+#: src/srtspeak/progress_i18n.py:160
 #, python-brace-format
 msgid "waiting chat... {seconds}s"
 msgstr "waiting chat... {seconds}s"
 
-#: src/srtspeak/progress_i18n.py:127
+#: src/srtspeak/progress_i18n.py:164
 #, python-brace-format
 msgid "candidates={count}"
 msgstr "candidates={count}"
 
-#: src/srtspeak/progress_i18n.py:131
+#: src/srtspeak/progress_i18n.py:168
 #, python-brace-format
 msgid "write {name}"
 msgstr "write {name}"
 
-#: src/srtspeak/progress_i18n.py:135
+#: src/srtspeak/progress_i18n.py:172
 #, python-brace-format
 msgid "{target} finished"
 msgstr "{target} finished"
 
-#: src/srtspeak/progress_i18n.py:139
+#: src/srtspeak/progress_i18n.py:176
 #, python-brace-format
 msgid "{target} dry-run"
 msgstr "{target} dry-run"
@@ -661,12 +662,12 @@ msgstr "Vietnamese"
 msgid "Thai"
 msgstr "Thai"
 
-#: src/srtspeak/core/languages.py:96
+#: src/srtspeak/core/languages.py:216
 #, python-brace-format
 msgid "unknown language code: {value}"
 msgstr "unknown language code: {value}"
 
-#: src/srtspeak/core/languages.py:109
+#: src/srtspeak/core/languages.py:229
 #, python-brace-format
 msgid "unknown lang key: {lang}"
 msgstr "unknown lang key: {lang}"
@@ -848,264 +849,345 @@ msgstr "Friendly, upbeat"
 msgid "Docs catalog voice"
 msgstr "Docs catalog voice"
 
-#: src/srtspeak/gui/app.py:250
+#: src/srtspeak/gui/app.py:329
 msgid "API key (XAI_API_KEY)"
 msgstr "API key (XAI_API_KEY)"
 
-#: src/srtspeak/gui/app.py:263
+#: src/srtspeak/gui/app.py:334
+msgid "Save on this PC"
+msgstr ""
+
+#: src/srtspeak/gui/app.py:338
+msgid ""
+"Save via OS credential store (Windows Credential Locker / macOS Keychain / "
+"Linux Secret Service). Backend: "
+msgstr ""
+
+#: src/srtspeak/gui/app.py:345 src/srtspeak/gui/app.py:443
+msgid "No secure store. Install: pip install keyring (or set XAI_API_KEY)."
+msgstr ""
+
+#: src/srtspeak/gui/app.py:349
+msgid "Clear saved"
+msgstr ""
+
+#: src/srtspeak/gui/app.py:368
 msgid "Build"
 msgstr "Build"
 
-#: src/srtspeak/gui/app.py:264 src/srtspeak/gui/app.py:300
+#: src/srtspeak/gui/app.py:369 src/srtspeak/gui/app.py:504
 msgid "Translate"
 msgstr "Translate"
 
-#: src/srtspeak/gui/app.py:272 src/srtspeak/gui/app.py:1317
+#: src/srtspeak/gui/app.py:377 src/srtspeak/gui/app.py:1607
 msgid "Ready"
 msgstr "Ready"
 
-#: src/srtspeak/gui/app.py:277 src/srtspeak/gui/app.py:302
+#: src/srtspeak/gui/app.py:385 src/srtspeak/gui/app.py:506
 msgid "Start"
 msgstr "Start"
 
-#: src/srtspeak/gui/app.py:278 src/srtspeak/gui/app.py:1089
-#: src/srtspeak/gui/app.py:1314
+#: src/srtspeak/gui/app.py:386 src/srtspeak/gui/app.py:1331
+#: src/srtspeak/gui/app.py:1604
 msgid "Cancel"
 msgstr "Cancel"
 
-#: src/srtspeak/gui/app.py:292
-msgid "Status: using environment variable"
-msgstr "Status: using environment variable"
+#: src/srtspeak/gui/app.py:402
+msgid "API key ready (from environment)"
+msgstr "API key ready (from environment)"
 
-#: src/srtspeak/gui/app.py:293
-msgid "Status: not set (enter key above for this session)"
-msgstr "Status: not set (enter key above for this session)"
+#: src/srtspeak/gui/app.py:404
+msgid "API key ready (from keyring)"
+msgstr "API key ready (from keyring)"
 
-#: src/srtspeak/gui/app.py:318
+#: src/srtspeak/gui/app.py:406
+msgid "API key ready (from DPAPI)"
+msgstr "API key ready (from DPAPI)"
+
+#: src/srtspeak/gui/app.py:408
+msgid "API key ready (this session)"
+msgstr "API key ready (this session)"
+
+#: src/srtspeak/gui/app.py:409
+msgid "No API key yet — paste above"
+msgstr "No API key yet — paste above"
+
+#: src/srtspeak/gui/app.py:420
+msgid "Already set via env — typing optional"
+msgstr "Already set via env — typing optional"
+
+#: src/srtspeak/gui/app.py:422 src/srtspeak/gui/app.py:424
+msgid "Already loaded — typing optional"
+msgstr "Already loaded — typing optional"
+
+#: src/srtspeak/gui/app.py:426
+msgid "Session key ready — typing optional"
+msgstr "Session key ready — typing optional"
+
+#: src/srtspeak/gui/app.py:428
+msgid "Paste API key here"
+msgstr "Paste API key here"
+
+#: src/srtspeak/gui/app.py:441 src/srtspeak/gui/app.py:452
+#: src/srtspeak/gui/app.py:464 src/srtspeak/gui/app.py:961
+#: src/srtspeak/gui/app.py:966 src/srtspeak/gui/app.py:971
+#: src/srtspeak/gui/app.py:984 src/srtspeak/gui/app.py:990
+#: src/srtspeak/gui/app.py:1039 src/srtspeak/gui/app.py:1106
+#: src/srtspeak/gui/app.py:1115 src/srtspeak/gui/app.py:1121
+#: src/srtspeak/gui/app.py:1129 src/srtspeak/gui/app.py:1193
+#: src/srtspeak/gui/app.py:1204 src/srtspeak/gui/app.py:1213
+#: src/srtspeak/gui/app.py:1250 src/srtspeak/gui/app.py:1259
+#: src/srtspeak/gui/app.py:1265 src/srtspeak/gui/app.py:1274
+#: src/srtspeak/gui/app.py:1301 src/srtspeak/gui/app.py:1590
+msgid "Error"
+msgstr "Error"
+
+#: src/srtspeak/gui/app.py:454
+msgid "Enter an API key above first (or set XAI_API_KEY in the environment)."
+msgstr ""
+
+#: src/srtspeak/gui/app.py:465
+msgid "Could not save key: "
+msgstr ""
+
+#: src/srtspeak/gui/app.py:474
+msgid "Saved"
+msgstr ""
+
+#: src/srtspeak/gui/app.py:476
+msgid ""
+"API key saved in the OS credential store (this user only).\n"
+"Backend: "
+msgstr ""
+
+#: src/srtspeak/gui/app.py:489 src/srtspeak/gui/app.py:495
+msgid "Cleared"
+msgstr ""
+
+#: src/srtspeak/gui/app.py:490
+msgid "Saved API key removed from this PC."
+msgstr ""
+
+#: src/srtspeak/gui/app.py:496
+msgid "No saved API key found."
+msgstr ""
+
+#: src/srtspeak/gui/app.py:522
 msgid "SRT file"
 msgstr "SRT file"
 
-#: src/srtspeak/gui/app.py:320 src/srtspeak/gui/app.py:403
-#: src/srtspeak/gui/app.py:813
+#: src/srtspeak/gui/app.py:524 src/srtspeak/gui/app.py:614
+#: src/srtspeak/gui/app.py:1058
 msgid "Cues: —"
 msgstr "Cues: —"
 
-#: src/srtspeak/gui/app.py:325 src/srtspeak/gui/app.py:408
-#: src/srtspeak/gui/app.py:425
+#: src/srtspeak/gui/app.py:529 src/srtspeak/gui/app.py:619
+#: src/srtspeak/gui/app.py:636
 #, python-brace-format
 msgid "{name} ({code})"
 msgstr "{name} ({code})"
 
-#: src/srtspeak/gui/app.py:328 src/srtspeak/gui/app.py:411
+#: src/srtspeak/gui/app.py:532 src/srtspeak/gui/app.py:622
 msgid "Detect"
 msgstr "Detect"
 
-#: src/srtspeak/gui/app.py:335
+#: src/srtspeak/gui/app.py:539
 msgid "Language"
 msgstr "Language"
 
-#: src/srtspeak/gui/app.py:345
+#: src/srtspeak/gui/app.py:549
 msgid "Voice"
 msgstr "Voice"
 
-#: src/srtspeak/gui/app.py:348 src/srtspeak/gui/app.py:446
+#: src/srtspeak/gui/app.py:559 src/srtspeak/gui/app.py:664
 msgid "Output folder"
 msgstr "Output folder"
 
-#: src/srtspeak/gui/app.py:358
+#: src/srtspeak/gui/app.py:569
 msgid "Base WAV (mix onto)"
 msgstr "Base WAV (mix onto)"
 
-#: src/srtspeak/gui/app.py:362 src/srtspeak/gui/app.py:477
+#: src/srtspeak/gui/app.py:573 src/srtspeak/gui/app.py:695
 msgid "all"
 msgstr "all"
 
-#: src/srtspeak/gui/app.py:365
+#: src/srtspeak/gui/app.py:576
 msgid "Process only the first N cues. 0 = all cues in the SRT."
 msgstr "Process only the first N cues. 0 = all cues in the SRT."
 
-#: src/srtspeak/gui/app.py:367 src/srtspeak/gui/app.py:479
+#: src/srtspeak/gui/app.py:578 src/srtspeak/gui/app.py:697
 msgid "Max cues (0 = all)"
 msgstr "Max cues (0 = all)"
 
-#: src/srtspeak/gui/app.py:369
+#: src/srtspeak/gui/app.py:580
 msgid "Dry-run (estimate only, no TTS)"
 msgstr "Dry-run (estimate only, no TTS)"
 
-#: src/srtspeak/gui/app.py:371
+#: src/srtspeak/gui/app.py:582
 msgid "Japanese yomi (kanji → hiragana)"
 msgstr "Japanese yomi (kanji → hiragana)"
 
-#: src/srtspeak/gui/app.py:375
+#: src/srtspeak/gui/app.py:586
 msgid "Ignore existing TTS/ja_yomi caches (still write fresh)"
 msgstr "Ignore existing TTS/ja_yomi caches (still write fresh)"
 
-#: src/srtspeak/gui/app.py:379
+#: src/srtspeak/gui/app.py:590
 msgid "Strip kaomoji for TTS only (emoji kept; SRT unchanged)"
 msgstr "Strip kaomoji for TTS only (emoji kept; SRT unchanged)"
 
-#: src/srtspeak/gui/app.py:401
+#: src/srtspeak/gui/app.py:612
 msgid "Source SRT"
 msgstr "Source SRT"
 
-#: src/srtspeak/gui/app.py:418
+#: src/srtspeak/gui/app.py:629
 msgid "Source language"
 msgstr "Source language"
 
-#: src/srtspeak/gui/app.py:420
+#: src/srtspeak/gui/app.py:631
 msgid "Target languages"
 msgstr "Target languages"
 
-#: src/srtspeak/gui/app.py:436
+#: src/srtspeak/gui/app.py:647
 msgid "Select all"
 msgstr "Select all"
 
-#: src/srtspeak/gui/app.py:437
+#: src/srtspeak/gui/app.py:648
 msgid "Clear"
 msgstr "Clear"
 
-#: src/srtspeak/gui/app.py:451
+#: src/srtspeak/gui/app.py:669
 msgid "Suggest"
 msgstr "Suggest"
 
-#: src/srtspeak/gui/app.py:453
+#: src/srtspeak/gui/app.py:671
 msgid "Generate glossary from source SRT via Grok Chat"
 msgstr "Generate glossary from source SRT via Grok Chat"
 
-#: src/srtspeak/gui/app.py:462
+#: src/srtspeak/gui/app.py:680
 msgid "Glossary (JSON)"
 msgstr "Glossary (JSON)"
 
-#: src/srtspeak/gui/app.py:466
+#: src/srtspeak/gui/app.py:684
 msgid "Off"
 msgstr "Off"
 
-#: src/srtspeak/gui/app.py:467
+#: src/srtspeak/gui/app.py:685
 msgid "Hint (default)"
 msgstr "Hint (default)"
 
-#: src/srtspeak/gui/app.py:468
+#: src/srtspeak/gui/app.py:686
 msgid "Enforce (2nd pass)"
 msgstr "Enforce (2nd pass)"
 
-#: src/srtspeak/gui/app.py:469
+#: src/srtspeak/gui/app.py:687
 msgid "Report only"
 msgstr "Report only"
 
-#: src/srtspeak/gui/app.py:473
+#: src/srtspeak/gui/app.py:691
 msgid "Length mode"
 msgstr "Length mode"
 
-#: src/srtspeak/gui/app.py:484
+#: src/srtspeak/gui/app.py:702
 msgid "Batch size"
 msgstr "Batch size"
 
-#: src/srtspeak/gui/app.py:486
+#: src/srtspeak/gui/app.py:704
 msgid "Dry-run (estimate only, no Chat)"
 msgstr "Dry-run (estimate only, no Chat)"
 
-#: src/srtspeak/gui/app.py:488
+#: src/srtspeak/gui/app.py:706
 msgid "Fail fast (stop on first target error)"
 msgstr "Fail fast (stop on first target error)"
 
-#: src/srtspeak/gui/app.py:491
+#: src/srtspeak/gui/app.py:709
 msgid "Ignore existing translate caches (still write fresh)"
 msgstr "Ignore existing translate caches (still write fresh)"
 
-#: src/srtspeak/gui/app.py:496
+#: src/srtspeak/gui/app.py:714
 #, python-brace-format
 msgid "{stem}_{lang}.srt"
 msgstr "{stem}_{lang}.srt"
 
-#: src/srtspeak/gui/app.py:498
+#: src/srtspeak/gui/app.py:716
 msgid "File naming"
 msgstr "File naming"
 
-#: src/srtspeak/gui/app.py:655 src/srtspeak/gui/app.py:673
+#: src/srtspeak/gui/app.py:887 src/srtspeak/gui/app.py:899
 msgid "Open SRT"
 msgstr "Open SRT"
 
-#: src/srtspeak/gui/app.py:657 src/srtspeak/gui/app.py:675
+#: src/srtspeak/gui/app.py:889 src/srtspeak/gui/app.py:901
 msgid "SRT files (*.srt);;All files (*.*)"
 msgstr "SRT files (*.srt);;All files (*.*)"
 
-#: src/srtspeak/gui/app.py:691
+#: src/srtspeak/gui/app.py:911
 msgid "Select base WAV"
 msgstr "Select base WAV"
 
-#: src/srtspeak/gui/app.py:693
+#: src/srtspeak/gui/app.py:913
 msgid "WAV files (*.wav);;All files (*.*)"
 msgstr "WAV files (*.wav);;All files (*.*)"
 
-#: src/srtspeak/gui/app.py:701
+#: src/srtspeak/gui/app.py:921
 msgid "Select glossary JSON"
 msgstr "Select glossary JSON"
 
-#: src/srtspeak/gui/app.py:703
+#: src/srtspeak/gui/app.py:923
 msgid "JSON files (*.json);;All files (*.*)"
 msgstr "JSON files (*.json);;All files (*.*)"
 
-#: src/srtspeak/gui/app.py:717 src/srtspeak/gui/app.py:722
-#: src/srtspeak/gui/app.py:727 src/srtspeak/gui/app.py:740
-#: src/srtspeak/gui/app.py:751 src/srtspeak/gui/app.py:800
-#: src/srtspeak/gui/app.py:861 src/srtspeak/gui/app.py:870
-#: src/srtspeak/gui/app.py:876 src/srtspeak/gui/app.py:886
-#: src/srtspeak/gui/app.py:949 src/srtspeak/gui/app.py:960
-#: src/srtspeak/gui/app.py:971 src/srtspeak/gui/app.py:1006
-#: src/srtspeak/gui/app.py:1015 src/srtspeak/gui/app.py:1021
-#: src/srtspeak/gui/app.py:1032 src/srtspeak/gui/app.py:1059
-#: src/srtspeak/gui/app.py:1300
-msgid "Error"
-msgstr "Error"
+#: src/srtspeak/gui/app.py:936 src/srtspeak/gui/app.py:946
+msgid "Select output folder"
+msgstr "Select output folder"
 
-#: src/srtspeak/gui/app.py:717
+#: src/srtspeak/gui/app.py:961
 msgid "SRT file not found."
 msgstr "SRT file not found."
 
-#: src/srtspeak/gui/app.py:728
+#: src/srtspeak/gui/app.py:972
 #, python-brace-format
 msgid "Cannot read SRT: {e}"
 msgstr "Cannot read SRT: {e}"
 
-#: src/srtspeak/gui/app.py:740
+#: src/srtspeak/gui/app.py:984
 msgid "No text found in SRT."
 msgstr "No text found in SRT."
 
-#: src/srtspeak/gui/app.py:752
+#: src/srtspeak/gui/app.py:991
 msgid "API key required for language detection."
 msgstr "API key required for language detection."
 
-#: src/srtspeak/gui/app.py:801
+#: src/srtspeak/gui/app.py:1040
 #, python-brace-format
 msgid "Detection failed: {e}"
 msgstr "Detection failed: {e}"
 
-#: src/srtspeak/gui/app.py:817
+#: src/srtspeak/gui/app.py:1062
 msgid "Cues: file not found"
 msgstr "Cues: file not found"
 
-#: src/srtspeak/gui/app.py:824
+#: src/srtspeak/gui/app.py:1069
 #, python-brace-format
 msgid "Cues: encoding error ({detail})"
 msgstr "Cues: encoding error ({detail})"
 
-#: src/srtspeak/gui/app.py:829
+#: src/srtspeak/gui/app.py:1074
 #, python-brace-format
 msgid "Cues: parse error ({detail})"
 msgstr "Cues: parse error ({detail})"
 
-#: src/srtspeak/gui/app.py:834
+#: src/srtspeak/gui/app.py:1079
 #, python-brace-format
 msgid "Cues: read error ({detail})"
 msgstr "Cues: read error ({detail})"
 
-#: src/srtspeak/gui/app.py:837
+#: src/srtspeak/gui/app.py:1082
 #, python-brace-format
 msgid "Cues in SRT: {count}"
 msgstr "Cues in SRT: {count}"
 
-#: src/srtspeak/gui/app.py:862 src/srtspeak/gui/app.py:950
-#: src/srtspeak/gui/app.py:1007
+#: src/srtspeak/gui/app.py:1107 src/srtspeak/gui/app.py:1194
+#: src/srtspeak/gui/app.py:1251
 #, python-brace-format
 msgid ""
 "SRT file not found:\n"
@@ -1114,12 +1196,12 @@ msgstr ""
 "SRT file not found:\n"
 "{path}"
 
-#: src/srtspeak/gui/app.py:877 src/srtspeak/gui/app.py:1022
+#: src/srtspeak/gui/app.py:1122 src/srtspeak/gui/app.py:1266
 msgid "Select at least one target language."
 msgstr "Select at least one target language."
 
-#: src/srtspeak/gui/app.py:888 src/srtspeak/gui/app.py:973
-#: src/srtspeak/gui/app.py:1034
+#: src/srtspeak/gui/app.py:1131 src/srtspeak/gui/app.py:1215
+#: src/srtspeak/gui/app.py:1276
 msgid ""
 "XAI_API_KEY is not set.\n"
 "Set the environment variable or enter the key above."
@@ -1127,11 +1209,11 @@ msgstr ""
 "XAI_API_KEY is not set.\n"
 "Set the environment variable or enter the key above."
 
-#: src/srtspeak/gui/app.py:903
+#: src/srtspeak/gui/app.py:1146
 msgid "Merge glossary?"
 msgstr "Merge glossary?"
 
-#: src/srtspeak/gui/app.py:905
+#: src/srtspeak/gui/app.py:1148
 #, python-brace-format
 msgid ""
 "Glossary file already exists:\n"
@@ -1146,20 +1228,15 @@ msgstr ""
 "Yes = merge (existing entries win)\n"
 "No = overwrite with new suggestions"
 
-#: src/srtspeak/gui/app.py:1090
+#: src/srtspeak/gui/app.py:1332
 msgid "Running…"
 msgstr "Running…"
 
-#: src/srtspeak/gui/app.py:1099
+#: src/srtspeak/gui/app.py:1349
 msgid "Cancelling…"
 msgstr "Cancelling…"
 
-#: src/srtspeak/gui/app.py:1116
-#, python-brace-format
-msgid "{percent:.1f}%  {stage}  {lang}{current}/{total}  {message}"
-msgstr "{percent:.1f}%  {stage}  {lang}{current}/{total}  {message}"
-
-#: src/srtspeak/gui/app.py:1138 src/srtspeak/gui/app.py:1193
+#: src/srtspeak/gui/app.py:1428 src/srtspeak/gui/app.py:1483
 #, python-brace-format
 msgid ""
 "Build finished.\n"
@@ -1168,26 +1245,26 @@ msgstr ""
 "Build finished.\n"
 "Status: {status}"
 
-#: src/srtspeak/gui/app.py:1139 src/srtspeak/gui/app.py:1190
-#: src/srtspeak/gui/app.py:1220 src/srtspeak/gui/app.py:1264
+#: src/srtspeak/gui/app.py:1429 src/srtspeak/gui/app.py:1480
+#: src/srtspeak/gui/app.py:1510 src/srtspeak/gui/app.py:1554
 msgid "Done"
 msgstr "Done"
 
-#: src/srtspeak/gui/app.py:1139 src/srtspeak/gui/app.py:1191
+#: src/srtspeak/gui/app.py:1429 src/srtspeak/gui/app.py:1481
 #, python-brace-format
 msgid "Finished: {status}"
 msgstr "Finished: {status}"
 
-#: src/srtspeak/gui/app.py:1163
+#: src/srtspeak/gui/app.py:1453
 msgid "Dry-run result"
 msgstr "Dry-run result"
 
-#: src/srtspeak/gui/app.py:1165
+#: src/srtspeak/gui/app.py:1455
 #, python-brace-format
 msgid "Dry-run: {cues} cues, {chars} chars, ~${cost} USD"
 msgstr "Dry-run: {cues} cues, {chars} chars, ~${cost} USD"
 
-#: src/srtspeak/gui/app.py:1168
+#: src/srtspeak/gui/app.py:1458
 #, python-brace-format
 msgid ""
 "Dry-run complete (no TTS).\n"
@@ -1214,34 +1291,34 @@ msgstr ""
 "Report:\n"
 "{report_path}"
 
-#: src/srtspeak/gui/app.py:1185
+#: src/srtspeak/gui/app.py:1475
 msgid "on"
 msgstr "on"
 
-#: src/srtspeak/gui/app.py:1185
+#: src/srtspeak/gui/app.py:1475
 msgid "off"
 msgstr "off"
 
-#: src/srtspeak/gui/app.py:1186 src/srtspeak/gui/app.py:1258
+#: src/srtspeak/gui/app.py:1476 src/srtspeak/gui/app.py:1548
 msgid "(unknown)"
 msgstr "(unknown)"
 
-#: src/srtspeak/gui/app.py:1195
+#: src/srtspeak/gui/app.py:1485
 #, python-brace-format
 msgid "Language: {lang} ({language_code})"
 msgstr "Language: {lang} ({language_code})"
 
-#: src/srtspeak/gui/app.py:1198
+#: src/srtspeak/gui/app.py:1488
 #, python-brace-format
 msgid "Voice: {voice_id}"
 msgstr "Voice: {voice_id}"
 
-#: src/srtspeak/gui/app.py:1199
+#: src/srtspeak/gui/app.py:1489
 #, python-brace-format
 msgid "Cues: {processed}/{total}"
 msgstr "Cues: {processed}/{total}"
 
-#: src/srtspeak/gui/app.py:1202
+#: src/srtspeak/gui/app.py:1492
 #, python-brace-format
 msgid ""
 "Track:\n"
@@ -1250,7 +1327,7 @@ msgstr ""
 "Track:\n"
 "{path}"
 
-#: src/srtspeak/gui/app.py:1204 src/srtspeak/gui/app.py:1258
+#: src/srtspeak/gui/app.py:1494 src/srtspeak/gui/app.py:1548
 #, python-brace-format
 msgid ""
 "Report:\n"
@@ -1259,30 +1336,30 @@ msgstr ""
 "Report:\n"
 "{path}"
 
-#: src/srtspeak/gui/app.py:1209
+#: src/srtspeak/gui/app.py:1499
 #, python-brace-format
 msgid "Track duration: {ms:.0f} ms"
 msgstr "Track duration: {ms:.0f} ms"
 
-#: src/srtspeak/gui/app.py:1213
+#: src/srtspeak/gui/app.py:1503
 #, python-brace-format
 msgid "Duration error: {ms:.0f} ms"
 msgstr "Duration error: {ms:.0f} ms"
 
-#: src/srtspeak/gui/app.py:1219
+#: src/srtspeak/gui/app.py:1509
 msgid "Translate finished."
 msgstr "Translate finished."
 
-#: src/srtspeak/gui/app.py:1226
+#: src/srtspeak/gui/app.py:1516
 msgid "Translate result"
 msgstr "Translate result"
 
-#: src/srtspeak/gui/app.py:1228
+#: src/srtspeak/gui/app.py:1518
 #, python-brace-format
 msgid "Translate: {status}  ok={ok} failed={failed} skipped={skipped}"
 msgstr "Translate: {status}  ok={ok} failed={failed} skipped={skipped}"
 
-#: src/srtspeak/gui/app.py:1231
+#: src/srtspeak/gui/app.py:1521
 #, python-brace-format
 msgid ""
 "Translate finished.\n"
@@ -1291,39 +1368,39 @@ msgstr ""
 "Translate finished.\n"
 "Status: {status}"
 
-#: src/srtspeak/gui/app.py:1233
+#: src/srtspeak/gui/app.py:1523
 #, python-brace-format
 msgid "Source: {lang}"
 msgstr "Source: {lang}"
 
-#: src/srtspeak/gui/app.py:1234
+#: src/srtspeak/gui/app.py:1524
 #, python-brace-format
 msgid "Cues: {count}"
 msgstr "Cues: {count}"
 
-#: src/srtspeak/gui/app.py:1235
+#: src/srtspeak/gui/app.py:1525
 #, python-brace-format
 msgid "OK: {ok}  Failed: {failed}  Skipped: {skipped}"
 msgstr "OK: {ok}  Failed: {failed}  Skipped: {skipped}"
 
-#: src/srtspeak/gui/app.py:1246
+#: src/srtspeak/gui/app.py:1536
 msgid "(dry-run)"
 msgstr "(dry-run)"
 
-#: src/srtspeak/gui/app.py:1263
+#: src/srtspeak/gui/app.py:1553
 msgid "Glossary finished."
 msgstr "Glossary finished."
 
-#: src/srtspeak/gui/app.py:1268
+#: src/srtspeak/gui/app.py:1558
 msgid "Glossary result"
 msgstr "Glossary result"
 
-#: src/srtspeak/gui/app.py:1269
+#: src/srtspeak/gui/app.py:1559
 #, python-brace-format
 msgid "Glossary: {n} terms → {path}"
 msgstr "Glossary: {n} terms → {path}"
 
-#: src/srtspeak/gui/app.py:1271
+#: src/srtspeak/gui/app.py:1561
 #, python-brace-format
 msgid ""
 "Glossary written.\n"
@@ -1346,11 +1423,11 @@ msgstr ""
 "\n"
 "Review and edit before translate."
 
-#: src/srtspeak/gui/app.py:1296 src/srtspeak/gui/app.py:1338
+#: src/srtspeak/gui/app.py:1586 src/srtspeak/gui/app.py:1628
 msgid "Cancelled"
 msgstr "Cancelled"
 
-#: src/srtspeak/gui/app.py:1297
+#: src/srtspeak/gui/app.py:1587
 msgid "Operation was cancelled."
 msgstr "Operation was cancelled."
 
@@ -1423,9 +1500,7 @@ msgstr "Operation was cancelled."
 #~ msgid "kanjiconv: error ({exc})"
 #~ msgstr ""
 
-#~ msgid ""
-#~ "JA only: convert kanji to hiragana "
-#~ "via kanjiconv before TTS (default: on)"
+#~ msgid "JA only: convert kanji to hiragana via kanjiconv before TTS (default: on)"
 #~ msgstr ""
 
 #~ msgid "Build was cancelled."
@@ -1433,4 +1508,37 @@ msgstr "Operation was cancelled."
 
 #~ msgid "{percent:.1f}%  {stage}  {current}/{total}  {message}"
 #~ msgstr "{percent:.1f}%  {stage}  {current}/{total}  {message}"
+
+#~ msgid "Status: using environment variable"
+#~ msgstr "Status: using environment variable"
+
+#~ msgid "Status: not set (enter key above for this session)"
+#~ msgstr "Status: not set (enter key above for this session)"
+
+#~ msgid "Status: loaded from environment (ready)"
+#~ msgstr "Status: loaded from environment (ready)"
+
+#~ msgid "Status: loaded from keyring (ready)"
+#~ msgstr "Status: loaded from keyring (ready)"
+
+#~ msgid "Status: loaded from DPAPI (ready)"
+#~ msgstr "Status: loaded from DPAPI (ready)"
+
+#~ msgid "Status: session only (not saved)"
+#~ msgstr "Status: session only (not saved)"
+
+#~ msgid "Status: not set (enter key above)"
+#~ msgstr "Status: not set (enter key above)"
+
+#~ msgid "Using env XAI_API_KEY — leave blank"
+#~ msgstr "Using env XAI_API_KEY — leave blank"
+
+#~ msgid "Loaded from keyring — leave blank"
+#~ msgstr "Loaded from keyring — leave blank"
+
+#~ msgid "Loaded from DPAPI — leave blank"
+#~ msgstr "Loaded from DPAPI — leave blank"
+
+#~ msgid "Session key set — leave blank"
+#~ msgstr "Session key set — leave blank"
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import signal
 import sys
 from pathlib import Path
@@ -968,7 +969,22 @@ def _peek_locale(argv: list[str] | None) -> str | None:
     return None
 
 
+def _enable_utf8_stdio_defaults() -> None:
+    """Prefer UTF-8 on Windows consoles unless the user already set env vars."""
+    os.environ.setdefault("PYTHONUTF8", "1")
+    os.environ.setdefault("PYTHONIOENCODING", "utf-8")
+    for stream_name in ("stdout", "stderr", "stdin"):
+        stream = getattr(sys, stream_name, None)
+        reconf = getattr(stream, "reconfigure", None)
+        if callable(reconf):
+            try:
+                reconf(encoding="utf-8", errors="replace")
+            except Exception:
+                pass
+
+
 def main(argv: Sequence[str] | None = None) -> int:
+    _enable_utf8_stdio_defaults()
     argv_list = list(argv) if argv is not None else None
     setup_i18n(_peek_locale(argv_list))
     parser = build_parser()

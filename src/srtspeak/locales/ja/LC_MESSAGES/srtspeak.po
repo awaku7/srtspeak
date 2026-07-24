@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: srtspeak 0.1.0\n"
 "Report-Msgid-Bugs-To: hirofumi@ukawa.biPOT-Creation-Date: 2026-07-18 "
 "17:08+0900\n"
-"POT-Creation-Date: 2026-07-20 13:18+0900\n"
+"POT-Creation-Date: 2026-07-25 00:33+0900\n"
 "PO-Revision-Date: 2026-03-22 00:00+0900\n"
 "Last-Translator: Hirofumi Ukawa <hirofumi@ukawa.bizLanguage-Team: ja "
 "<hirofumi@ukawa.bizMIME-Version: 1.0\n"
@@ -62,7 +62,7 @@ msgstr "  取得元: {source}"
 msgid "  version: {version}"
 msgstr "  バージョン: {version}"
 
-#: src/srtspeak/cli.py:193 src/srtspeak/gui/app.py:1279
+#: src/srtspeak/cli.py:193 src/srtspeak/gui/app.py:1569
 msgid "(none)"
 msgstr "（なし）"
 
@@ -189,9 +189,7 @@ msgstr "翻訳エラー: {exc}"
 msgid ""
 "translate status={status} ok={ok} failed={failed} skipped={skipped} "
 "warnings={warnings} report={report}"
-msgstr ""
-"翻訳 状態={status} 成功={ok} 失敗={failed} スキップ={skipped} 警告={warnings} "
-"レポート={report}"
+msgstr "翻訳 状態={status} 成功={ok} 失敗={failed} スキップ={skipped} 警告={warnings} レポート={report}"
 
 #: src/srtspeak/cli.py:552
 #, python-brace-format
@@ -303,9 +301,7 @@ msgid "MVP must be 1"
 msgstr "MVP では 1 固定"
 
 #: src/srtspeak/cli.py:776
-msgid ""
-"JA only: convert kanji to hiragana via Grok Chat API before TTS (default:"
-" on)"
+msgid "JA only: convert kanji to hiragana via Grok Chat API before TTS (default: on)"
 msgstr "日本語のみ: TTS 前に Grok Chat API で漢字→ひらがな（既定: オン）"
 
 #: src/srtspeak/cli.py:785
@@ -432,149 +428,154 @@ msgstr "先頭 N キューのみ使用"
 msgid "error: jobs must be 1 in MVP"
 msgstr "エラー: MVP では jobs は 1 である必要があります"
 
-#: src/srtspeak/progress_i18n.py:17
+#: src/srtspeak/progress_i18n.py:40
+#, python-brace-format
+msgid "{percent:.1f}%  {stage}  {lang}{current}/{total}  {message}"
+msgstr "{percent:.1f}%  {stage}  {lang}{current}/{total}  {message}"
+
+#: src/srtspeak/progress_i18n.py:54
 msgid "parse"
 msgstr "解析"
 
-#: src/srtspeak/progress_i18n.py:19 src/srtspeak/progress_i18n.py:55
+#: src/srtspeak/progress_i18n.py:56 src/srtspeak/progress_i18n.py:92
 msgid "tts"
 msgstr "TTS"
 
-#: src/srtspeak/progress_i18n.py:21 src/srtspeak/progress_i18n.py:61
+#: src/srtspeak/progress_i18n.py:58 src/srtspeak/progress_i18n.py:98
 msgid "fit"
 msgstr "フィット"
 
-#: src/srtspeak/progress_i18n.py:23 src/srtspeak/progress_i18n.py:65
+#: src/srtspeak/progress_i18n.py:60 src/srtspeak/progress_i18n.py:102
 msgid "timeline"
 msgstr "タイムライン"
 
-#: src/srtspeak/progress_i18n.py:25
+#: src/srtspeak/progress_i18n.py:62
 msgid "report"
 msgstr "レポート"
 
-#: src/srtspeak/progress_i18n.py:27
+#: src/srtspeak/progress_i18n.py:64
 msgid "translate"
 msgstr "翻訳"
 
-#: src/srtspeak/progress_i18n.py:29
+#: src/srtspeak/progress_i18n.py:66
 msgid "translate_compress"
 msgstr "翻訳圧縮"
 
-#: src/srtspeak/progress_i18n.py:31
+#: src/srtspeak/progress_i18n.py:68
 msgid "translate_write"
 msgstr "翻訳書き込み"
 
-#: src/srtspeak/progress_i18n.py:33
+#: src/srtspeak/progress_i18n.py:70
 msgid "glossary"
 msgstr "用語集"
 
-#: src/srtspeak/progress_i18n.py:35
+#: src/srtspeak/progress_i18n.py:72
 msgid "ja_yomi"
 msgstr "ひらがな化"
 
-#: src/srtspeak/progress_i18n.py:49
+#: src/srtspeak/progress_i18n.py:86
 msgid "parse srt"
 msgstr "SRT解析"
 
-#: src/srtspeak/progress_i18n.py:51
+#: src/srtspeak/progress_i18n.py:88
 msgid "parsed"
 msgstr "解析完了"
 
-#: src/srtspeak/progress_i18n.py:53
+#: src/srtspeak/progress_i18n.py:90
 msgid "dry_run done"
 msgstr "ドライラン完了"
 
-#: src/srtspeak/progress_i18n.py:57
+#: src/srtspeak/progress_i18n.py:94
 msgid "tts done"
 msgstr "TTS完了"
 
-#: src/srtspeak/progress_i18n.py:59
+#: src/srtspeak/progress_i18n.py:96
 msgid "tts api"
 msgstr "TTS API"
 
-#: src/srtspeak/progress_i18n.py:63
+#: src/srtspeak/progress_i18n.py:100
 msgid "fit done"
 msgstr "フィット完了"
 
-#: src/srtspeak/progress_i18n.py:67
+#: src/srtspeak/progress_i18n.py:104
 msgid "timeline done"
 msgstr "タイムライン完了"
 
-#: src/srtspeak/progress_i18n.py:69
+#: src/srtspeak/progress_i18n.py:106
 msgid "report done"
 msgstr "レポート完了"
 
-#: src/srtspeak/progress_i18n.py:71
+#: src/srtspeak/progress_i18n.py:108
 msgid "start"
 msgstr "開始"
 
-#: src/srtspeak/progress_i18n.py:73
+#: src/srtspeak/progress_i18n.py:110
 msgid "done"
 msgstr "完了"
 
-#: src/srtspeak/progress_i18n.py:75
+#: src/srtspeak/progress_i18n.py:112
 msgid "extract candidates"
 msgstr "候補抽出"
 
-#: src/srtspeak/progress_i18n.py:77
+#: src/srtspeak/progress_i18n.py:114
 msgid "chat suggest"
 msgstr "Chat提案"
 
-#: src/srtspeak/progress_i18n.py:79
+#: src/srtspeak/progress_i18n.py:116
 msgid "finalize glossary"
 msgstr "用語集確定"
 
-#: src/srtspeak/progress_i18n.py:83
+#: src/srtspeak/progress_i18n.py:120
 #, python-brace-format
 msgid "cache hit {current}/{total}"
 msgstr "キャッシュヒット {current}/{total}"
 
-#: src/srtspeak/progress_i18n.py:90
+#: src/srtspeak/progress_i18n.py:127
 #, python-brace-format
 msgid "hiragana batch {current}/{total}"
 msgstr "ひらがな バッチ {current}/{total}"
 
-#: src/srtspeak/progress_i18n.py:96
+#: src/srtspeak/progress_i18n.py:133
 #, python-brace-format
 msgid "{target} batch {current}/{total} waiting chat... {seconds}s"
 msgstr "{target} バッチ {current}/{total} Chat待機中… {seconds}s"
 
-#: src/srtspeak/progress_i18n.py:105
+#: src/srtspeak/progress_i18n.py:142
 #, python-brace-format
 msgid "{target} batch {current}/{total} done"
 msgstr "{target} バッチ {current}/{total} 完了"
 
-#: src/srtspeak/progress_i18n.py:111
+#: src/srtspeak/progress_i18n.py:148
 #, python-brace-format
 msgid "{target} batch {current}/{total}"
 msgstr "{target} バッチ {current}/{total}"
 
-#: src/srtspeak/progress_i18n.py:117
+#: src/srtspeak/progress_i18n.py:154
 #, python-brace-format
 msgid "{target} compress index {index}"
 msgstr "{target} 圧縮 index {index}"
 
-#: src/srtspeak/progress_i18n.py:123
+#: src/srtspeak/progress_i18n.py:160
 #, python-brace-format
 msgid "waiting chat... {seconds}s"
 msgstr "Chat待機中… {seconds}s"
 
-#: src/srtspeak/progress_i18n.py:127
+#: src/srtspeak/progress_i18n.py:164
 #, python-brace-format
 msgid "candidates={count}"
 msgstr "候補数={count}"
 
-#: src/srtspeak/progress_i18n.py:131
+#: src/srtspeak/progress_i18n.py:168
 #, python-brace-format
 msgid "write {name}"
 msgstr "書き込み {name}"
 
-#: src/srtspeak/progress_i18n.py:135
+#: src/srtspeak/progress_i18n.py:172
 #, python-brace-format
 msgid "{target} finished"
 msgstr "{target} 完了"
 
-#: src/srtspeak/progress_i18n.py:139
+#: src/srtspeak/progress_i18n.py:176
 #, python-brace-format
 msgid "{target} dry-run"
 msgstr "{target} ドライラン"
@@ -659,12 +660,12 @@ msgstr "ベトナム語"
 msgid "Thai"
 msgstr "タイ語"
 
-#: src/srtspeak/core/languages.py:96
+#: src/srtspeak/core/languages.py:216
 #, python-brace-format
 msgid "unknown language code: {value}"
 msgstr "不明な言語コード: {value}"
 
-#: src/srtspeak/core/languages.py:109
+#: src/srtspeak/core/languages.py:229
 #, python-brace-format
 msgid "unknown lang key: {lang}"
 msgstr "不明な言語キー: {lang}"
@@ -748,9 +749,7 @@ msgstr "SRTにキューが見つかりません（空ファイルまたは形式
 msgid ""
 "cues {a} and {b} overlap in time: [{sa},{ea}) and [{sb},{eb}) (half-open "
 "[start,end); adjacent is allowed)"
-msgstr ""
-"キュー {a} と {b} が時間的に重なっています: [{sa},{ea}) と [{sb},{eb})（半開区間 "
-"[start,end)、隣接は可）"
+msgstr "キュー {a} と {b} が時間的に重なっています: [{sa},{ea}) と [{sb},{eb})（半開区間 [start,end)、隣接は可）"
 
 #: src/srtspeak/core/srt_parser.py:290
 msgid "limit must be >= 1"
@@ -844,264 +843,345 @@ msgstr "親しみやすく明るい"
 msgid "Docs catalog voice"
 msgstr "ドキュメント掲載の声"
 
-#: src/srtspeak/gui/app.py:250
+#: src/srtspeak/gui/app.py:329
 msgid "API key (XAI_API_KEY)"
 msgstr "APIキー（XAI_API_KEY）"
 
-#: src/srtspeak/gui/app.py:263
+#: src/srtspeak/gui/app.py:334
+msgid "Save on this PC"
+msgstr ""
+
+#: src/srtspeak/gui/app.py:338
+msgid ""
+"Save via OS credential store (Windows Credential Locker / macOS Keychain / "
+"Linux Secret Service). Backend: "
+msgstr ""
+
+#: src/srtspeak/gui/app.py:345 src/srtspeak/gui/app.py:443
+msgid "No secure store. Install: pip install keyring (or set XAI_API_KEY)."
+msgstr ""
+
+#: src/srtspeak/gui/app.py:349
+msgid "Clear saved"
+msgstr ""
+
+#: src/srtspeak/gui/app.py:368
 msgid "Build"
 msgstr "ビルド"
 
-#: src/srtspeak/gui/app.py:264 src/srtspeak/gui/app.py:300
+#: src/srtspeak/gui/app.py:369 src/srtspeak/gui/app.py:504
 msgid "Translate"
 msgstr "翻訳"
 
-#: src/srtspeak/gui/app.py:272 src/srtspeak/gui/app.py:1317
+#: src/srtspeak/gui/app.py:377 src/srtspeak/gui/app.py:1607
 msgid "Ready"
 msgstr "待機中"
 
-#: src/srtspeak/gui/app.py:277 src/srtspeak/gui/app.py:302
+#: src/srtspeak/gui/app.py:385 src/srtspeak/gui/app.py:506
 msgid "Start"
 msgstr "開始"
 
-#: src/srtspeak/gui/app.py:278 src/srtspeak/gui/app.py:1089
-#: src/srtspeak/gui/app.py:1314
+#: src/srtspeak/gui/app.py:386 src/srtspeak/gui/app.py:1331
+#: src/srtspeak/gui/app.py:1604
 msgid "Cancel"
 msgstr "中止"
 
-#: src/srtspeak/gui/app.py:292
-msgid "Status: using environment variable"
-msgstr "状態: 環境変数を使用中"
+#: src/srtspeak/gui/app.py:402
+msgid "API key ready (from environment)"
+msgstr "APIキー準備OK（環境変数）"
 
-#: src/srtspeak/gui/app.py:293
-msgid "Status: not set (enter key above for this session)"
-msgstr "状態: 未設定（上の欄にキーを入力するとこのセッションで使用）"
+#: src/srtspeak/gui/app.py:404
+msgid "API key ready (from keyring)"
+msgstr "APIキー準備OK（keyring）"
 
-#: src/srtspeak/gui/app.py:318
+#: src/srtspeak/gui/app.py:406
+msgid "API key ready (from DPAPI)"
+msgstr "APIキー準備OK（DPAPI）"
+
+#: src/srtspeak/gui/app.py:408
+msgid "API key ready (this session)"
+msgstr "APIキー準備OK（このセッション）"
+
+#: src/srtspeak/gui/app.py:409
+msgid "No API key yet — paste above"
+msgstr "APIキー未設定 — 上に貼り付け"
+
+#: src/srtspeak/gui/app.py:420
+msgid "Already set via env — typing optional"
+msgstr "環境変数で設定済み — 入力不要"
+
+#: src/srtspeak/gui/app.py:422 src/srtspeak/gui/app.py:424
+msgid "Already loaded — typing optional"
+msgstr "読み込み済み — 入力不要"
+
+#: src/srtspeak/gui/app.py:426
+msgid "Session key ready — typing optional"
+msgstr "セッションキー準備OK — 入力不要"
+
+#: src/srtspeak/gui/app.py:428
+msgid "Paste API key here"
+msgstr "APIキーをここに貼り付け"
+
+#: src/srtspeak/gui/app.py:441 src/srtspeak/gui/app.py:452
+#: src/srtspeak/gui/app.py:464 src/srtspeak/gui/app.py:961
+#: src/srtspeak/gui/app.py:966 src/srtspeak/gui/app.py:971
+#: src/srtspeak/gui/app.py:984 src/srtspeak/gui/app.py:990
+#: src/srtspeak/gui/app.py:1039 src/srtspeak/gui/app.py:1106
+#: src/srtspeak/gui/app.py:1115 src/srtspeak/gui/app.py:1121
+#: src/srtspeak/gui/app.py:1129 src/srtspeak/gui/app.py:1193
+#: src/srtspeak/gui/app.py:1204 src/srtspeak/gui/app.py:1213
+#: src/srtspeak/gui/app.py:1250 src/srtspeak/gui/app.py:1259
+#: src/srtspeak/gui/app.py:1265 src/srtspeak/gui/app.py:1274
+#: src/srtspeak/gui/app.py:1301 src/srtspeak/gui/app.py:1590
+msgid "Error"
+msgstr "エラー"
+
+#: src/srtspeak/gui/app.py:454
+msgid "Enter an API key above first (or set XAI_API_KEY in the environment)."
+msgstr ""
+
+#: src/srtspeak/gui/app.py:465
+msgid "Could not save key: "
+msgstr ""
+
+#: src/srtspeak/gui/app.py:474
+msgid "Saved"
+msgstr ""
+
+#: src/srtspeak/gui/app.py:476
+msgid ""
+"API key saved in the OS credential store (this user only).\n"
+"Backend: "
+msgstr ""
+
+#: src/srtspeak/gui/app.py:489 src/srtspeak/gui/app.py:495
+msgid "Cleared"
+msgstr ""
+
+#: src/srtspeak/gui/app.py:490
+msgid "Saved API key removed from this PC."
+msgstr ""
+
+#: src/srtspeak/gui/app.py:496
+msgid "No saved API key found."
+msgstr ""
+
+#: src/srtspeak/gui/app.py:522
 msgid "SRT file"
 msgstr "SRTファイル"
 
-#: src/srtspeak/gui/app.py:320 src/srtspeak/gui/app.py:403
-#: src/srtspeak/gui/app.py:813
+#: src/srtspeak/gui/app.py:524 src/srtspeak/gui/app.py:614
+#: src/srtspeak/gui/app.py:1058
 msgid "Cues: —"
 msgstr "キュー数: —"
 
-#: src/srtspeak/gui/app.py:325 src/srtspeak/gui/app.py:408
-#: src/srtspeak/gui/app.py:425
+#: src/srtspeak/gui/app.py:529 src/srtspeak/gui/app.py:619
+#: src/srtspeak/gui/app.py:636
 #, python-brace-format
 msgid "{name} ({code})"
 msgstr "{name}（{code}）"
 
-#: src/srtspeak/gui/app.py:328 src/srtspeak/gui/app.py:411
+#: src/srtspeak/gui/app.py:532 src/srtspeak/gui/app.py:622
 msgid "Detect"
 msgstr "検出"
 
-#: src/srtspeak/gui/app.py:335
+#: src/srtspeak/gui/app.py:539
 msgid "Language"
 msgstr "言語"
 
-#: src/srtspeak/gui/app.py:345
+#: src/srtspeak/gui/app.py:549
 msgid "Voice"
 msgstr "声"
 
-#: src/srtspeak/gui/app.py:348 src/srtspeak/gui/app.py:446
+#: src/srtspeak/gui/app.py:559 src/srtspeak/gui/app.py:664
 msgid "Output folder"
 msgstr "出力フォルダ"
 
-#: src/srtspeak/gui/app.py:358
+#: src/srtspeak/gui/app.py:569
 msgid "Base WAV (mix onto)"
 msgstr "ベース WAV（重ね先）"
 
-#: src/srtspeak/gui/app.py:362 src/srtspeak/gui/app.py:477
+#: src/srtspeak/gui/app.py:573 src/srtspeak/gui/app.py:695
 msgid "all"
 msgstr "すべて"
 
-#: src/srtspeak/gui/app.py:365
+#: src/srtspeak/gui/app.py:576
 msgid "Process only the first N cues. 0 = all cues in the SRT."
 msgstr "先頭から N 件のキューだけ処理します。0 で SRT 内の全キュー。"
 
-#: src/srtspeak/gui/app.py:367 src/srtspeak/gui/app.py:479
+#: src/srtspeak/gui/app.py:578 src/srtspeak/gui/app.py:697
 msgid "Max cues (0 = all)"
 msgstr "最大キュー数（0=すべて）"
 
-#: src/srtspeak/gui/app.py:369
+#: src/srtspeak/gui/app.py:580
 msgid "Dry-run (estimate only, no TTS)"
 msgstr "ドライラン（見積もりのみ・TTSなし）"
 
-#: src/srtspeak/gui/app.py:371
+#: src/srtspeak/gui/app.py:582
 msgid "Japanese yomi (kanji → hiragana)"
 msgstr "日本語よみ（漢字→ひらがな）"
 
-#: src/srtspeak/gui/app.py:375
+#: src/srtspeak/gui/app.py:586
 msgid "Ignore existing TTS/ja_yomi caches (still write fresh)"
 msgstr "既存の TTS/ja_yomi キャッシュを無視（新規は書き込む）"
 
-#: src/srtspeak/gui/app.py:379
+#: src/srtspeak/gui/app.py:590
 msgid "Strip kaomoji for TTS only (emoji kept; SRT unchanged)"
 msgstr "TTS 用のみ顔文字を除去（絵文字は保持・SRT は変更なし）"
 
-#: src/srtspeak/gui/app.py:401
+#: src/srtspeak/gui/app.py:612
 msgid "Source SRT"
 msgstr "元 SRT"
 
-#: src/srtspeak/gui/app.py:418
+#: src/srtspeak/gui/app.py:629
 msgid "Source language"
 msgstr "元言語"
 
-#: src/srtspeak/gui/app.py:420
+#: src/srtspeak/gui/app.py:631
 msgid "Target languages"
 msgstr "対象言語"
 
-#: src/srtspeak/gui/app.py:436
+#: src/srtspeak/gui/app.py:647
 msgid "Select all"
 msgstr "すべて選択"
 
-#: src/srtspeak/gui/app.py:437
+#: src/srtspeak/gui/app.py:648
 msgid "Clear"
 msgstr "クリア"
 
-#: src/srtspeak/gui/app.py:451
+#: src/srtspeak/gui/app.py:669
 msgid "Suggest"
 msgstr "提案"
 
-#: src/srtspeak/gui/app.py:453
+#: src/srtspeak/gui/app.py:671
 msgid "Generate glossary from source SRT via Grok Chat"
 msgstr "Grok Chat で元 SRT から用語集を生成"
 
-#: src/srtspeak/gui/app.py:462
+#: src/srtspeak/gui/app.py:680
 msgid "Glossary (JSON)"
 msgstr "用語集（JSON）"
 
-#: src/srtspeak/gui/app.py:466
+#: src/srtspeak/gui/app.py:684
 msgid "Off"
 msgstr "オフ"
 
-#: src/srtspeak/gui/app.py:467
+#: src/srtspeak/gui/app.py:685
 msgid "Hint (default)"
 msgstr "ヒント（既定）"
 
-#: src/srtspeak/gui/app.py:468
+#: src/srtspeak/gui/app.py:686
 msgid "Enforce (2nd pass)"
 msgstr "強制（2パス目）"
 
-#: src/srtspeak/gui/app.py:469
+#: src/srtspeak/gui/app.py:687
 msgid "Report only"
 msgstr "レポートのみ"
 
-#: src/srtspeak/gui/app.py:473
+#: src/srtspeak/gui/app.py:691
 msgid "Length mode"
 msgstr "長さモード"
 
-#: src/srtspeak/gui/app.py:484
+#: src/srtspeak/gui/app.py:702
 msgid "Batch size"
 msgstr "バッチサイズ"
 
-#: src/srtspeak/gui/app.py:486
+#: src/srtspeak/gui/app.py:704
 msgid "Dry-run (estimate only, no Chat)"
 msgstr "ドライラン（見積もりのみ・Chat なし）"
 
-#: src/srtspeak/gui/app.py:488
+#: src/srtspeak/gui/app.py:706
 msgid "Fail fast (stop on first target error)"
 msgstr "即失敗（最初の対象エラーで停止）"
 
-#: src/srtspeak/gui/app.py:491
+#: src/srtspeak/gui/app.py:709
 msgid "Ignore existing translate caches (still write fresh)"
 msgstr "既存の翻訳キャッシュを無視（新規は書き込む）"
 
-#: src/srtspeak/gui/app.py:496
+#: src/srtspeak/gui/app.py:714
 #, python-brace-format
 msgid "{stem}_{lang}.srt"
 msgstr "{stem}_{lang}.srt"
 
-#: src/srtspeak/gui/app.py:498
+#: src/srtspeak/gui/app.py:716
 msgid "File naming"
 msgstr "ファイル命名"
 
-#: src/srtspeak/gui/app.py:655 src/srtspeak/gui/app.py:673
+#: src/srtspeak/gui/app.py:887 src/srtspeak/gui/app.py:899
 msgid "Open SRT"
 msgstr "SRTを開く"
 
-#: src/srtspeak/gui/app.py:657 src/srtspeak/gui/app.py:675
+#: src/srtspeak/gui/app.py:889 src/srtspeak/gui/app.py:901
 msgid "SRT files (*.srt);;All files (*.*)"
 msgstr "SRTファイル (*.srt);;すべてのファイル (*.*)"
 
-#: src/srtspeak/gui/app.py:691
+#: src/srtspeak/gui/app.py:911
 msgid "Select base WAV"
 msgstr "ベース WAV を選択"
 
-#: src/srtspeak/gui/app.py:693
+#: src/srtspeak/gui/app.py:913
 msgid "WAV files (*.wav);;All files (*.*)"
 msgstr "WAV ファイル (*.wav);;すべてのファイル (*.*)"
 
-#: src/srtspeak/gui/app.py:701
+#: src/srtspeak/gui/app.py:921
 msgid "Select glossary JSON"
 msgstr "用語集 JSON を選択"
 
-#: src/srtspeak/gui/app.py:703
+#: src/srtspeak/gui/app.py:923
 msgid "JSON files (*.json);;All files (*.*)"
 msgstr "JSON ファイル (*.json);;すべてのファイル (*.*)"
 
-#: src/srtspeak/gui/app.py:717 src/srtspeak/gui/app.py:722
-#: src/srtspeak/gui/app.py:727 src/srtspeak/gui/app.py:740
-#: src/srtspeak/gui/app.py:751 src/srtspeak/gui/app.py:800
-#: src/srtspeak/gui/app.py:861 src/srtspeak/gui/app.py:870
-#: src/srtspeak/gui/app.py:876 src/srtspeak/gui/app.py:886
-#: src/srtspeak/gui/app.py:949 src/srtspeak/gui/app.py:960
-#: src/srtspeak/gui/app.py:971 src/srtspeak/gui/app.py:1006
-#: src/srtspeak/gui/app.py:1015 src/srtspeak/gui/app.py:1021
-#: src/srtspeak/gui/app.py:1032 src/srtspeak/gui/app.py:1059
-#: src/srtspeak/gui/app.py:1300
-msgid "Error"
-msgstr "エラー"
+#: src/srtspeak/gui/app.py:936 src/srtspeak/gui/app.py:946
+msgid "Select output folder"
+msgstr "出力フォルダを選択"
 
-#: src/srtspeak/gui/app.py:717
+#: src/srtspeak/gui/app.py:961
 msgid "SRT file not found."
 msgstr "SRT ファイルが見つかりません。"
 
-#: src/srtspeak/gui/app.py:728
+#: src/srtspeak/gui/app.py:972
 #, python-brace-format
 msgid "Cannot read SRT: {e}"
 msgstr "SRT を読めません: {e}"
 
-#: src/srtspeak/gui/app.py:740
+#: src/srtspeak/gui/app.py:984
 msgid "No text found in SRT."
 msgstr "SRT にテキストがありません。"
 
-#: src/srtspeak/gui/app.py:752
+#: src/srtspeak/gui/app.py:991
 msgid "API key required for language detection."
 msgstr "言語検出には API キーが必要です。"
 
-#: src/srtspeak/gui/app.py:801
+#: src/srtspeak/gui/app.py:1040
 #, python-brace-format
 msgid "Detection failed: {e}"
 msgstr "検出に失敗しました: {e}"
 
-#: src/srtspeak/gui/app.py:817
+#: src/srtspeak/gui/app.py:1062
 msgid "Cues: file not found"
 msgstr "キュー数: ファイルなし"
 
-#: src/srtspeak/gui/app.py:824
+#: src/srtspeak/gui/app.py:1069
 #, python-brace-format
 msgid "Cues: encoding error ({detail})"
 msgstr "キュー: エンコーディングエラー（{detail}）"
 
-#: src/srtspeak/gui/app.py:829
+#: src/srtspeak/gui/app.py:1074
 #, python-brace-format
 msgid "Cues: parse error ({detail})"
 msgstr "キュー数: 解析エラー（{detail}）"
 
-#: src/srtspeak/gui/app.py:834
+#: src/srtspeak/gui/app.py:1079
 #, python-brace-format
 msgid "Cues: read error ({detail})"
 msgstr "キュー数: 読み込みエラー（{detail}）"
 
-#: src/srtspeak/gui/app.py:837
+#: src/srtspeak/gui/app.py:1082
 #, python-brace-format
 msgid "Cues in SRT: {count}"
 msgstr "SRT内キュー数: {count}"
 
-#: src/srtspeak/gui/app.py:862 src/srtspeak/gui/app.py:950
-#: src/srtspeak/gui/app.py:1007
+#: src/srtspeak/gui/app.py:1107 src/srtspeak/gui/app.py:1194
+#: src/srtspeak/gui/app.py:1251
 #, python-brace-format
 msgid ""
 "SRT file not found:\n"
@@ -1110,12 +1190,12 @@ msgstr ""
 "SRTファイルが見つかりません:\n"
 "{path}"
 
-#: src/srtspeak/gui/app.py:877 src/srtspeak/gui/app.py:1022
+#: src/srtspeak/gui/app.py:1122 src/srtspeak/gui/app.py:1266
 msgid "Select at least one target language."
 msgstr "対象言語を1つ以上選択してください。"
 
-#: src/srtspeak/gui/app.py:888 src/srtspeak/gui/app.py:973
-#: src/srtspeak/gui/app.py:1034
+#: src/srtspeak/gui/app.py:1131 src/srtspeak/gui/app.py:1215
+#: src/srtspeak/gui/app.py:1276
 msgid ""
 "XAI_API_KEY is not set.\n"
 "Set the environment variable or enter the key above."
@@ -1123,11 +1203,11 @@ msgstr ""
 "XAI_API_KEY が設定されていません。\n"
 "環境変数を設定するか、上の欄にキーを入力してください。"
 
-#: src/srtspeak/gui/app.py:903
+#: src/srtspeak/gui/app.py:1146
 msgid "Merge glossary?"
 msgstr "用語集をマージしますか？"
 
-#: src/srtspeak/gui/app.py:905
+#: src/srtspeak/gui/app.py:1148
 #, python-brace-format
 msgid ""
 "Glossary file already exists:\n"
@@ -1142,20 +1222,15 @@ msgstr ""
 "はい = マージ（既存エントリ優先）\n"
 "いいえ = 新しい提案で上書き"
 
-#: src/srtspeak/gui/app.py:1090
+#: src/srtspeak/gui/app.py:1332
 msgid "Running…"
 msgstr "実行中…"
 
-#: src/srtspeak/gui/app.py:1099
+#: src/srtspeak/gui/app.py:1349
 msgid "Cancelling…"
 msgstr "中止しています…"
 
-#: src/srtspeak/gui/app.py:1116
-#, python-brace-format
-msgid "{percent:.1f}%  {stage}  {lang}{current}/{total}  {message}"
-msgstr "{percent:.1f}%  {stage}  {lang}{current}/{total}  {message}"
-
-#: src/srtspeak/gui/app.py:1138 src/srtspeak/gui/app.py:1193
+#: src/srtspeak/gui/app.py:1428 src/srtspeak/gui/app.py:1483
 #, python-brace-format
 msgid ""
 "Build finished.\n"
@@ -1164,26 +1239,26 @@ msgstr ""
 "ビルドが完了しました。\n"
 "状態: {status}"
 
-#: src/srtspeak/gui/app.py:1139 src/srtspeak/gui/app.py:1190
-#: src/srtspeak/gui/app.py:1220 src/srtspeak/gui/app.py:1264
+#: src/srtspeak/gui/app.py:1429 src/srtspeak/gui/app.py:1480
+#: src/srtspeak/gui/app.py:1510 src/srtspeak/gui/app.py:1554
 msgid "Done"
 msgstr "完了"
 
-#: src/srtspeak/gui/app.py:1139 src/srtspeak/gui/app.py:1191
+#: src/srtspeak/gui/app.py:1429 src/srtspeak/gui/app.py:1481
 #, python-brace-format
 msgid "Finished: {status}"
 msgstr "完了: {status}"
 
-#: src/srtspeak/gui/app.py:1163
+#: src/srtspeak/gui/app.py:1453
 msgid "Dry-run result"
 msgstr "ドライラン結果"
 
-#: src/srtspeak/gui/app.py:1165
+#: src/srtspeak/gui/app.py:1455
 #, python-brace-format
 msgid "Dry-run: {cues} cues, {chars} chars, ~${cost} USD"
 msgstr "ドライラン: {cues} キュー、{chars} 文字、約 ${cost} USD"
 
-#: src/srtspeak/gui/app.py:1168
+#: src/srtspeak/gui/app.py:1458
 #, python-brace-format
 msgid ""
 "Dry-run complete (no TTS).\n"
@@ -1210,34 +1285,34 @@ msgstr ""
 "レポート:\n"
 "{report_path}"
 
-#: src/srtspeak/gui/app.py:1185
+#: src/srtspeak/gui/app.py:1475
 msgid "on"
 msgstr "オン"
 
-#: src/srtspeak/gui/app.py:1185
+#: src/srtspeak/gui/app.py:1475
 msgid "off"
 msgstr "オフ"
 
-#: src/srtspeak/gui/app.py:1186 src/srtspeak/gui/app.py:1258
+#: src/srtspeak/gui/app.py:1476 src/srtspeak/gui/app.py:1548
 msgid "(unknown)"
 msgstr "（不明）"
 
-#: src/srtspeak/gui/app.py:1195
+#: src/srtspeak/gui/app.py:1485
 #, python-brace-format
 msgid "Language: {lang} ({language_code})"
 msgstr "言語: {lang} ({language_code})"
 
-#: src/srtspeak/gui/app.py:1198
+#: src/srtspeak/gui/app.py:1488
 #, python-brace-format
 msgid "Voice: {voice_id}"
 msgstr "声: {voice_id}"
 
-#: src/srtspeak/gui/app.py:1199
+#: src/srtspeak/gui/app.py:1489
 #, python-brace-format
 msgid "Cues: {processed}/{total}"
 msgstr "キュー: {processed}/{total}"
 
-#: src/srtspeak/gui/app.py:1202
+#: src/srtspeak/gui/app.py:1492
 #, python-brace-format
 msgid ""
 "Track:\n"
@@ -1246,7 +1321,7 @@ msgstr ""
 "トラック:\n"
 "{path}"
 
-#: src/srtspeak/gui/app.py:1204 src/srtspeak/gui/app.py:1258
+#: src/srtspeak/gui/app.py:1494 src/srtspeak/gui/app.py:1548
 #, python-brace-format
 msgid ""
 "Report:\n"
@@ -1255,30 +1330,30 @@ msgstr ""
 "レポート:\n"
 "{path}"
 
-#: src/srtspeak/gui/app.py:1209
+#: src/srtspeak/gui/app.py:1499
 #, python-brace-format
 msgid "Track duration: {ms:.0f} ms"
 msgstr "トラック長: {ms:.0f} ms"
 
-#: src/srtspeak/gui/app.py:1213
+#: src/srtspeak/gui/app.py:1503
 #, python-brace-format
 msgid "Duration error: {ms:.0f} ms"
 msgstr "尺誤差: {ms:.0f} ms"
 
-#: src/srtspeak/gui/app.py:1219
+#: src/srtspeak/gui/app.py:1509
 msgid "Translate finished."
 msgstr "翻訳が完了しました。"
 
-#: src/srtspeak/gui/app.py:1226
+#: src/srtspeak/gui/app.py:1516
 msgid "Translate result"
 msgstr "翻訳結果"
 
-#: src/srtspeak/gui/app.py:1228
+#: src/srtspeak/gui/app.py:1518
 #, python-brace-format
 msgid "Translate: {status}  ok={ok} failed={failed} skipped={skipped}"
 msgstr "翻訳: {status}  成功={ok} 失敗={failed} スキップ={skipped}"
 
-#: src/srtspeak/gui/app.py:1231
+#: src/srtspeak/gui/app.py:1521
 #, python-brace-format
 msgid ""
 "Translate finished.\n"
@@ -1287,39 +1362,39 @@ msgstr ""
 "翻訳が完了しました。\n"
 "状態: {status}"
 
-#: src/srtspeak/gui/app.py:1233
+#: src/srtspeak/gui/app.py:1523
 #, python-brace-format
 msgid "Source: {lang}"
 msgstr "元言語: {lang}"
 
-#: src/srtspeak/gui/app.py:1234
+#: src/srtspeak/gui/app.py:1524
 #, python-brace-format
 msgid "Cues: {count}"
 msgstr "キュー: {count}"
 
-#: src/srtspeak/gui/app.py:1235
+#: src/srtspeak/gui/app.py:1525
 #, python-brace-format
 msgid "OK: {ok}  Failed: {failed}  Skipped: {skipped}"
 msgstr "成功: {ok}  失敗: {failed}  スキップ: {skipped}"
 
-#: src/srtspeak/gui/app.py:1246
+#: src/srtspeak/gui/app.py:1536
 msgid "(dry-run)"
 msgstr "（ドライラン）"
 
-#: src/srtspeak/gui/app.py:1263
+#: src/srtspeak/gui/app.py:1553
 msgid "Glossary finished."
 msgstr "用語集処理が完了しました。"
 
-#: src/srtspeak/gui/app.py:1268
+#: src/srtspeak/gui/app.py:1558
 msgid "Glossary result"
 msgstr "用語集結果"
 
-#: src/srtspeak/gui/app.py:1269
+#: src/srtspeak/gui/app.py:1559
 #, python-brace-format
 msgid "Glossary: {n} terms → {path}"
 msgstr "用語集: {n} 語 → {path}"
 
-#: src/srtspeak/gui/app.py:1271
+#: src/srtspeak/gui/app.py:1561
 #, python-brace-format
 msgid ""
 "Glossary written.\n"
@@ -1342,11 +1417,11 @@ msgstr ""
 "\n"
 "翻訳前に内容を確認・編集してください。"
 
-#: src/srtspeak/gui/app.py:1296 src/srtspeak/gui/app.py:1338
+#: src/srtspeak/gui/app.py:1586 src/srtspeak/gui/app.py:1628
 msgid "Cancelled"
 msgstr "中止"
 
-#: src/srtspeak/gui/app.py:1297
+#: src/srtspeak/gui/app.py:1587
 msgid "Operation was cancelled."
 msgstr "操作は中止されました。"
 
@@ -1359,9 +1434,7 @@ msgstr "操作は中止されました。"
 #~ msgid "kanjiconv: error ({exc})"
 #~ msgstr "kanjiconv: エラー（{exc}）"
 
-#~ msgid ""
-#~ "JA only: convert kanji to hiragana "
-#~ "via kanjiconv before TTS (default: on)"
+#~ msgid "JA only: convert kanji to hiragana via kanjiconv before TTS (default: on)"
 #~ msgstr "日本語のみ: TTS 前に kanjiconv で漢字→ひらがな（既定: オン）"
 
 #~ msgid "Build was cancelled."
@@ -1369,4 +1442,37 @@ msgstr "操作は中止されました。"
 
 #~ msgid "{percent:.1f}%  {stage}  {current}/{total}  {message}"
 #~ msgstr "{percent:.1f}%  {stage}  {current}/{total}  {message}"
+
+#~ msgid "Status: using environment variable"
+#~ msgstr "状態: 環境変数を使用中"
+
+#~ msgid "Status: not set (enter key above for this session)"
+#~ msgstr "状態: 未設定（上の欄にキーを入力するとこのセッションで使用）"
+
+#~ msgid "Status: loaded from environment (ready)"
+#~ msgstr "状態: 環境変数から読み込み済み（利用可）"
+
+#~ msgid "Status: loaded from keyring (ready)"
+#~ msgstr "状態: keyring から読み込み済み（利用可）"
+
+#~ msgid "Status: loaded from DPAPI (ready)"
+#~ msgstr "状態: DPAPI から読み込み済み（利用可）"
+
+#~ msgid "Status: session only (not saved)"
+#~ msgstr "状態: このセッションのみ（未保存）"
+
+#~ msgid "Status: not set (enter key above)"
+#~ msgstr "状態: 未設定（上の欄にキーを入力）"
+
+#~ msgid "Using env XAI_API_KEY — leave blank"
+#~ msgstr "環境変数 XAI_API_KEY を使用中 — 空欄でOK"
+
+#~ msgid "Loaded from keyring — leave blank"
+#~ msgstr "keyring から読み込み済み — 空欄でOK"
+
+#~ msgid "Loaded from DPAPI — leave blank"
+#~ msgstr "DPAPI から読み込み済み — 空欄でOK"
+
+#~ msgid "Session key set — leave blank"
+#~ msgstr "セッションキー設定済み — 空欄でOK"
 

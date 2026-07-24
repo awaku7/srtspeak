@@ -16,11 +16,32 @@ from srtspeak.core.secrets import (
     has_api_key_secure,
     load_api_key_dpapi,
     load_api_key_secure,
+    normalize_api_key,
     resolve_api_key,
     save_api_key_dpapi,
     save_api_key_secure,
     secure_store_available,
 )
+
+
+def test_normalize_api_key_strips_whitespace() -> None:
+    assert normalize_api_key("  ab\ncd\t ef\r\n") == "abcdef"
+    assert normalize_api_key(None) == ""
+    assert normalize_api_key("   \n\t") == ""
+
+
+def test_resolve_ignores_newlines_in_env_and_session(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("XAI_API_KEY", "env-\nkey\r\n")
+    assert resolve_api_key(prompt=False, session_key="x") == "env-key"
+    monkeypatch.delenv("XAI_API_KEY", raising=False)
+    assert (
+        resolve_api_key(
+            prompt=False, session_key=" sess\n ion ", use_secure_store=False
+        )
+        == "session"
+    )
 
 
 def test_env_takes_priority(monkeypatch: pytest.MonkeyPatch) -> None:
