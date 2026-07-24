@@ -1,6 +1,6 @@
 # srtspeak 設計書（実装準拠）
 
-**状態:** 実装済み（パッケージ版 `0.1.4`）。本ドキュメントはコードと同期した仕様の正本。  
+**状態:** 実装済み（パッケージ版 `0.1.5`）。本ドキュメントはコードと同期した仕様の正本。  
 **目的:** 多言語 SRT を xAI Grok TTS で音声化し、各キューの開始・終了時刻へ **強制フィット** したナレーション WAV を生成する。加えて SRT→SRT 翻訳と用語集提案を Grok Chat で提供する。
 
 関連:
@@ -643,3 +643,4 @@ optional extras（`pyproject.toml`）:
 | 0.1.2 同期 | 版番号 0.1.2。strip_emoticons 実装（既定オン）。no_cache。TranslateConfig / translate / glossary-suggest。GUI Build+Translate タブ。gui_settings.json。doctor 拡張。パッケージ構成更新 |
 | 0.1.3 同期 | 版番号 0.1.3。API キー OS 資格情報保存（keyring + Windows DPAPI 移行）。ファイル名から元言語推定強化。glossary 薄型化。translate cache を `out/work/translate/by_out/`（出力 SRT ファイル名キー + out SRT シード）に再設計 |
 | 0.1.4 同期 | 版番号 0.1.4。`__version__` を pyproject と同期。PySide6/keyring を本体依存化（`[gui]` extra 廃止）。API キー空白正規化。GUI キー状態表示・絶対パス出力フォルダ・非モーダル完了。UTF-8 既定。Windows bat ヘルパ削除 |
+| 0.1.5 同期 | 版番号 0.1.5。既定 work/srt_gen を out/ 配下へ（out/work, out/srt_gen）。gettext en/ja 修復 |

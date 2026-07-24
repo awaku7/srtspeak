@@ -2,6 +2,20 @@
 
 このプロジェクトの主な変更を記録する。
 
+## [0.1.5] - 2026-07-25
+
+### 変更
+- 既定の work / 翻訳出力ルートを `out/` 配下へ:
+  - `DEFAULT_WORK_DIR` → `out/work`
+  - `DEFAULT_SRT_GEN_DIR` → `out/srt_gen`
+  - ビルド出力ルートは従来どおり `out`（`DEFAULT_OUT_ROOT`）
+- CLI / GUI / pipeline / translate は `util.py` の共有定数を使用。
+- `.gitignore` はトップレベル旧 `work/` / `srt_gen/` も無視継続。
+
+### ドキュメント
+- DESIGN / README 類 / SRT_TRANSLATE_DESIGN / CHANGELOG のパス表記を `out/work`・`out/srt_gen` に同期。
+- en/ja gettext カタログ修復（ヘッダ・obsolete 削除）。work-dir / out ヘルプ文字列更新。
+
 ## [0.1.4] - 2026-07-23
 
 ### 変更

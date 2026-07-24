@@ -18,7 +18,7 @@ SRT 多言語 TTS。各キューの開始・終了時刻へ音声を強制フィ
 | ffmpeg / ffprobe | PATH 上を推奨。無ければ optional `imageio-ffmpeg` |
 | API キー | 実 TTS / 翻訳 / 用語集 / ja_yomi 時のみ `XAI_API_KEY`（Chat を使わない dry-run なら不要） |
 
-パッケージ版: **0.1.4**（`pyproject.toml`）。
+パッケージ版: **0.1.5**（`pyproject.toml`）。
 
 ## インストール
 

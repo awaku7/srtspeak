@@ -2,6 +2,20 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.1.5] - 2026-07-25
+
+### Changed
+- Default work and translate output roots nested under `out/`:
+  - `DEFAULT_WORK_DIR` → `out/work`
+  - `DEFAULT_SRT_GEN_DIR` → `out/srt_gen`
+  - build out root remains `out` (`DEFAULT_OUT_ROOT`)
+- CLI/GUI/pipeline/translate use shared constants from `util.py`.
+- `.gitignore` keeps ignoring top-level legacy `work/` and `srt_gen/`.
+
+### Documentation
+- Sync DESIGN, READMEs, SRT_TRANSLATE_DESIGN, CHANGELOG paths to `out/work` and `out/srt_gen`.
+- Repair en/ja gettext catalogs (headers, obsolete entries); work-dir / out help strings.
+
 ## [0.1.4] - 2026-07-23
 
 ### Changed

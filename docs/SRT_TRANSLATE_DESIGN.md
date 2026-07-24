@@ -1,6 +1,6 @@
 # 多言語 SRT 生成 — 設計と srtspeak アダプト方針
 
-**状態:** 実装済み（パッケージ `0.1.4`）・設計版 0.6  
+**状態:** 実装済み（パッケージ `0.1.5`）・設計版 0.6  
 **目的:** 入力 SRT 1 本から、**タイムコードを保持したまま**他言語 SRT を高精度に生成し、既存の `build` / `build-all`（Grok TTS + 強制フィット）へそのまま流す。  
 **関連:** [DESIGN.md](../DESIGN.md)（TTS パイプライン正本）  
 **必須:** TDD（P9）・progress（P5）・multi-target（P5b）・**言語以外同一（P0）**  
@@ -729,5 +729,6 @@ DESIGN.md §1.2 非スコープの「文章リライト」は次のように更�
 | 0.7 | パッケージ 0.1.3 同期: keyring/DPAPI（P7・§6.6）、guess_lang 強化、GUI progress queue+coalesce、README 同期 |
 | 0.8 | **translate cache 再設計**: 出力 SRT ファイル名キー `out/work/translate/by_out/{tgt}__{out}.json`、index→{src,tgt}、既存 out SRT シード。旧 sha256 キー廃止 |
 | 0.9 | パッケージ 0.1.4 同期: 版番号 / `__version__` 整合 |
+| 1.0 | パッケージ 0.1.5 同期: 既定 work/srt_gen を out/ 配下へ |
 
 
