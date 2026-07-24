@@ -28,23 +28,13 @@ From [PyPI](https://pypi.org/project/srtspeak/):
 python -m pip install srtspeak
 ```
 
-With GUI (PySide6 + keyring):
-
-```bat
-python -m pip install "srtspeak[gui]"
-```
-
 Optional ffmpeg fallback via pip:
 
 ```bat
 python -m pip install "srtspeak[ffmpeg]"
 ```
 
-Combined:
-
-```bat
-python -m pip install "srtspeak[gui,ffmpeg]"
-```
+Core install already includes **PySide6** (GUI) and **keyring** (OS credential store).
 
 After install, the `srtspeak` command is available:
 
@@ -60,7 +50,7 @@ Clone the repository, then editable install from the repo root:
 ```bat
 git clone https://github.com/awaku7/srtspeak.git
 cd srtspeak
-python -m pip install -e ".[gui,ffmpeg,dev]"
+python -m pip install -e ".[ffmpeg,dev]"
 ```
 
 Dev extras (`[dev]`): pytest / ruff / Babel / keyring.
@@ -167,7 +157,7 @@ Official docs:
 | Resolve order | env → session → **OS keyring** → legacy Windows DPAPI (migrate) → CLI `getpass` / GUI mask |
 | dry-run | Key optional (Chat APIs skipped if missing) |
 | Real TTS / translate / glossary | resolve chain; missing → exit code 2 |
-| GUI | **Save on this PC** / **Clear saved** via keyring (`pip install "srtspeak[gui]"`) |
+| GUI | **Save on this PC** / **Clear saved** via keyring (core dependency) |
 
 Windows cmd (current window only):
 
@@ -472,18 +462,20 @@ If `--out` already exists and `--force` is not set, new suggestions are merged w
 ### GUI
 
 ```bat
-python -m pip install "srtspeak[gui]"
 srtspeak gui
 ```
 
 - Tabs: **Build** (TTS) and **Translate**
-- Build: SRT, language (BCP-47 + Detect), voice, output root, base WAV, max cues, dry-run, ja_yomi, strip kaomoji, no-cache
-- Translate: source SRT, source lang, multi-target checkboxes, glossary path + Suggest, length mode, batch size, naming (`stem` / `gran_tenku`), fail-fast, no-cache, dry-run
-- Shared: API key (masked) + **Save on this PC** / **Clear saved** (OS keyring; legacy DPAPI migrate on Windows)
+- Build: SRT, language (BCP-47 + Detect), voice, **absolute** output folder + directory picker, base WAV, max cues, dry-run, ja_yomi, strip kaomoji, no-cache
+- Translate: source SRT, source lang, multi-target checkboxes, **absolute** output folder + directory picker, glossary path + Suggest, length mode, batch size, naming (`stem` / `gran_tenku`), fail-fast, no-cache, dry-run
+- Shared: API key (masked) + status/placeholder showing load source (env / keyring / DPAPI / session) + **Save on this PC** / **Clear saved**
+- Key input: whitespace/newlines stripped (`normalize_api_key`); language detect uses the same resolve chain as build/translate
+- Completion: non-modal result dialog; main window stays open
 - Browse / path confirm: filename → source language guess (`guess_lang_from_filename`)
-- Progress: bottom status + bar (0–1000); worker → thread-safe queue + ~80ms drain (avoids stuck「実行中…」); Cancel via `CancellationToken`
+- Progress: bottom status + bar (0–1000); worker → thread-safe queue + ~80ms drain; Cancel via `CancellationToken`
 - Optional diag: `SRTSPEAK_GUI_PROGRESS_LOG=1` → `work/gui_progress.log` only
 - Non-secret settings in **`gui_settings.json`** (never the key plaintext)
+- UTF-8 defaults: CLI/GUI set `PYTHONUTF8=1` and `PYTHONIOENCODING=utf-8` when unset
 
 ## Processing notes
 
@@ -523,7 +515,7 @@ srtspeak gui
 ```bat
 git clone https://github.com/awaku7/srtspeak.git
 cd srtspeak
-python -m pip install -e ".[dev,gui,ffmpeg]"
+python -m pip install -e ".[dev,ffmpeg]"
 set PYTHONPATH=src
 python -m pytest -q
 python -m ruff check src tests

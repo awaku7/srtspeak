@@ -7,6 +7,17 @@
 ### 変更
 - パッケージ版を 0.1.4 に上げ。
 - `src/srtspeak/__init__.py` の `__version__` を `pyproject.toml` に同期（旧 0.1.1）。
+- 本体依存に `PySide6>=6.6` と `keyring>=25` を追加（optional `[gui]` extra 廃止）。
+- API キーの空白・改行を `normalize_api_key()` で全経路正規化。
+- GUI の API キー状態/プレースホルダに読み込み元（env / keyring / DPAPI / session）を表示。
+- GUI 出力フォルダを絶対パス化し、ディレクトリ選択ダイアログを追加（Build / Translate）。
+- GUI 完了ダイアログを非モーダル化。ジョブ完了後もメイン窓を維持。
+- 言語検出も build/translate と同じ API キー解決チェーンを使用。
+- CLI/GUI は未設定時に `PYTHONUTF8=1` / `PYTHONIOENCODING=utf-8` を既定化。
+- Windows 補助スクリプト `run_gui.bat` / `run_doctor.bat` / `run_srtspeak.bat` を削除。
+
+### ドキュメント
+- `DESIGN.md` / `README.md` / `README.ja.md` を本体 GUI 依存・キー UX・絶対パス出力・UTF-8 既定・bat 削除に同期。
 
 ## [0.1.3] - 2026-03-22
 

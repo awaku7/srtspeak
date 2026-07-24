@@ -220,7 +220,7 @@ def cmd_doctor(_args: argparse.Namespace) -> int:
 
         print(_("PySide6: available"))
     except Exception:
-        print(_("PySide6: not installed (optional extra [gui])"))
+        print(_("PySide6: not installed (core dependency)"))
     return 0
 
 
@@ -229,7 +229,7 @@ def cmd_gui(_args: argparse.Namespace) -> int:
         from srtspeak.gui.app import main as gui_main
     except Exception as exc:
         print(
-            _("GUI unavailable: {exc}\nInstall with: pip install -e .[gui]").format(
+            _("GUI unavailable: {exc}\nInstall with: pip install srtspeak").format(
                 exc=exc
             ),
             file=sys.stderr,

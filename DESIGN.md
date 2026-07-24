@@ -20,7 +20,7 @@
 | 翻訳 / よみ / 用語集 | Grok Chat `POST /v1/chat/completions`（同一 `XAI_API_KEY`） |
 | フィット | ffmpeg CLI（`atempo` 0.5–2.0 多段 + pad/stretch + hard_trim/pad） |
 | タイムライン | 無音キャンバス（または base WAV）へ PCM 配置・加算ミックス |
-| UI | CLI（argparse）+ optional GUI（PySide6、Build / Translate タブ） |
+| UI | CLI（argparse）+ GUI（PySide6、Build / Translate タブ。本体依存） |
 | 認証 | **`XAI_API_KEY` のみ**（`--api-key` なし / `.env` なし / report・ログに値を出さない） |
 | Python | 3.11+ |
 | ライセンス | Apache-2.0 |
@@ -139,8 +139,9 @@ GUI は **BCP-47 を1つ選ぶ** UI。内部 `lang` は `internal_lang_from_code
 - 平文キーを `gui_settings.json` / report / ログ / `.env` に **書かない**
 - GUI: **Save on this PC** / **Clear saved**（`core/secrets.py`）。backend 表示は `keyring:<Backend>` または `dpapi`
 - keyring 保存成功時は旧 DPAPI ファイルを削除して一本化
-- optional: `[gui]` / `[dev]` に `keyring>=25`
-- bat: `XAI_API_KEY` 未設定かつ `UAGENT_GROK_API_KEY` があるときセッションへコピーのみ
+- 本体依存: `PySide6>=6.6` / `keyring>=25`（`[dev]` にも keyring）
+- キー正規化: `normalize_api_key()` で空白・改行・タブを除去（env / session / prompt / store 共通）
+- CLI/GUI 起動時: 未設定なら `PYTHONUTF8=1` / `PYTHONIOENCODING=utf-8` を setdefault（stdio も utf-8 reconfigure）
 - dry-run: キー任意（ja_yomi / Chat 変換はキー無しならスキップ）
 - `api_key_status()`: `set (env)` / `set (keyring)` / `set (dpapi)` / `missing`
 
@@ -501,13 +502,15 @@ srtspeak [--locale en|ja] [--verbose|--quiet] <command>
 ## 15. GUI（`gui/app.py`）
 
 - タブ: **Build**（TTS）/ **Translate**
-- Build: SRT・Language（BCP-47 + Detect）・Voice・Output root・Base WAV・Max cues・Dry-run・ja_yomi・strip kaomoji・no-cache
-- Translate: ソース SRT・元言語・多ターゲット・glossary + Suggest・length mode・batch size・naming・fail-fast・no-cache・dry-run
-- 共有: API キー（マスク）・**Save on this PC** / **Clear saved**（keyring / DPAPI）
+- Build: SRT・Language（BCP-47 + Detect）・Voice・**絶対パス** Output folder + ディレクトリ選択・Base WAV・Max cues・Dry-run・ja_yomi・strip kaomoji・no-cache
+- Translate: ソース SRT・元言語・多ターゲット・**絶対パス** Output folder + ディレクトリ選択・glossary + Suggest・length mode・batch size・naming・fail-fast・no-cache・dry-run
+- 共有: API キー（マスク）・読み込み元ステータス/プレースホルダ・**Save on this PC** / **Clear saved**（keyring / DPAPI）
+- キー解決: 入力欄 / セッション / env / keyring / DPAPI を `_current_api_key()` で統一（言語検出含む）
+- 完了通知: 非モーダル。メイン窓は閉じない
 - Browse / パス確定: ファイル名から言語推定 → Build Language / Translate 元言語
 - 進捗: 下部共有ラベル + `QProgressBar`（0–1000）+ Cancel（`CancellationToken`）+ progress queue
 - 非シークレットを **`gui_settings.json`** に保存。**キー平文は保存しない**
-- extra: `pip install "srtspeak[gui]"`（PySide6 + keyring）。開発時は `pip install -e ".[gui]"`
+- 本体依存（`pip install srtspeak`）。開発時は `pip install -e ".[ffmpeg,dev]"`
 
 ---
 
@@ -547,10 +550,10 @@ src/srtspeak/
 
 optional extras（`pyproject.toml`）:
 
-- `gui` → PySide6 + keyring
+- 本体依存: PySide6 + keyring
 - `ffmpeg` → imageio-ffmpeg
 - `dev` → pytest / ruff / Babel + keyring  
-- **`ja` extra は存在しない**（旧記述の kanjiconv は廃止。よみは Grok Chat）
+- **`gui` / `ja` extra は存在しない**（GUI は標準。旧 kanjiconv は廃止。よみは Grok Chat）
 
 ---
 
@@ -600,7 +603,7 @@ optional extras（`pyproject.toml`）:
 ## 19. 受け入れ条件（実装済みの目安）
 
 - CLI/GUI で language_code と voice_id を指定できる
-- キーは env / getpass / GUI セッションのみ
+- キーは env / keyring / DPAPI / getpass / GUI セッション
 - report に language_code を残しキーを残さない
 - fitted ±10ms、完成尺目標 ±50ms（base 無し）
 - short_mode 既定 pad
@@ -639,4 +642,4 @@ optional extras（`pyproject.toml`）:
 | 0.1.x 同期 | 実装反映: 多言語、男女 voice、ja_yomi（Grok Chat）、base_wav、CLI 全フラグ、out ルート解決、timeline 加算ミックス、extras 修正 |
 | 0.1.2 同期 | 版番号 0.1.2。strip_emoticons 実装（既定オン）。no_cache。TranslateConfig / translate / glossary-suggest。GUI Build+Translate タブ。gui_settings.json。doctor 拡張。パッケージ構成更新 |
 | 0.1.3 同期 | 版番号 0.1.3。API キー OS 資格情報保存（keyring + Windows DPAPI 移行）。ファイル名から元言語推定強化。glossary 薄型化。translate cache を `work/translate/by_out/`（出力 SRT ファイル名キー + out SRT シード）に再設計 |
-| 0.1.4 同期 | 版番号 0.1.4。`__version__` を pyproject と同期 |
+| 0.1.4 同期 | 版番号 0.1.4。`__version__` を pyproject と同期。PySide6/keyring を本体依存化（`[gui]` extra 廃止）。API キー空白正規化。GUI キー状態表示・絶対パス出力フォルダ・非モーダル完了。UTF-8 既定。Windows bat ヘルパ削除 |

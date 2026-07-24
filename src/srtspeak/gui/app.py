@@ -1,4 +1,4 @@
-"""PySide6 GUI: Build + Translate tabs (optional extra [gui])."""
+"""PySide6 GUI: Build + Translate tabs (core dependency)."""
 
 from __future__ import annotations
 

@@ -7,6 +7,17 @@ All notable changes to this project are documented in this file.
 ### Changed
 - Package version bump to 0.1.4.
 - Align `src/srtspeak/__init__.py` `__version__` with `pyproject.toml` (was 0.1.1).
+- Core dependencies now include `PySide6>=6.6` and `keyring>=25` (removed optional `[gui]` extra).
+- API key whitespace/newlines normalized via `normalize_api_key()` on all resolve/save paths.
+- GUI API-key status/placeholder shows load source (env / keyring / DPAPI / session).
+- GUI output folders use absolute paths with directory pickers (Build + Translate).
+- GUI completion dialog is non-modal; main window stays open after jobs finish.
+- Language detect uses the same API-key resolve chain as build/translate.
+- CLI/GUI default `PYTHONUTF8=1` and `PYTHONIOENCODING=utf-8` when unset.
+- Remove Windows helper scripts `run_gui.bat` / `run_doctor.bat` / `run_srtspeak.bat`.
+
+### Documentation
+- Sync `DESIGN.md`, `README.md`, and `README.ja.md` with core GUI deps, key UX, absolute out dirs, UTF-8 defaults, and bat removal.
 
 ## [0.1.3] - 2026-03-22
 

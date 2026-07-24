@@ -28,23 +28,13 @@ SRT 多言語 TTS。各キューの開始・終了時刻へ音声を強制フィ
 python -m pip install srtspeak
 ```
 
-GUI 付き（PySide6 + keyring）:
-
-```bat
-python -m pip install "srtspeak[gui]"
-```
-
 ffmpeg を pip 経由で補う場合（任意・フォールバック）:
 
 ```bat
 python -m pip install "srtspeak[ffmpeg]"
 ```
 
-まとめて:
-
-```bat
-python -m pip install "srtspeak[gui,ffmpeg]"
-```
+本体依存に **PySide6**（GUI）と **keyring**（OS 資格情報）を含む。
 
 インストール後は `srtspeak` コマンドが使える:
 
@@ -60,7 +50,7 @@ srtspeak doctor
 ```bat
 git clone https://github.com/awaku7/srtspeak.git
 cd srtspeak
-python -m pip install -e ".[gui,ffmpeg,dev]"
+python -m pip install -e ".[ffmpeg,dev]"
 ```
 
 開発用 extra（`[dev]`）: pytest / ruff / Babel / keyring。
@@ -167,7 +157,7 @@ TTS は **xAI Grok のみ**（`POST https://api.x.ai/v1/tts`）。
 | 解決順 | env → セッション → **OS keyring** → 旧 Windows DPAPI（移行） → CLI `getpass` / GUI マスク |
 | dry-run | キー任意（Chat API はスキップ） |
 | 実 TTS / 翻訳 / 用語集 | 解決チェーン。無ければ終了コード 2 |
-| GUI | **Save on this PC** / **Clear saved**（keyring。`pip install "srtspeak[gui]"`） |
+| GUI | **Save on this PC** / **Clear saved**（keyring。本体依存） |
 
 Windows cmd（現在のウィンドウのみ）:
 
@@ -472,18 +462,20 @@ srtspeak glossary-suggest ^
 ### GUI
 
 ```bat
-python -m pip install "srtspeak[gui]"
 srtspeak gui
 ```
 
 - タブ: **Build**（TTS）と **Translate**
-- Build: SRT、言語（BCP-47 + Detect）、ボイス、出力ルート、Base WAV、Max cues、dry-run、ja_yomi、顔文字除去、no-cache
-- Translate: ソース SRT、元言語、多ターゲット選択、glossary パス + Suggest、length mode、batch size、naming（`stem` / `gran_tenku`）、fail-fast、no-cache、dry-run
-- 共有: API キー（マスク）+ **Save on this PC** / **Clear saved**（OS keyring。Windows は旧 DPAPI から移行）
+- Build: SRT、言語（BCP-47 + Detect）、ボイス、**絶対パス**出力フォルダ + ディレクトリ選択、Base WAV、Max cues、dry-run、ja_yomi、顔文字除去、no-cache
+- Translate: ソース SRT、元言語、多ターゲット選択、**絶対パス**出力フォルダ + ディレクトリ選択、glossary パス + Suggest、length mode、batch size、naming（`stem` / `gran_tenku`）、fail-fast、no-cache、dry-run
+- 共有: API キー（マスク）+ 読み込み元を示すステータス/プレースホルダ（env / keyring / DPAPI / session）+ **Save on this PC** / **Clear saved**
+- キー入力: 空白・改行を除去（`normalize_api_key`）。言語検出も build/translate と同じ解決チェーン
+- 完了: 非モーダル結果ダイアログ。メイン窓は開いたまま
 - Browse / パス確定: ファイル名から元言語推定（`guess_lang_from_filename`）
-- 進捗: 下部ステータス + バー（0–1000）。worker → スレッド安全 queue + 約 80ms drain（「実行中…」固定を回避）。Cancel は `CancellationToken`
+- 進捗: 下部ステータス + バー（0–1000）。worker → スレッド安全 queue + 約 80ms drain。Cancel は `CancellationToken`
 - 診断（任意）: `SRTSPEAK_GUI_PROGRESS_LOG=1` → `work/gui_progress.log` のみ
 - 非シークレットは **`gui_settings.json`**（キー平文は保存しない）
+- UTF-8 既定: CLI/GUI は未設定時に `PYTHONUTF8=1` と `PYTHONIOENCODING=utf-8` をセット
 
 ## 処理の要点
 
@@ -523,7 +515,7 @@ srtspeak gui
 ```bat
 git clone https://github.com/awaku7/srtspeak.git
 cd srtspeak
-python -m pip install -e ".[dev,gui,ffmpeg]"
+python -m pip install -e ".[dev,ffmpeg]"
 set PYTHONPATH=src
 python -m pytest -q
 python -m ruff check src tests
