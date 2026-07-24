@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any, Callable, Sequence
 
 from srtspeak.core.cancel import BuildCancelled, CancellationToken
+from srtspeak.core.util import DEFAULT_WORK_DIR
 from srtspeak.core.languages import normalize_language_code
 from srtspeak.core.models import TranslateConfig
 from srtspeak.core.progress import ProgressEvent
@@ -808,7 +809,7 @@ def run_translate(
     srt_hash = _srt_input_hash(src_cues)
 
     # Cache files named after output SRT (stable across re-runs / cwd).
-    work_root = Path(config.work_dir or "work") / "translate" / "by_out"
+    work_root = Path(config.work_dir or DEFAULT_WORK_DIR) / "translate" / "by_out"
     work_root.mkdir(parents=True, exist_ok=True)
     out_root = Path(config.out_dir)
     out_root.mkdir(parents=True, exist_ok=True)

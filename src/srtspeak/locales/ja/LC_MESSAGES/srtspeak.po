@@ -3,23 +3,19 @@
 # This file is distributed under the Apache License, Version 2.0.
 # Hirofumi Ukawa <hirofumi@ukawa.biz>, 2026.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: srtspeak 0.1.0\n"
-"Report-Msgid-Bugs-To: hirofumi@ukawa.biPOT-Creation-Date: 2026-07-18 "
-"17:08+0900\n"
+"Report-Msgid-Bugs-To: hirofumi@ukawa.biz\n"
 "POT-Creation-Date: 2026-07-25 00:49+0900\n"
 "PO-Revision-Date: 2026-03-22 00:00+0900\n"
-"Last-Translator: Hirofumi Ukawa <hirofumi@ukawa.bizLanguage-Team: ja "
-"<hirofumi@ukawa.bizMIME-Version: 1.0\n"
+"Last-Translator: Hirofumi Ukawa <hirofumi@ukawa.biz>\n"
+"Language-Team: ja <hirofumi@ukawa.biz>\n"
 "Language: ja\n"
-"Language-Team: ja <hirofumi@ukawa.biz>
-"
-"Plural-Forms: nplurals=1; plural=0;\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.18.0\n"
 
 #: src/srtspeak/cli.py:131
@@ -261,8 +257,8 @@ msgid "output root directory (lang id always appended; default: out)"
 msgstr "出力ルート（言語 ID を必ず付与・既定: out）"
 
 #: src/srtspeak/cli.py:718 src/srtspeak/cli.py:845
-msgid "work directory root"
-msgstr "作業ディレクトリのルート"
+msgid "work directory root (default: out/work)"
+msgstr "作業ディレクトリのルート（既定: out/work）"
 
 #: src/srtspeak/cli.py:724
 msgid "voice id or lang=voice (repeatable)"
@@ -361,8 +357,8 @@ msgid "target language BCP-47 (repeatable or comma-separated)"
 msgstr "対象言語 BCP-47（繰り返しまたはカンマ区切り）"
 
 #: src/srtspeak/cli.py:840
-msgid "output root directory (default: srt_gen)"
-msgstr "出力ルートディレクトリ（既定: srt_gen）"
+msgid "output root directory (default: out/srt_gen)"
+msgstr "出力ルートディレクトリ（既定: out/srt_gen）"
 
 #: src/srtspeak/cli.py:850
 msgid "glossary JSON path"
@@ -1424,65 +1420,3 @@ msgstr "中止"
 #: src/srtspeak/gui/app.py:1604
 msgid "Operation was cancelled."
 msgstr "操作は中止されました。"
-
-#~ msgid "available"
-#~ msgstr "利用可能"
-
-#~ msgid "not available (pip install -e \".[ja]\")"
-#~ msgstr "利用不可（pip install -e \".[ja]\"）"
-
-#~ msgid "kanjiconv: error ({exc})"
-#~ msgstr "kanjiconv: エラー（{exc}）"
-
-#~ msgid "JA only: convert kanji to hiragana via kanjiconv before TTS (default: on)"
-#~ msgstr "日本語のみ: TTS 前に kanjiconv で漢字→ひらがな（既定: オン）"
-
-#~ msgid "Build was cancelled."
-#~ msgstr "ビルドを中止しました。"
-
-#~ msgid "{percent:.1f}%  {stage}  {current}/{total}  {message}"
-#~ msgstr "{percent:.1f}%  {stage}  {current}/{total}  {message}"
-
-#~ msgid "Status: using environment variable"
-#~ msgstr "状態: 環境変数を使用中"
-
-#~ msgid "Status: not set (enter key above for this session)"
-#~ msgstr "状態: 未設定（上の欄にキーを入力するとこのセッションで使用）"
-
-#~ msgid "Status: loaded from environment (ready)"
-#~ msgstr "状態: 環境変数から読み込み済み（利用可）"
-
-#~ msgid "Status: loaded from keyring (ready)"
-#~ msgstr "状態: keyring から読み込み済み（利用可）"
-
-#~ msgid "Status: loaded from DPAPI (ready)"
-#~ msgstr "状態: DPAPI から読み込み済み（利用可）"
-
-#~ msgid "Status: session only (not saved)"
-#~ msgstr "状態: このセッションのみ（未保存）"
-
-#~ msgid "Status: not set (enter key above)"
-#~ msgstr "状態: 未設定（上の欄にキーを入力）"
-
-#~ msgid "Using env XAI_API_KEY — leave blank"
-#~ msgstr "環境変数 XAI_API_KEY を使用中 — 空欄でOK"
-
-#~ msgid "Loaded from keyring — leave blank"
-#~ msgstr "keyring から読み込み済み — 空欄でOK"
-
-#~ msgid "Loaded from DPAPI — leave blank"
-#~ msgstr "DPAPI から読み込み済み — 空欄でOK"
-
-#~ msgid "Session key set — leave blank"
-#~ msgstr "セッションキー設定済み — 空欄でOK"
-
-#~ msgid "PySide6: not installed (optional extra [gui])"
-#~ msgstr "PySide6: 未インストール（オプション extra [gui]）"
-
-#~ msgid ""
-#~ "GUI unavailable: {exc}\n"
-#~ "Install with: pip install -e .[gui]"
-#~ msgstr ""
-#~ "GUI を利用できません: {exc}\n"
-#~ "インストール: pip install -e .[gui]"
-

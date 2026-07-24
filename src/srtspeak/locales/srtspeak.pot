@@ -257,7 +257,7 @@ msgid "output root directory (lang id always appended; default: out)"
 msgstr ""
 
 #: src/srtspeak/cli.py:718 src/srtspeak/cli.py:845
-msgid "work directory root"
+msgid "work directory root (default: out/work)"
 msgstr ""
 
 #: src/srtspeak/cli.py:724
@@ -359,7 +359,7 @@ msgid "target language BCP-47 (repeatable or comma-separated)"
 msgstr ""
 
 #: src/srtspeak/cli.py:840
-msgid "output root directory (default: srt_gen)"
+msgid "output root directory (default: out/srt_gen)"
 msgstr ""
 
 #: src/srtspeak/cli.py:850

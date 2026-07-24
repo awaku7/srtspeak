@@ -3,23 +3,19 @@
 # This file is distributed under the Apache License, Version 2.0.
 # Hirofumi Ukawa <hirofumi@ukawa.biz>, 2026.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: srtspeak 0.1.0\n"
-"Report-Msgid-Bugs-To: hirofumi@ukawa.biPOT-Creation-Date: 2026-07-18 "
-"17:08+0900\n"
+"Report-Msgid-Bugs-To: hirofumi@ukawa.biz\n"
 "POT-Creation-Date: 2026-07-25 00:49+0900\n"
 "PO-Revision-Date: 2026-03-22 00:00+0900\n"
-"Last-Translator: Hirofumi Ukawa <hirofumi@ukawa.bizLanguage-Team: en "
-"<hirofumi@ukawa.bizPlural-Forms: nplurals=2; plural=(n != 1);\n"
+"Last-Translator: Hirofumi Ukawa <hirofumi@ukawa.biz>\n"
+"Language-Team: en <hirofumi@ukawa.biz>\n"
 "Language: en\n"
-"Language-Team: en <hirofumi@ukawa.bizPlural-Forms: nplurals=2; plural=(n != "
-"1);\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Generated-By: Babel 2.18.0\n"
 
 #: src/srtspeak/cli.py:131
@@ -263,8 +259,8 @@ msgid "output root directory (lang id always appended; default: out)"
 msgstr "output root directory (lang id always appended; default: out)"
 
 #: src/srtspeak/cli.py:718 src/srtspeak/cli.py:845
-msgid "work directory root"
-msgstr "work directory root"
+msgid "work directory root (default: out/work)"
+msgstr "work directory root (default: out/work)"
 
 #: src/srtspeak/cli.py:724
 msgid "voice id or lang=voice (repeatable)"
@@ -363,8 +359,8 @@ msgid "target language BCP-47 (repeatable or comma-separated)"
 msgstr "target language BCP-47 (repeatable or comma-separated)"
 
 #: src/srtspeak/cli.py:840
-msgid "output root directory (default: srt_gen)"
-msgstr "output root directory (default: srt_gen)"
+msgid "output root directory (default: out/srt_gen)"
+msgstr "output root directory (default: out/srt_gen)"
 
 #: src/srtspeak/cli.py:850
 msgid "glossary JSON path"
@@ -1430,125 +1426,3 @@ msgstr "Cancelled"
 #: src/srtspeak/gui/app.py:1604
 msgid "Operation was cancelled."
 msgstr "Operation was cancelled."
-
-#~ msgid "Japanese"
-#~ msgstr ""
-
-#~ msgid "English"
-#~ msgstr ""
-
-#~ msgid "Portuguese (Brazil)"
-#~ msgstr ""
-
-#~ msgid "Portuguese (Portugal)"
-#~ msgstr ""
-
-#~ msgid "Spanish"
-#~ msgstr ""
-
-#~ msgid "French"
-#~ msgstr ""
-
-#~ msgid "German"
-#~ msgstr ""
-
-#~ msgid "Italian"
-#~ msgstr ""
-
-#~ msgid "Korean"
-#~ msgstr ""
-
-#~ msgid "Chinese"
-#~ msgstr ""
-
-#~ msgid "Hindi"
-#~ msgstr ""
-
-#~ msgid "Arabic"
-#~ msgstr ""
-
-#~ msgid "Russian"
-#~ msgstr ""
-
-#~ msgid "Turkish"
-#~ msgstr ""
-
-#~ msgid "Dutch"
-#~ msgstr ""
-
-#~ msgid "Polish"
-#~ msgstr ""
-
-#~ msgid "Swedish"
-#~ msgstr ""
-
-#~ msgid "Indonesian"
-#~ msgstr ""
-
-#~ msgid "Vietnamese"
-#~ msgstr ""
-
-#~ msgid "Thai"
-#~ msgstr ""
-
-#~ msgid "available"
-#~ msgstr ""
-
-#~ msgid "not available (pip install -e \".[ja]\")"
-#~ msgstr ""
-
-#~ msgid "kanjiconv: error ({exc})"
-#~ msgstr ""
-
-#~ msgid "JA only: convert kanji to hiragana via kanjiconv before TTS (default: on)"
-#~ msgstr ""
-
-#~ msgid "Build was cancelled."
-#~ msgstr ""
-
-#~ msgid "{percent:.1f}%  {stage}  {current}/{total}  {message}"
-#~ msgstr "{percent:.1f}%  {stage}  {current}/{total}  {message}"
-
-#~ msgid "Status: using environment variable"
-#~ msgstr "Status: using environment variable"
-
-#~ msgid "Status: not set (enter key above for this session)"
-#~ msgstr "Status: not set (enter key above for this session)"
-
-#~ msgid "Status: loaded from environment (ready)"
-#~ msgstr "Status: loaded from environment (ready)"
-
-#~ msgid "Status: loaded from keyring (ready)"
-#~ msgstr "Status: loaded from keyring (ready)"
-
-#~ msgid "Status: loaded from DPAPI (ready)"
-#~ msgstr "Status: loaded from DPAPI (ready)"
-
-#~ msgid "Status: session only (not saved)"
-#~ msgstr "Status: session only (not saved)"
-
-#~ msgid "Status: not set (enter key above)"
-#~ msgstr "Status: not set (enter key above)"
-
-#~ msgid "Using env XAI_API_KEY — leave blank"
-#~ msgstr "Using env XAI_API_KEY — leave blank"
-
-#~ msgid "Loaded from keyring — leave blank"
-#~ msgstr "Loaded from keyring — leave blank"
-
-#~ msgid "Loaded from DPAPI — leave blank"
-#~ msgstr "Loaded from DPAPI — leave blank"
-
-#~ msgid "Session key set — leave blank"
-#~ msgstr "Session key set — leave blank"
-
-#~ msgid "PySide6: not installed (optional extra [gui])"
-#~ msgstr "PySide6: not installed (optional extra [gui])"
-
-#~ msgid ""
-#~ "GUI unavailable: {exc}\n"
-#~ "Install with: pip install -e .[gui]"
-#~ msgstr ""
-#~ "GUI unavailable: {exc}\n"
-#~ "Install with: pip install -e .[gui]"
-

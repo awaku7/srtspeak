@@ -255,7 +255,7 @@ out/{lang}/
   GRAN_TENKU_{lang}.wav 完成トラック（名前固定）
   GRAN_TENKU_{lang}.mp3 --also-mp3 時
   report.json
-work/{lang}/
+out/work/{lang}/
   raw/
   cache/
   ja_yomi_cache.json    ja かつ ja_yomi 時
@@ -268,15 +268,15 @@ work/{lang}/
 
 ### 翻訳
 
-`--out` 既定: `srt_gen`。作業キャッシュは `work/translate/by_out/`（出力 SRT ファイル名キー）。
+`--out` 既定: `out/srt_gen`。作業キャッシュは `out/work/translate/by_out/`（出力 SRT ファイル名キー）。
 
 ```text
-srt_gen/
+out/srt_gen/
   translate_report.json
   {target}/                         # BCP-47 トークン（例: en, pt-BR）
     {source_stem}_{target}.srt      # naming=stem（既定）
     GRAN_TENKU_{target}.srt         # naming=gran_tenku
-work/translate/by_out/
+out/work/translate/by_out/
   {target}__{out_srt_name}.json   # 例: en__GRAN_TENKU_en.srt.json
 ```
 
@@ -320,7 +320,7 @@ srtspeak build --srt GRAN_TENKU_Portugus.srt --lang pt --voice-id leo
 | `--lang` | 内部キー `ja` / `en` / `pt` など | ファイル名から推定可 |
 | `--language-code` | API へ送る BCP-47 | lang のデフォルト（`pt`→`pt-BR`） |
 | `--out` | 出力ルート（lang を付与） | `out` |
-| `--work-dir` | 作業ルート | `work` |
+| `--work-dir` | 作業ルート | `out/work` |
 | `--voice-id` | ボイス ID（build-all は `lang=id` 可） | `leo` |
 | `--short-mode` | `pad` / `stretch` | `pad` |
 | `--max-speed` | atempo 積の上限。超過は hard_trim | なし |
@@ -395,7 +395,7 @@ srtspeak translate ^
   --srt GRAN_TENKU_japan.srt ^
   --source-lang ja ^
   --to en --to pt-BR --to es ^
-  --out srt_gen ^
+  --out out/srt_gen ^
   --glossary glossary.json ^
   --length-mode hint
 ```
@@ -405,8 +405,8 @@ srtspeak translate ^
 | `--srt` | 元 SRT | 必須 |
 | `--source-lang` | 元言語 | ファイル名推定 / `ja` |
 | `--to` | 対象 BCP-47（繰り返し or カンマ区切り） | 必須（1 件以上） |
-| `--out` | 出力ルート | `srt_gen` |
-| `--work-dir` | 作業ルート | `work` |
+| `--out` | 出力ルート | `out/srt_gen` |
+| `--work-dir` | 作業ルート | `out/work` |
 | `--glossary` | 用語集 JSON | なし |
 | `--length-mode` | `off` / `hint` / `enforce` / `report-only` | `hint` |
 | `--on-empty` | `fail` / `keep-source` | `fail` |
@@ -429,11 +429,11 @@ srtspeak translate --srt GRAN_TENKU_japan.srt --to en,pt-BR --dry-run
 ```bat
 srtspeak build-all ^
   --map ja=GRAN_TENKU_japan.srt ^
-  --map en=srt_gen/en/GRAN_TENKU_japan_en.srt ^
+  --map en=out/srt_gen/en/GRAN_TENKU_japan_en.srt ^
   --voice-id leo --out out
 ```
 
-（`--naming gran_tenku` なら `srt_gen/en/GRAN_TENKU_en.srt`）
+（`--naming gran_tenku` なら `out/srt_gen/en/GRAN_TENKU_en.srt`）
 
 ### 用語集提案
 
@@ -473,7 +473,7 @@ srtspeak gui
 - 完了: 非モーダル結果ダイアログ。メイン窓は開いたまま
 - Browse / パス確定: ファイル名から元言語推定（`guess_lang_from_filename`）
 - 進捗: 下部ステータス + バー（0–1000）。worker → スレッド安全 queue + 約 80ms drain。Cancel は `CancellationToken`
-- 診断（任意）: `SRTSPEAK_GUI_PROGRESS_LOG=1` → `work/gui_progress.log` のみ
+- 診断（任意）: `SRTSPEAK_GUI_PROGRESS_LOG=1` → `out/work/gui_progress.log` のみ
 - 非シークレットは **`gui_settings.json`**（キー平文は保存しない）
 - UTF-8 既定: CLI/GUI は未設定時に `PYTHONUTF8=1` と `PYTHONIOENCODING=utf-8` をセット
 
@@ -483,7 +483,7 @@ srtspeak gui
 
 - パイプライン: parse → limit → **ja_yomi**（ja）→ TTS/cache → 正規化 → fit → timeline → report
 - TTS: xAI Grok unary REST のみ（`speed` は常に 1.0）
-- ja_yomi: Grok Chat の structured JSON、バッチ 5、`work/{lang}/` にキャッシュ
+- ja_yomi: Grok Chat の structured JSON、バッチ 5、`out/work/{lang}/` にキャッシュ
 - strip_emoticons: **TTS 発話テキストのみ**顔文字除去。絵文字は保持。SRT キュー本文は変更しない。既定 **オン**
 - 尺合わせ: ffmpeg CLI のみ（`atempo` 0.5–2.0 多段、不足は pad 既定）
 - タイムライン: 無音キャンバスまたは base_wav。配置区間は半開 `[start, end)`。**PCM 加算ミックス**（±32767 クリップ）

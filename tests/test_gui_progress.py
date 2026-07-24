@@ -183,7 +183,7 @@ def test_translate_worker_progress_reaches_label() -> None:
             self.flush()
             app.quit()
 
-    srt = Path(__file__).resolve().parents[1] / "srt_gen" / "en" / "GRAN_TENKU_en.srt"
+    srt = Path(__file__).resolve().parents[1] / "out" / "srt_gen" / "en" / "GRAN_TENKU_en.srt"
     if not srt.is_file():
         # minimal fallback
         srt = Path("_tmp_gui_progress_mini.srt")

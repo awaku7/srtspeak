@@ -157,7 +157,7 @@ GUI は **BCP-47 を1つ選ぶ** UI。内部 `lang` は `internal_lang_from_code
 | `lang` | 必須 | 内部キー |
 | `language_code` | 必須 | API BCP-47 |
 | `out_dir` | 解決後パス | **言語付き最終ディレクトリ**（`resolve_out_dir` 済み） |
-| `work_dir` | `work` | 作業ルート。実体は `work/{lang}/` |
+| `work_dir` | `out/work` | 作業ルート。実体は `out/work/{lang}/` |
 | `provider` | `xai_grok` | 固定想定 |
 | `voice_id` | `leo` | |
 | `tts_model` | `None` | 予約。**リクエストに載せない** |
@@ -196,8 +196,8 @@ GUI は **BCP-47 を1つ選ぶ** UI。内部 `lang` は `internal_lang_from_code
 | `srt_path` | 必須 | ソース SRT |
 | `source_lang` | 必須 | 正規化済みソース言語 |
 | `targets` | 必須 | BCP-47 リスト（1 件以上） |
-| `out_dir` | 必須 | 出力ルート（CLI 既定 `srt_gen`） |
-| `work_dir` | `None`→`work` | 作業ルート。実体 `work/translate/by_out/`（出力ファイル名キー） |
+| `out_dir` | 必須 | 出力ルート（CLI 既定 `out/srt_gen`） |
+| `work_dir` | `None`→`out/work` | 作業ルート。実体 `out/work/translate/by_out/`（出力ファイル名キー） |
 | `model` | `grok-4.5` | Grok Chat モデル |
 | `batch_size` | `8` | 1 Chat バッチのキュー数 |
 | `glossary_path` | `None` | 用語集 JSON |
@@ -224,8 +224,8 @@ GUI は **BCP-47 を1つ選ぶ** UI。内部 `lang` は `internal_lang_from_code
 | 条件 | `ja_yomi=True` かつ `lang=="ja"` かつ API キーあり |
 | 手段 | Grok Chat `POST /v1/chat/completions`、model `grok-4.5`、structured JSON |
 | 単位 | 漢字を含む cue のみ。バッチサイズ 5 |
-| キャッシュ | `work/{lang}/ja_yomi_cache.json`（SRT テキストハッシュで無効化） |
-| ログ | `work/{lang}/srtspeak_ja_yomi.log`（任意） |
+| キャッシュ | `out/work/{lang}/ja_yomi_cache.json`（SRT テキストハッシュで無効化） |
+| ログ | `out/work/{lang}/srtspeak_ja_yomi.log`（任意） |
 | CLI | `--ja-yomi` / `--no-ja-yomi`（既定オン） |
 | GUI | チェックボックス（既定オン、`gui_settings.json` に保存可） |
 | doctor | `ja_yomi: grok-chat (Grok Chat API)` |
@@ -284,7 +284,7 @@ GUI は **BCP-47 を1つ選ぶ** UI。内部 `lang` は `internal_lang_from_code
 
 | 項目 | 値 |
 |------|-----|
-| 場所 | `work/{lang}/cache/{sha256}.wav` |
+| 場所 | `out/work/{lang}/cache/{sha256}.wav` |
 | キー材料 | provider, voice_id, language_code, **text（speak text）**, sample_rate, codec, tts_speed, text_normalization |
 | ハッシュ | キーソート JSON の SHA-256 |
 | ヒット | TTS ステージ 1 cue 完了として進捗カウント |
@@ -354,7 +354,7 @@ HTTP は **stdlib `urllib`** のみ。
 - GUI: 下部共有ステータス + `QProgressBar`（0–1000 スケール）、約 80ms coalesce
 - GUI 進捗配送: worker → **`queue.SimpleQueue`（スレッド安全）** + Signal バックアップ → タイマー drain でラベル更新  
   （translate/glossary の Chat heartbeat が「実行中…」固定にならないようにする）
-- 診断ログ: 既定 OFF。`SRTSPEAK_GUI_PROGRESS_LOG=1` のときのみ `work/gui_progress.log`（out/srt_gen には書かない）
+- 診断ログ: 既定 OFF。`SRTSPEAK_GUI_PROGRESS_LOG=1` のときのみ `out/work/gui_progress.log`（ビルド成果物ツリー外）
 
 重み（1 言語 = 100%、実装で微調整可）: parse 小 + tts 大 + fit 中 + timeline/report 小。build-all は言語数で等分。
 
@@ -373,7 +373,7 @@ HTTP は **stdlib `urllib`** のみ。
     GRAN_TENKU_{lang}.wav
     GRAN_TENKU_{lang}.mp3   # --also-mp3
     report.json
-work/{lang}/
+out/work/{lang}/
   raw/{index:04d}.wav
   cache/{sha256}.wav
   ja_yomi_cache.json        # ja かつ ja_yomi 時
@@ -386,12 +386,12 @@ work/{lang}/
 ### 12.2 Translate
 
 ```text
-{out}/                      # 既定 srt_gen
+{out}/                      # 既定 out/srt_gen
   translate_report.json
   {target}/                 # BCP-47 正規化トークン
     {source_stem}_{target}.srt   # naming=stem（既定）
     GRAN_TENKU_{target}.srt      # naming=gran_tenku
-work/translate/by_out/
+out/work/translate/by_out/
   {target}__{out_srt_name}.json   # 例: en__GRAN_TENKU_en.srt.json
 ```
 
@@ -446,7 +446,7 @@ srtspeak [--locale en|ja] [--verbose|--quiet] <command>
 | `--lang` | ファイル名推定可 | 内部キー |
 | `--language-code` | lang 既定 | BCP-47 |
 | `--out` | `out` | 出力ルート |
-| `--work-dir` | `work` | |
+| `--work-dir` | `out/work` | |
 | `--voice-id` | `leo` | 単一 or `lang=id` 複数 |
 | `--short-mode` | `pad` | `pad`\|`stretch` |
 | `--max-speed` | なし | |
@@ -467,8 +467,8 @@ srtspeak [--locale en|ja] [--verbose|--quiet] <command>
 | `--srt` | 必須 | ソース |
 | `--source-lang` | ファイル名推定 / `ja` | |
 | `--to` | 必須 | 複数回 / カンマ区切り |
-| `--out` | `srt_gen` | |
-| `--work-dir` | `work` | |
+| `--out` | `out/srt_gen` | |
+| `--work-dir` | `out/work` | |
 | `--glossary` | なし | |
 | `--length-mode` | `hint` | off\|hint\|enforce\|report-only |
 | `--on-empty` | `fail` | fail\|keep-source |
@@ -641,5 +641,5 @@ optional extras（`pyproject.toml`）:
 | 設計初期 | 要件・凍結仕様 |
 | 0.1.x 同期 | 実装反映: 多言語、男女 voice、ja_yomi（Grok Chat）、base_wav、CLI 全フラグ、out ルート解決、timeline 加算ミックス、extras 修正 |
 | 0.1.2 同期 | 版番号 0.1.2。strip_emoticons 実装（既定オン）。no_cache。TranslateConfig / translate / glossary-suggest。GUI Build+Translate タブ。gui_settings.json。doctor 拡張。パッケージ構成更新 |
-| 0.1.3 同期 | 版番号 0.1.3。API キー OS 資格情報保存（keyring + Windows DPAPI 移行）。ファイル名から元言語推定強化。glossary 薄型化。translate cache を `work/translate/by_out/`（出力 SRT ファイル名キー + out SRT シード）に再設計 |
+| 0.1.3 同期 | 版番号 0.1.3。API キー OS 資格情報保存（keyring + Windows DPAPI 移行）。ファイル名から元言語推定強化。glossary 薄型化。translate cache を `out/work/translate/by_out/`（出力 SRT ファイル名キー + out SRT シード）に再設計 |
 | 0.1.4 同期 | 版番号 0.1.4。`__version__` を pyproject と同期。PySide6/keyring を本体依存化（`[gui]` extra 廃止）。API キー空白正規化。GUI キー状態表示・絶対パス出力フォルダ・非モーダル完了。UTF-8 既定。Windows bat ヘルパ削除 |

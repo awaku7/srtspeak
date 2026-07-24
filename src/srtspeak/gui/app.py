@@ -69,7 +69,7 @@ def main() -> int:
         save_glossary,
         suggest_glossary,
     )
-    from srtspeak.core.util import resolve_out_dir
+    from srtspeak.core.util import resolve_out_dir, DEFAULT_OUT_ROOT, DEFAULT_WORK_DIR, DEFAULT_SRT_GEN_DIR
     from srtspeak.core.voices import DEFAULT_VOICE_ID, list_builtin_voices
     from srtspeak.i18n import _, setup_i18n
     from srtspeak.progress_i18n import format_gui_progress_label, localize_message, localize_stage
@@ -94,8 +94,8 @@ def main() -> int:
             pass
 
     def _diag_log_dir() -> Path:
-        """Fixed diagnostic log dir (not out/srt_gen; not process cwd)."""
-        return Path("work")
+        """Fixed diagnostic log dir under out/work (not process cwd)."""
+        return DEFAULT_WORK_DIR
 
     def _log_crash(err: str) -> None:
         try:
@@ -109,7 +109,7 @@ def main() -> int:
     def _log_progress(msg: str) -> None:
         """Append GUI progress diagnostics when SRTSPEAK_GUI_PROGRESS_LOG=1.
 
-        Default OFF. Path: work/gui_progress.log (never under out/srt_gen).
+        Default OFF. Path: out/work/gui_progress.log.
         """
         flag = os.environ.get("SRTSPEAK_GUI_PROGRESS_LOG", "0").strip().lower()
         if flag not in ("1", "true", "yes", "on"):
@@ -551,7 +551,7 @@ def main() -> int:
                 self.voice_combo.setCurrentIndex(idx)
             form.addRow(_("Voice"), self.voice_combo)
 
-            self.out_edit = QLineEdit(str((Path.cwd() / "out").resolve()))
+            self.out_edit = QLineEdit(str((Path.cwd() / DEFAULT_OUT_ROOT).resolve()))
             browse_out = QPushButton("…")
             browse_out.clicked.connect(self._browse_out_dir)
             row_out = QHBoxLayout()
@@ -656,7 +656,7 @@ def main() -> int:
             tgt_layout.addLayout(btn_row)
             form.addRow(tgt_box)
 
-            self.tr_out_edit = QLineEdit(str((Path.cwd() / "srt_gen").resolve()))
+            self.tr_out_edit = QLineEdit(str((Path.cwd() / DEFAULT_SRT_GEN_DIR).resolve()))
             browse_tr_out = QPushButton("…")
             browse_tr_out.clicked.connect(self._browse_tr_out_dir)
             row_tr_out = QHBoxLayout()
@@ -780,7 +780,7 @@ def main() -> int:
                 if idx >= 0:
                     self.voice_combo.setCurrentIndex(idx)
             if s.get("out_dir"):
-                self.out_edit.setText(self._abs_dir_text(str(s["out_dir"]), "out"))
+                self.out_edit.setText(self._abs_dir_text(str(s["out_dir"]), str(DEFAULT_OUT_ROOT)))
             if s.get("base_wav"):
                 self.base_wav_edit.setText(s["base_wav"])
             if "limit" in s:
@@ -811,7 +811,7 @@ def main() -> int:
                     self._set_target_checked(str(t), True)
             if s.get("tr_out_dir"):
                 self.tr_out_edit.setText(
-                    self._abs_dir_text(str(s["tr_out_dir"]), "srt_gen")
+                    self._abs_dir_text(str(s["tr_out_dir"]), str(DEFAULT_SRT_GEN_DIR))
                 )
             if s.get("tr_glossary"):
                 self.tr_glossary_edit.setText(s["tr_glossary"])
@@ -844,7 +844,7 @@ def main() -> int:
                 "srt_path": self.srt_edit.text().strip(),
                 "language_code": self._current_code(self.lang_combo),
                 "voice_id": self.voice_combo.currentData() or "",
-                "out_dir": self._abs_dir_text(self.out_edit.text(), "out"),
+                "out_dir": self._abs_dir_text(self.out_edit.text(), str(DEFAULT_OUT_ROOT)),
                 "base_wav": self.base_wav_edit.text().strip(),
                 "limit": self.limit_spin.value(),
                 "dry_run": self.dry_run_cb.isChecked(),
@@ -854,7 +854,7 @@ def main() -> int:
                 "tr_srt_path": self.tr_srt_edit.text().strip(),
                 "tr_source_lang": self._current_code(self.tr_source_combo),
                 "tr_targets": self._selected_targets(),
-                "tr_out_dir": self._abs_dir_text(self.tr_out_edit.text(), "srt_gen"),
+                "tr_out_dir": self._abs_dir_text(self.tr_out_edit.text(), str(DEFAULT_SRT_GEN_DIR)),
                 "tr_glossary": self.tr_glossary_edit.text().strip(),
                 "tr_length_mode": self.tr_length_combo.currentData() or "hint",
                 "tr_limit": self.tr_limit_spin.value(),
@@ -1225,7 +1225,7 @@ def main() -> int:
                 lang=lang,
                 language_code=language_code,
                 out_dir=resolve_out_dir(
-                    self._abs_dir_text(self.out_edit.text(), "out"), lang
+                    self._abs_dir_text(self.out_edit.text(), str(DEFAULT_OUT_ROOT)), lang
                 ),
                 voice_id=str(voice_id),
                 limit=limit,
@@ -1238,7 +1238,7 @@ def main() -> int:
                     if self.base_wav_edit.text().strip()
                     else None
                 ),
-                work_dir=Path("work"),
+                work_dir=DEFAULT_WORK_DIR,
             )
             self._begin_job(
                 kind="build",
@@ -1288,8 +1288,8 @@ def main() -> int:
                     srt_path=srt,
                     source_lang=source_lang,
                     targets=targets,
-                    out_dir=Path(self._abs_dir_text(self.tr_out_edit.text(), "srt_gen")),
-                    work_dir=Path("work"),
+                    out_dir=Path(self._abs_dir_text(self.tr_out_edit.text(), str(DEFAULT_SRT_GEN_DIR))),
+                    work_dir=DEFAULT_WORK_DIR,
                     batch_size=int(self.tr_batch_spin.value()),
                     glossary_path=Path(gloss) if gloss else None,
                     length_mode=str(self.tr_length_combo.currentData() or "hint"),

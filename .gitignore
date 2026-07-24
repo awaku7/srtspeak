@@ -21,10 +21,11 @@ htmlcov/
 .venv/
 venv/
 
-# srtspeak outputs / work
+# srtspeak outputs / work (work & srt_gen live under out/)
 gui_settings.json
 out/
 out_*/
+srt_gen/
 work/
 browser_downloads/
 build_*.log

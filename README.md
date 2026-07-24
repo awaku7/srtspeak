@@ -255,7 +255,7 @@ out/{lang}/
   GRAN_TENKU_{lang}.wav  final track (fixed name)
   GRAN_TENKU_{lang}.mp3  if --also-mp3
   report.json
-work/{lang}/
+out/work/{lang}/
   raw/
   cache/
   ja_yomi_cache.json     when ja + ja_yomi
@@ -268,15 +268,15 @@ work/{lang}/
 
 ### Translate
 
-`--out` default: `srt_gen`. Work cache under `work/translate/by_out/` (keyed by output SRT file name).
+`--out` default: `out/srt_gen`. Work cache under `out/work/translate/by_out/` (keyed by output SRT file name).
 
 ```text
-srt_gen/
+out/srt_gen/
   translate_report.json
   {target}/                         # BCP-47 token (e.g. en, pt-BR)
     {source_stem}_{target}.srt      # naming=stem (default)
     GRAN_TENKU_{target}.srt         # naming=gran_tenku
-work/translate/by_out/
+out/work/translate/by_out/
   {target}__{out_srt_name}.json   # e.g. en__GRAN_TENKU_en.srt.json
 ```
 
@@ -320,7 +320,7 @@ Main options:
 | `--lang` | Internal key `ja` / `en` / `pt` … | may be guessed from filename |
 | `--language-code` | BCP-47 sent to API | lang default (`pt`→`pt-BR`) |
 | `--out` | Output root (lang appended) | `out` |
-| `--work-dir` | Work root | `work` |
+| `--work-dir` | Work root | `out/work` |
 | `--voice-id` | Voice ID (or `lang=id` for build-all) | `leo` |
 | `--short-mode` | `pad` / `stretch` | `pad` |
 | `--max-speed` | Cap on atempo product; over → hard_trim | none |
@@ -395,7 +395,7 @@ srtspeak translate ^
   --srt GRAN_TENKU_japan.srt ^
   --source-lang ja ^
   --to en --to pt-BR --to es ^
-  --out srt_gen ^
+  --out out/srt_gen ^
   --glossary glossary.json ^
   --length-mode hint
 ```
@@ -405,8 +405,8 @@ srtspeak translate ^
 | `--srt` | Source SRT | required |
 | `--source-lang` | Source language | filename guess / `ja` |
 | `--to` | Target BCP-47 (repeat or comma-separated) | required (≥1) |
-| `--out` | Output root | `srt_gen` |
-| `--work-dir` | Work root | `work` |
+| `--out` | Output root | `out/srt_gen` |
+| `--work-dir` | Work root | `out/work` |
 | `--glossary` | Glossary JSON path | none |
 | `--length-mode` | `off` / `hint` / `enforce` / `report-only` | `hint` |
 | `--on-empty` | `fail` / `keep-source` | `fail` |
@@ -429,11 +429,11 @@ Then TTS the generated SRT:
 ```bat
 srtspeak build-all ^
   --map ja=GRAN_TENKU_japan.srt ^
-  --map en=srt_gen/en/GRAN_TENKU_japan_en.srt ^
+  --map en=out/srt_gen/en/GRAN_TENKU_japan_en.srt ^
   --voice-id leo --out out
 ```
 
-(With `--naming gran_tenku`, paths become `srt_gen/en/GRAN_TENKU_en.srt`.)
+(With `--naming gran_tenku`, paths become `out/srt_gen/en/GRAN_TENKU_en.srt`.)
 
 ### Glossary suggest
 
@@ -473,7 +473,7 @@ srtspeak gui
 - Completion: non-modal result dialog; main window stays open
 - Browse / path confirm: filename → source language guess (`guess_lang_from_filename`)
 - Progress: bottom status + bar (0–1000); worker → thread-safe queue + ~80ms drain; Cancel via `CancellationToken`
-- Optional diag: `SRTSPEAK_GUI_PROGRESS_LOG=1` → `work/gui_progress.log` only
+- Optional diag: `SRTSPEAK_GUI_PROGRESS_LOG=1` → `out/work/gui_progress.log` only
 - Non-secret settings in **`gui_settings.json`** (never the key plaintext)
 - UTF-8 defaults: CLI/GUI set `PYTHONUTF8=1` and `PYTHONIOENCODING=utf-8` when unset
 
@@ -483,7 +483,7 @@ srtspeak gui
 
 - Pipeline: parse → limit → **ja_yomi** (ja) → TTS/cache → normalize → fit → timeline → report
 - TTS: xAI Grok unary REST only (`speed` always 1.0)
-- ja_yomi: Grok Chat structured JSON, batch 5, cache under `work/{lang}/`
+- ja_yomi: Grok Chat structured JSON, batch 5, cache under `out/work/{lang}/`
 - strip_emoticons: kaomoji stripped for **TTS speak text only**; emoji kept; stored SRT cues unchanged; default **on**
 - Fit: ffmpeg CLI only (`atempo` 0.5–2.0 multi-stage; short cues default to pad)
 - Timeline: silence canvas or base_wav; place in half-open `[start, end)`; **PCM add-mix** (clip ±32767)

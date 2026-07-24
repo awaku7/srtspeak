@@ -28,7 +28,7 @@ def test_translate_parser_accepts_multiple_to() -> None:
             "--to",
             "pt-BR",
             "--out",
-            "srt_gen",
+            "out/srt_gen",
             "--dry-run",
         ]
     )
@@ -50,7 +50,7 @@ def test_translate_parser_accepts_no_cache() -> None:
             "--to",
             "en",
             "--out",
-            "srt_gen",
+            "out/srt_gen",
             "--no-cache",
         ]
     )

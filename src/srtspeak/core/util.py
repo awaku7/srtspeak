@@ -109,6 +109,17 @@ def ensure_dir(path: Path | str) -> Path:
     p.mkdir(parents=True, exist_ok=True)
     return p
 
+
+
+# Default layout: everything under out/
+#   out/                 build output root
+#   out/work/            caches, logs, ja_yomi
+#   out/srt_gen/         translate output root
+DEFAULT_OUT_ROOT = Path("out")
+DEFAULT_WORK_DIR = DEFAULT_OUT_ROOT / "work"
+DEFAULT_SRT_GEN_DIR = DEFAULT_OUT_ROOT / "srt_gen"
+
+
 def resolve_out_dir(out: str | Path | None, lang: str) -> Path:
     """Resolve final per-language output directory.
 
@@ -116,7 +127,7 @@ def resolve_out_dir(out: str | Path | None, lang: str) -> Path:
     always appended (``out`` -> ``out/ja``). If the path already ends with the
     same lang segment, it is not doubled (``out/ja`` + ``ja`` -> ``out/ja``).
     """
-    root = Path(out) if out is not None and str(out).strip() else Path("out")
+    root = Path(out) if out is not None and str(out).strip() else DEFAULT_OUT_ROOT
     lang_key = (lang or "").strip()
     if not lang_key:
         raise ValueError("lang is required for out_dir resolution")

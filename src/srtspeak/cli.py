@@ -26,7 +26,7 @@ from srtspeak.core.progress import ProgressEvent
 from srtspeak.core.report import write_json
 from srtspeak.core.secrets import api_key_status, resolve_api_key
 from srtspeak.core.tts_xai import TtsError, fetch_voices, merge_voice_catalog
-from srtspeak.core.util import resolve_out_dir
+from srtspeak.core.util import resolve_out_dir, DEFAULT_OUT_ROOT, DEFAULT_WORK_DIR, DEFAULT_SRT_GEN_DIR
 from srtspeak.core.voices import (
     builtin_voice_ids,
     list_builtin_voices,
@@ -378,7 +378,7 @@ def cmd_build_all(args: argparse.Namespace) -> int:
             print(_("XAI_API_KEY is not set"), file=sys.stderr)
             return 2
 
-    out_root = Path(args.out) if args.out else Path("out")
+    out_root = Path(args.out) if args.out else DEFAULT_OUT_ROOT
     # summary.json stays at out root; per-lang artifacts under {root}/{lang}/
     reports: dict[str, str] = {}
     langs: list[str] = []
@@ -474,8 +474,8 @@ def cmd_translate(args: argparse.Namespace) -> int:
         print(_("translate requires at least one --to"), file=sys.stderr)
         return 2
 
-    out_dir = Path(args.out) if args.out else Path("srt_gen")
-    work_dir = Path(args.work_dir) if args.work_dir else Path("work")
+    out_dir = Path(args.out) if args.out else DEFAULT_SRT_GEN_DIR
+    work_dir = Path(args.work_dir) if args.work_dir else DEFAULT_WORK_DIR
     glossary = Path(args.glossary) if getattr(args, "glossary", None) else None
 
     try:
@@ -715,7 +715,7 @@ def build_parser() -> argparse.ArgumentParser:
         sp.add_argument(
             "--work-dir",
             default=None,
-            help=_("work directory root"),
+            help=_("work directory root (default: out/work)"),
         )
         sp.add_argument(
             "--voice-id",
@@ -836,13 +836,13 @@ def build_parser() -> argparse.ArgumentParser:
     )
     sp_tr.add_argument(
         "--out",
-        default="srt_gen",
-        help=_("output root directory (default: srt_gen)"),
+        default=str(DEFAULT_SRT_GEN_DIR),
+        help=_("output root directory (default: out/srt_gen)"),
     )
     sp_tr.add_argument(
         "--work-dir",
-        default="work",
-        help=_("work directory root"),
+        default=str(DEFAULT_WORK_DIR),
+        help=_("work directory root (default: out/work)"),
     )
     sp_tr.add_argument(
         "--glossary",

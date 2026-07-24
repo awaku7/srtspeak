@@ -31,9 +31,9 @@
 ### 変更
 - `glossary.json` を固有名詞中心に薄型化（翻訳プロンプト高速化）。
 - GUI 翻訳進捗をスレッド安全キュー経由にし、Chat 待機中もステータス更新。
-- 診断用 GUI 進捗ログは既定 OFF。有効時のみ `work/gui_progress.log`。
+- 診断用 GUI 進捗ログは既定 OFF。有効時のみ `out/work/gui_progress.log`。
 - optional: `[gui]` / `[dev]` に `keyring>=25`。
-- 翻訳キャッシュ再設計: `work/translate/by_out/{tgt}__{out_name}.json`（index→`{src,tgt}`）、既存出力 SRT からシード。旧キュー単位 sha256 キーは不使用。
+- 翻訳キャッシュ再設計: `out/work/translate/by_out/{tgt}__{out_name}.json`（index→`{src,tgt}`）、既存出力 SRT からシード。旧キュー単位 sha256 キーは不使用。
 
 ### 修正
 - Translate タブが Grok Chat 待ち中に「実行中…」のまま固まる問題。

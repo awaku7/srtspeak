@@ -20,7 +20,7 @@ from srtspeak.core.srt_parser import Cue, apply_limit, parse_srt, read_srt_text
 from srtspeak.core.timeline import write_timeline_wav
 from srtspeak.core.tts_xai import TtsError, synthesize_to_file
 from srtspeak.core.text_sanitize import tts_speak_text
-from srtspeak.core.util import ensure_dir, wav_duration_ms
+from srtspeak.core.util import ensure_dir, wav_duration_ms, DEFAULT_WORK_DIR
 from srtspeak.core.voices import resolve_voice_id, validate_voice_id, builtin_voice_ids
 
 
@@ -29,7 +29,7 @@ def _utc_now_iso() -> str:
 
 
 def _work_lang_dir(config: BuildConfig) -> Path:
-    base = config.work_dir if config.work_dir is not None else Path("work")
+    base = config.work_dir if config.work_dir is not None else DEFAULT_WORK_DIR
     return Path(base) / config.lang
 
 

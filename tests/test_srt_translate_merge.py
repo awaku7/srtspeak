@@ -176,7 +176,7 @@ def test_run_translate_cache_seeds_from_output_srt(tmp_path: Path) -> None:
 
 
 def test_run_translate_cache_by_out_name_file(tmp_path: Path) -> None:
-    """Cache file lives under work/translate/by_out/{tgt}__{out_name}.json."""
+    """Cache file lives under out/work/translate/by_out/{tgt}__{out_name}.json."""
     src_cues = _cues()
     srt_path = tmp_path / "GRAN_TENKU_ja.srt"
     srt_path.write_text(format_srt(src_cues), encoding="utf-8")

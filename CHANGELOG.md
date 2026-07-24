@@ -31,9 +31,9 @@ All notable changes to this project are documented in this file.
 ### Changed
 - `glossary.json` thinned to proper-noun-centric terms (faster translate prompts).
 - GUI translate progress uses a thread-safe queue so Chat heartbeats update the status bar live.
-- Diagnostic GUI progress log default OFF; when enabled writes `work/gui_progress.log` only.
+- Diagnostic GUI progress log default OFF; when enabled writes `out/work/gui_progress.log` only.
 - Optional deps: `keyring>=25` on `[gui]` and `[dev]`.
-- Translate cache redesigned: `work/translate/by_out/{tgt}__{out_name}.json` (index→`{src,tgt}`), seed from existing output SRT; old per-cue sha256 keys unused.
+- Translate cache redesigned: `out/work/translate/by_out/{tgt}__{out_name}.json` (index→`{src,tgt}`), seed from existing output SRT; old per-cue sha256 keys unused.
 
 ### Fixed
 - Translate tab status stuck on “Running…” while Grok Chat was in flight.
