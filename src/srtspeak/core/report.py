@@ -22,6 +22,6 @@ def write_json(path: Path, data: dict[str, Any]) -> None:
     )
 
 
-def track_filename(lang: str, *, mp3: bool = False) -> str:
+def track_filename(lang: str, *, mp3: bool = False, stem: str = "GRAN_TENKU") -> str:
     ext = "mp3" if mp3 else "wav"
-    return f"GRAN_TENKU_{lang}.{ext}"
+    return f"{stem}_{lang}.{ext}"

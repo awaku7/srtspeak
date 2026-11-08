@@ -250,18 +250,21 @@ srtspeak --verbose build --srt sample.srt --lang ja --dry-run
 
 ```text
 out/{lang}/
-  cues/                  per-cue audio (normalized)
-  fitted/                duration-fitted audio
-  GRAN_TENKU_{lang}.wav  final track (fixed name)
-  GRAN_TENKU_{lang}.mp3  if --also-mp3
-  report.json
+  cues/{source_token}/       per-cue audio (normalized), per input SRT
+  fitted/{source_token}/     duration-fitted audio, per input SRT
+  {output_stem}_{source_id}_{lang}.wav
+  {output_stem}_{source_id}_{lang}.mp3 # if --also-mp3
+  report_{source_token}.json # report for this input SRT
+  report.json            # latest-run compatibility report
 out/work/{lang}/
-  raw/
+  raw/{source_token}/
   cache/
   ja_yomi_cache.json     when ja + ja_yomi
 ```
 
 - Default root: `out` → e.g. `out/ja/`
+- `{source_id}` is the first 12 hex digits of SHA-256 over the normalized absolute SRT path; `{source_token}` is `{input_stem}_{source_id}`.
+- `{output_stem}` is the input filename stem with a trailing `_{lang}` removed, if present.
 - `--out out/en` with `--lang en` → `out/en/` (no double nesting)
 - `--out artifacts` with `--lang pt` → `artifacts/pt/`
 - `build-all` writes `summary.json` at the out root

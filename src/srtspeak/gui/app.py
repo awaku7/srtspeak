@@ -318,6 +318,7 @@ def main() -> int:
             self._latest_progress: ProgressEvent | None = None
             self._progress_seen: bool = False
             self._progress_q: queue.SimpleQueue = queue.SimpleQueue()
+            self._last_browse_dir: str = ""
             self._progress_timer = QTimer(self)
             self._progress_timer.setInterval(80)
             self._progress_timer.timeout.connect(self._flush_progress)
@@ -515,6 +516,7 @@ def main() -> int:
 
             self.srt_edit = QLineEdit()
             self.srt_edit.editingFinished.connect(self._on_srt_path_changed)
+            self.srt_edit.editingFinished.connect(self._save_current_settings)
             browse = QPushButton("…")
             browse.clicked.connect(self._browse_srt)
             row = QHBoxLayout()
@@ -532,6 +534,7 @@ def main() -> int:
                 label = _("{name} ({code})").format(name=_(opt.label), code=opt.code)
                 self.lang_combo.addItem(label, opt.code)
             self._select_language_code(self.lang_combo, "ja")
+            self.lang_combo.currentIndexChanged.connect(self._save_current_settings)
             detect_btn = QPushButton(_("Detect"))
             detect_btn.clicked.connect(self._detect_language_build)
             row_lang = QHBoxLayout()
@@ -549,6 +552,7 @@ def main() -> int:
             idx = self.voice_combo.findData(DEFAULT_VOICE_ID)
             if idx >= 0:
                 self.voice_combo.setCurrentIndex(idx)
+            self.voice_combo.currentIndexChanged.connect(self._save_current_settings)
             form.addRow(_("Voice"), self.voice_combo)
 
             self.out_edit = QLineEdit(str((Path.cwd() / DEFAULT_OUT_ROOT).resolve()))
@@ -605,6 +609,7 @@ def main() -> int:
 
             self.tr_srt_edit = QLineEdit()
             self.tr_srt_edit.editingFinished.connect(self._on_tr_srt_changed)
+            self.tr_srt_edit.editingFinished.connect(self._save_current_settings)
             browse = QPushButton("…")
             browse.clicked.connect(self._browse_tr_srt)
             row = QHBoxLayout()
@@ -838,6 +843,11 @@ def main() -> int:
             tab = s.get("active_tab")
             if tab == "translate":
                 self.tabs.setCurrentWidget(self._translate_tab)
+            lbd = s.get("last_browse_dir", "")
+            if lbd:
+                self._last_browse_dir = lbd
+            if not self._last_browse_dir:
+                self._last_browse_dir = str(Path.cwd())
 
         def _save_current_settings(self) -> None:
             s = {
@@ -868,6 +878,7 @@ def main() -> int:
                     if self.tabs.currentWidget() is self._translate_tab
                     else "build"
                 ),
+                "last_browse_dir": self._last_browse_dir,
             }
             _save_settings(s)
 
@@ -884,49 +895,63 @@ def main() -> int:
             self._select_language_code(combo, code)
             return True
 
+
+    
         def _browse_srt(self) -> None:
+            cur = self.srt_edit.text().strip()
+            start = os.path.dirname(os.path.normpath(cur)) if cur else self._last_browse_dir
             path, _u = QFileDialog.getOpenFileName(
                 self,
                 _("Open SRT"),
-                "",
+                start,
                 _("SRT files (*.srt);;All files (*.*)"),
             )
             if path:
                 self.srt_edit.setText(path)
+                self._last_browse_dir = os.path.dirname(os.path.normpath(path))
                 self._apply_filename_lang_guess(path, self.lang_combo)
                 self._refresh_cue_count(self.srt_edit, self.cue_count_label)
 
         def _browse_tr_srt(self) -> None:
+            cur = self.tr_srt_edit.text().strip()
+            start = os.path.dirname(os.path.normpath(cur)) if cur else self._last_browse_dir
             path, _u = QFileDialog.getOpenFileName(
                 self,
                 _("Open SRT"),
-                "",
+                start,
                 _("SRT files (*.srt);;All files (*.*)"),
             )
             if path:
                 self.tr_srt_edit.setText(path)
+                self._last_browse_dir = os.path.dirname(os.path.normpath(path))
                 self._apply_filename_lang_guess(path, self.tr_source_combo)
                 self._refresh_cue_count(self.tr_srt_edit, self.tr_cue_label)
 
         def _browse_base_wav(self) -> None:
+            cur = self.base_wav_edit.text().strip()
+            start = os.path.dirname(os.path.normpath(cur)) if cur else self._last_browse_dir
             path, _u = QFileDialog.getOpenFileName(
                 self,
                 _("Select base WAV"),
-                "",
+                start,
                 _("WAV files (*.wav);;All files (*.*)"),
             )
             if path:
                 self.base_wav_edit.setText(path)
+                self._last_browse_dir = os.path.dirname(os.path.normpath(path))
 
         def _browse_glossary(self) -> None:
+            cur = self.tr_glossary_edit.text().strip()
+            start = os.path.dirname(os.path.normpath(cur)) if cur else self._last_browse_dir
             path, _u = QFileDialog.getOpenFileName(
                 self,
                 _("Select glossary JSON"),
-                "",
+                start,
                 _("JSON files (*.json);;All files (*.*)"),
             )
             if path:
                 self.tr_glossary_edit.setText(path)
+                self._last_browse_dir = os.path.dirname(os.path.normpath(path))
 
         def _abs_dir_text(self, text: str, default_name: str) -> str:
             raw = (text or "").strip() or default_name
@@ -1574,6 +1599,10 @@ def main() -> int:
 
         def _show_pending_dialog(self, kind: str, payload: object) -> None:
             # Keep the main window open; completion must never quit the app.
+            if not self.isVisible():
+                self.show()
+            self.raise_()
+            self.activateWindow()
             if kind == "ok":
                 if self._last_result_kind == "glossary":
                     title, _label, body = self._format_glossary_summary(payload)
@@ -1674,12 +1703,18 @@ def main() -> int:
                         thread.terminate()
                         thread.wait(2000)
                 self._cleanup_worker_thread()
+            # Keep app alive across job completion dialogs; quit only when
+            # the main window itself is closed by the user.
+            app = QApplication.instance()
+            if app is not None:
+                QTimer.singleShot(0, app.quit)
             super().closeEvent(event)
 
     app = QApplication(sys.argv)
-    app.setQuitOnLastWindowClosed(True)
+    # Job result boxes must never end the process. Quit only from MainWindow.closeEvent.
+    app.setQuitOnLastWindowClosed(False)
     win = MainWindow()
-    win.setAttribute(Qt.WidgetAttribute.WA_QuitOnClose, True)
+    win.setAttribute(Qt.WidgetAttribute.WA_QuitOnClose, False)
     win.resize(640, 720)
     win.show()
     return int(app.exec())

@@ -6,7 +6,7 @@ User-facing anomaly messages use English gettext msgids (see ``srtspeak.i18n``).
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 from srtspeak.i18n import _
@@ -121,6 +121,13 @@ def parse_timestamp_ms(value: str) -> int:
     h = int(m.group("h"))
     mi = int(m.group("m"))
     s = int(m.group("s"))
+    if mi >= 60 or s >= 60:
+        raise SrtParseError(
+            _(
+                "invalid timestamp: {value} "
+                "(minute and second fields must be below 60)"
+            ).format(value=repr(value))
+        )
     ms_raw = m.group("ms")
     # pad/truncate to milliseconds
     ms = int((ms_raw + "000")[:3])
@@ -155,6 +162,14 @@ def _parse_block(block: str, block_no: int) -> tuple[Cue | None, list[str]]:
                 block_no=block_no,
                 value=repr(lines[0]),
             )
+        )
+        return None, issues
+
+    if index < 1:
+        issues.append(
+            _(
+                "block {block_no}: cue index must be a positive integer: {value}"
+            ).format(block_no=block_no, value=index)
         )
         return None, issues
 
@@ -232,7 +247,7 @@ def _parse_block(block: str, block_no: int) -> tuple[Cue | None, list[str]]:
     )
 
 
-def parse_srt(source: str) -> list[Cue]:
+def parse_srt(source: str, *, fix_overlap: bool = True) -> list[Cue]:
     """Parse SRT text into cues. Anomalies raise :class:`SrtParseError`.
 
     Collect as many issues as practical into ``issues``.
@@ -249,6 +264,15 @@ def parse_srt(source: str) -> list[Cue]:
         if cue is not None:
             cues.append(cue)
 
+    seen_indices: set[int] = set()
+    duplicate_indices: set[int] = set()
+    for cue in cues:
+        if cue.index in seen_indices:
+            duplicate_indices.add(cue.index)
+        seen_indices.add(cue.index)
+    for index in sorted(duplicate_indices):
+        issues.append(_("duplicate cue index: {index}").format(index=index))
+
     if not cues and not issues:
         raise SrtParseError(
             _("no cues found in SRT (empty file or invalid format)")
@@ -257,29 +281,40 @@ def parse_srt(source: str) -> list[Cue]:
     if not cues and issues:
         raise SrtParseError(issues)
 
-    # overlap check: half-open [start, end); adjacent equal is OK
-    ordered = sorted(cues, key=lambda c: (c.start_ms, c.index))
-    for prev, cur in zip(ordered, ordered[1:]):
-        if cur.start_ms < prev.end_ms:
-            issues.append(
-                _(
-                    "cues {a} and {b} overlap in time: "
-                    "[{sa},{ea}) and [{sb},{eb}) "
-                    "(half-open [start,end); adjacent is allowed)"
-                ).format(
-                    a=prev.index,
-                    b=cur.index,
-                    sa=_ms_to_ts(prev.start_ms),
-                    ea=_ms_to_ts(prev.end_ms),
-                    sb=_ms_to_ts(cur.start_ms),
-                    eb=_ms_to_ts(cur.end_ms),
-                )
-            )
-
     if issues:
         raise SrtParseError(issues)
 
-    # return in file/index order as parsed
+    # Shift later cues forward when duration survives; reject fully-contained cues.
+    if fix_overlap:
+        ordered = sorted(cues, key=lambda c: (c.start_ms, c.index))
+        fixed: list[Cue] = []
+        for cue in ordered:
+            if not fixed:
+                fixed.append(cue)
+                continue
+            prev = fixed[-1]
+            if cue.start_ms < prev.end_ms:
+                if cue.end_ms <= prev.end_ms:
+                    raise SrtParseError(
+                        _(
+                            "cues {a} and {b} overlap in time: [{sa},{ea}) and "
+                            "[{sb},{eb}) (half-open [start,end); adjacent is allowed)"
+                        ).format(
+                            a=prev.index,
+                            b=cue.index,
+                            sa=prev.start_ms,
+                            ea=prev.end_ms,
+                            sb=cue.start_ms,
+                            eb=cue.end_ms,
+                        )
+                    )
+                new_start = prev.end_ms
+                new_end = cue.end_ms
+                fixed.append(replace(cue, start_ms=new_start, end_ms=new_end))
+            else:
+                fixed.append(cue)
+        fixed.sort(key=lambda c: c.index)
+        return fixed
     return cues
 
 

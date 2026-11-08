@@ -42,6 +42,12 @@ def test_parse_timestamp_ms_invalid_japanese() -> None:
     assert "not-a-time" in msg
 
 
+@pytest.mark.parametrize("value", ["00:60:00,000", "00:00:60,000"])
+def test_parse_timestamp_ms_rejects_out_of_range_fields(value: str) -> None:
+    with pytest.raises(SrtParseError):
+        parse_timestamp_ms(value)
+
+
 def test_parse_sample_block() -> None:
     text = (
         "1\n"
@@ -90,16 +96,32 @@ def test_parse_rejects_zero_duration() -> None:
     assert "長さ" in msg or "終了" in msg
 
 
-def test_parse_rejects_overlap() -> None:
+def test_parse_fixes_overlap_clip_last() -> None:
     text = (
         "1\n00:00:00,000 --> 00:00:02,000\na\n\n"
         "2\n00:00:01,000 --> 00:00:03,000\nb\n"
     )
+    cues = parse_srt(text)
+    assert len(cues) == 2
+    # cue 1 keeps its timing
+    assert cues[0].index == 1
+    assert cues[0].start_ms == 0
+    assert cues[0].end_ms == 2000
+    # cue 2 clipped: start = cue1.end
+    assert cues[1].index == 2
+    assert cues[1].start_ms == 2000
+    assert cues[1].end_ms == 3000
+
+
+def test_parse_rejects_fully_contained_overlap_instead_of_making_one_ms_cue() -> None:
+    text = (
+        "1\n00:00:00,000 --> 00:00:10,000\nlong cue\n\n"
+        "2\n00:00:02,000 --> 00:00:03,000\nshort cue\n"
+    )
     with pytest.raises(SrtParseError) as ei:
         parse_srt(text)
-    msg = str(ei.value)
-    assert "重な" in msg
-    assert "1" in msg and "2" in msg
+    assert "1" in str(ei.value)
+    assert "2" in str(ei.value)
 
 
 def test_parse_rejects_invalid_index() -> None:
@@ -107,6 +129,23 @@ def test_parse_rejects_invalid_index() -> None:
     with pytest.raises(SrtParseError) as ei:
         parse_srt(text)
     assert "番号" in str(ei.value)
+
+
+@pytest.mark.parametrize("index", ["0", "-1"])
+def test_parse_rejects_nonpositive_index(index: str) -> None:
+    text = f"{index}\n00:00:00,000 --> 00:00:01,000\nhello\n"
+    with pytest.raises(SrtParseError):
+        parse_srt(text)
+
+
+def test_parse_rejects_duplicate_indices() -> None:
+    text = (
+        "1\n00:00:00,000 --> 00:00:01,000\nfirst\n\n"
+        "1\n00:00:01,000 --> 00:00:02,000\nsecond\n"
+    )
+    with pytest.raises(SrtParseError) as ei:
+        parse_srt(text)
+    assert "1" in str(ei.value)
 
 
 def test_parse_rejects_missing_timing() -> None:

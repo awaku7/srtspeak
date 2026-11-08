@@ -79,16 +79,16 @@ def test_timestamp_error_en_and_ja() -> None:
     assert "タイムスタンプ" in str(ei.value)
 
 
-def test_overlap_en() -> None:
+def test_overlap_clip_last_en() -> None:
     set_locale("en")
     text = (
         "1\n00:00:00,000 --> 00:00:02,000\na\n\n"
         "2\n00:00:01,000 --> 00:00:03,000\nb\n"
     )
-    with pytest.raises(SrtParseError) as ei:
-        parse_srt(text)
-    msg = str(ei.value).lower()
-    assert "overlap" in msg
+    cues = parse_srt(text)
+    assert len(cues) == 2
+    # clip-last: cue 2 start pushed to cue 1 end
+    assert cues[1].start_ms == 2000
 
 
 def test_multiple_issues_header_en() -> None:

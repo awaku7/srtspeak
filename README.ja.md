@@ -250,18 +250,21 @@ srtspeak --verbose build --srt sample.srt --lang ja --dry-run
 
 ```text
 out/{lang}/
-  cues/                 キュー単位（正規化後）
-  fitted/               尺合わせ後
-  GRAN_TENKU_{lang}.wav 完成トラック（名前固定）
-  GRAN_TENKU_{lang}.mp3 --also-mp3 時
-  report.json
+  cues/{source_token}/       キュー単位（正規化後、入力SRTごと）
+  fitted/{source_token}/     尺合わせ後（入力SRTごと）
+  {output_stem}_{source_id}_{lang}.wav
+  {output_stem}_{source_id}_{lang}.mp3 # --also-mp3 時
+  report_{source_token}.json # 入力SRTごとのレポート
+  report.json            # 最新実行の互換レポート
 out/work/{lang}/
-  raw/
+  raw/{source_token}/
   cache/
   ja_yomi_cache.json    ja かつ ja_yomi 時
 ```
 
 - 既定ルート: `out` → 例 `out/ja/`
+- `{source_id}` は正規化した絶対SRTパスの SHA-256 先頭12桁、`{source_token}` は `{input_stem}_{source_id}` です。
+- `{output_stem}` は入力SRTの拡張子を除いた名前から、末尾の `_{lang}` を取り除いたものです（該当時）。
 - `--out out/en` かつ `--lang en` → `out/en/`（二重化しない）
 - `--out artifacts` かつ `--lang pt` → `artifacts/pt/`
 - `build-all` の `summary.json` は out ルート直下

@@ -689,9 +689,24 @@ msgstr "SRT を UTF-8/cp932/shift_jis/euc_jp で復号できません: {path}（
 msgid "invalid timestamp: {value} (expected HH:MM:SS,mmm or HH:MM:SS.mmm)"
 msgstr "タイムスタンプ形式が不正です: {value}（期待: HH:MM:SS,mmm または HH:MM:SS.mmm）"
 
+#: src/srtspeak/core/srt_parser.py
+#, python-brace-format
+msgid "invalid timestamp: {value} (minute and second fields must be below 60)"
+msgstr "タイムスタンプが不正です: {value}（分と秒は60未満である必要があります）"
+
+#: src/srtspeak/core/srt_parser.py
+#, python-brace-format
+msgid "block {block_no}: cue index must be a positive integer: {value}"
+msgstr "ブロック {block_no}: 字幕番号は正の整数である必要があります: {value}"
+
+#: src/srtspeak/core/srt_parser.py
+#, python-brace-format
+msgid "duplicate cue index: {index}"
+msgstr "字幕番号が重複しています: {index}"
+
 #: src/srtspeak/core/srt_parser.py:154
 #, python-brace-format
-msgid "block {block_no}: cue index is not a number: {value}"
+msgid "{label}: start {detail}"
 msgstr "ブロック{block_no}: キュー番号が数値ではありません: {value}"
 
 #: src/srtspeak/core/srt_parser.py:161

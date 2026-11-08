@@ -242,7 +242,7 @@ def _seed_cache_from_output_srt(
     if not out_path.is_file():
         return 0
     try:
-        out_cues = parse_srt(out_path.read_text(encoding="utf-8"))
+        out_cues = parse_srt(out_path.read_text(encoding="utf-8"), fix_overlap=False)
         validate_structure_lock(src_cues, out_cues)
     except (OSError, UnicodeError, TranslateError, ValueError):
         return 0
@@ -799,7 +799,7 @@ def run_translate(
         )
 
     text, srt_encoding = read_srt_text(config.srt_path)
-    src_cues = parse_srt(text)
+    src_cues = parse_srt(text, fix_overlap=False)
     src_cues = apply_limit(src_cues, config.limit)
     if not src_cues:
         raise TranslateError("no cues after limit")
@@ -928,7 +928,7 @@ def run_translate(
             )
             srt_text = format_srt(out_cues)
             out_path.write_text(srt_text, encoding="utf-8")
-            reparsed = parse_srt(out_path.read_text(encoding="utf-8"))
+            reparsed = parse_srt(out_path.read_text(encoding="utf-8"), fix_overlap=False)
             validate_structure_lock(src_cues, reparsed)
             warns = list(one.get("warnings") or [])
             target_results[tgt] = {

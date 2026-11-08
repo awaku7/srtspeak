@@ -13,7 +13,6 @@ import pytest
 from srtspeak.core.cancel import BuildCancelled, CancellationToken
 from srtspeak.core.models import BuildConfig
 from srtspeak.core.pipeline import BuildService, run_build
-from srtspeak.core.report import track_filename
 from srtspeak.core.util import ms_to_samples, wav_duration_ms
 
 
@@ -98,9 +97,9 @@ def test_run_build_mocked_tts_writes_artifacts(tmp_path: Path) -> None:
     assert "api_key" not in report
     assert "XAI_API_KEY" not in str(report)
 
-    track = out_dir / track_filename("ja")
+    track = Path(report["track_path"])
     assert track.is_file()
-    assert report.get("track_path") == str(track) or report.get("track") == str(track)
+    assert report["track_path"] == str(track)
     # last_end 2000ms ±50ms
     dur = wav_duration_ms(track, sample_rate=24000)
     assert abs(dur - 2000.0) <= 50.0
@@ -119,10 +118,102 @@ def test_run_build_mocked_tts_writes_artifacts(tmp_path: Path) -> None:
         )
 
     # raw + fitted + cues present
-    assert (work_dir / "ja" / "raw" / "0001.wav").is_file()
-    assert (out_dir / "fitted" / "0001.wav").is_file() or (
-        out_dir / "cues" / "0001.wav"
+    source_token = f"sample_{report['source_id']}"
+    assert (work_dir / "ja" / "raw" / source_token / "0001.wav").is_file()
+    assert (out_dir / "fitted" / source_token / "0001.wav").is_file() or (
+        out_dir / "cues" / source_token / "0001.wav"
     ).is_file()
+
+
+def test_run_build_keeps_artifacts_separate_for_different_input_stems(
+    tmp_path: Path,
+) -> None:
+    out_dir = tmp_path / "out" / "ja"
+    work_dir = tmp_path / "work"
+    paths = [tmp_path / "alpha.srt", tmp_path / "beta.srt"]
+    for path in paths:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        _minimal_srt(path)
+
+    with patch(
+        "srtspeak.core.pipeline.synthesize_to_file",
+        side_effect=_fake_synthesize,
+    ):
+        reports = [
+            run_build(
+                BuildConfig(
+                    srt_path=path,
+                    lang="ja",
+                    language_code="ja",
+                    out_dir=out_dir,
+                    work_dir=work_dir,
+                    ja_yomi=False,
+                    strip_emoticons=False,
+                    limit=2,
+                ),
+                api_key="test-key-not-real",
+            )
+            for path in paths
+        ]
+
+    for stem, report in zip(("alpha", "beta"), reports):
+        assert report["status"] == "ok"
+        source_token = f"{stem}_{report['source_id']}"
+        assert (out_dir / "cues" / source_token / "0001.wav").is_file()
+        assert (out_dir / "fitted" / source_token / "0001.wav").is_file()
+        assert (work_dir / "ja" / "raw" / source_token / "0001.wav").is_file()
+        report_path = out_dir / f"report_{source_token}.json"
+        assert report_path.is_file()
+        assert f"{stem}.srt" in report_path.read_text(encoding="utf-8")
+    # Preserve the existing path consumed by CLI callers as the latest report.
+    assert (out_dir / "report.json").is_file()
+
+
+def test_run_build_disambiguates_same_names_and_language_suffixes(
+    tmp_path: Path,
+) -> None:
+    out_dir = tmp_path / "out" / "ja"
+    work_dir = tmp_path / "work"
+    paths = [
+        tmp_path / "left" / "scene.srt",
+        tmp_path / "right" / "scene.srt",
+        tmp_path / "suffix" / "foo.srt",
+        tmp_path / "suffix" / "foo_ja.srt",
+    ]
+    for path in paths:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        _minimal_srt(path)
+
+    with patch(
+        "srtspeak.core.pipeline.synthesize_to_file",
+        side_effect=_fake_synthesize,
+    ):
+        reports = [
+            run_build(
+                BuildConfig(
+                    srt_path=path,
+                    lang="ja",
+                    language_code="ja",
+                    out_dir=out_dir,
+                    work_dir=work_dir,
+                    ja_yomi=False,
+                    strip_emoticons=False,
+                    limit=2,
+                ),
+                api_key="test-key-not-real",
+            )
+            for path in paths
+        ]
+
+    assert len({report["source_id"] for report in reports}) == len(paths)
+    assert len({report["track_path"] for report in reports}) == len(paths)
+    for path, report in zip(paths, reports):
+        source_token = f"{path.stem}_{report['source_id']}"
+        assert Path(report["track_path"]).is_file()
+        assert (out_dir / "cues" / source_token / "0001.wav").is_file()
+        assert (out_dir / "fitted" / source_token / "0001.wav").is_file()
+        assert (work_dir / "ja" / "raw" / source_token / "0001.wav").is_file()
+        assert (out_dir / f"report_{source_token}.json").is_file()
 
 
 def test_run_build_cache_hit_on_second_run(tmp_path: Path) -> None:

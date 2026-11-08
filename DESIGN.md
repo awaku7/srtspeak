@@ -1,6 +1,6 @@
 # srtspeak 設計書（実装準拠）
 
-**状態:** 実装済み（パッケージ版 `0.1.5`）。本ドキュメントはコードと同期した仕様の正本。  
+**状態:** 実装済み（パッケージ版 `0.1.6`）。本ドキュメントはコードと同期した仕様の正本。  
 **目的:** 多言語 SRT を xAI Grok TTS で音声化し、各キューの開始・終了時刻へ **強制フィット** したナレーション WAV を生成する。加えて SRT→SRT 翻訳と用語集提案を Grok Chat で提供する。
 
 関連:
@@ -325,7 +325,7 @@ HTTP は **stdlib `urllib`** のみ。
 3. fitted は base と同じ rate の mono s16le 前提でミックス
 4. ナレーションが base 長を超える start はスキップ
 
-完成トラック名: **`GRAN_TENKU_{lang}.wav` 固定**（入力 stem 非依存）。
+完成トラック名: `{output_stem}_{source_id}_{lang}.wav`。例: `clip.srt` → `clip_<source_id>_ja.wav`。
 
 ---
 
@@ -368,19 +368,22 @@ HTTP は **stdlib `urllib`** のみ。
 {out}/
   summary.json              # build-all
   {lang}/
-    cues/{index:04d}.wav    # 正規化後
-    fitted/{index:04d}.wav
-    GRAN_TENKU_{lang}.wav
-    GRAN_TENKU_{lang}.mp3   # --also-mp3
-    report.json
+    cues/{source_token}/{index:04d}.wav    # 正規化後、入力SRTごと
+    fitted/{source_token}/{index:04d}.wav # 尺合わせ後、入力SRTごと
+    {output_stem}_{source_id}_{lang}.wav
+    {output_stem}_{source_id}_{lang}.mp3 # --also-mp3
+    report_{source_token}.json            # 入力SRTごとのレポート
+    report.json                       # 最新実行の互換レポート
 out/work/{lang}/
-  raw/{index:04d}.wav
+  raw/{source_token}/{index:04d}.wav
   cache/{sha256}.wav
   ja_yomi_cache.json        # ja かつ ja_yomi 時
   srtspeak_ja_yomi.log      # ja_yomi ログ
 ```
 
 - `{index:04d}` は SRT 元 index（limit でも詰めない）
+- `{source_id}` は正規化した絶対SRTパスの SHA-256 先頭12桁。
+- `{source_token}` は `{input_stem}_{source_id}`、`{output_stem}` は末尾の `_{lang}` を除いた `{input_stem}`（該当時）。
 - 上書き可。cancel/limit で欠番可
 
 ### 12.2 Translate
@@ -578,7 +581,7 @@ optional extras（`pyproject.toml`）:
    cancel.check → speak_text=tts_speak_text(strip_emoticons)
    → cache(no_cache 可) → TTS → mono s16le 正規化
    → cues/ + raw/ + cache → force_fit → fitted/
-6. timeline（± base_wav）→ GRAN_TENKU_{lang}.wav → optional mp3
+6. timeline（± base_wav）→ {output_stem}_{source_id}_{lang}.wav → optional mp3
 7. report.json
 ```
 
@@ -644,3 +647,4 @@ optional extras（`pyproject.toml`）:
 | 0.1.3 同期 | 版番号 0.1.3。API キー OS 資格情報保存（keyring + Windows DPAPI 移行）。ファイル名から元言語推定強化。glossary 薄型化。translate cache を `out/work/translate/by_out/`（出力 SRT ファイル名キー + out SRT シード）に再設計 |
 | 0.1.4 同期 | 版番号 0.1.4。`__version__` を pyproject と同期。PySide6/keyring を本体依存化（`[gui]` extra 廃止）。API キー空白正規化。GUI キー状態表示・絶対パス出力フォルダ・非モーダル完了。UTF-8 既定。Windows bat ヘルパ削除 |
 | 0.1.5 同期 | 版番号 0.1.5。既定 work/srt_gen を out/ 配下へ（out/work, out/srt_gen）。gettext en/ja 修復 |
+| 0.1.6 同期 | 版番号 0.1.6。track_filename に入力SRT stem 採用。重複cue clip-last 自動修正。GUI Browse 開始フォルダ改善。設定自動保存。 |

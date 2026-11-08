@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import os
 import shutil
 import subprocess
 from datetime import datetime, timezone
@@ -35,6 +37,29 @@ def _work_lang_dir(config: BuildConfig) -> Path:
 
 def _out_lang_dir(config: BuildConfig) -> Path:
     return Path(config.out_dir)
+
+
+def _source_output_names(srt_path: Path, lang: str) -> tuple[str, str, str]:
+    """Return (artifact token, track stem, stable path-based source ID)."""
+    source_path = Path(srt_path)
+    source_stem = source_path.stem or "srt"
+    canonical_path = os.path.normcase(str(source_path.expanduser().resolve()))
+    source_id = hashlib.sha256(canonical_path.encode("utf-8")).hexdigest()[:12]
+
+    track_stem = source_stem
+    lang_suffix = f"_{lang}"
+    if track_stem.casefold().endswith(lang_suffix.casefold()):
+        track_stem = track_stem[:-len(lang_suffix)]
+
+    return f"{source_stem}_{source_id}", f"{track_stem}_{source_id}", source_id
+
+
+def _write_build_report(
+    out_dir: Path, source_token: str, report: dict[str, Any]
+) -> None:
+    """Keep a per-input report and the legacy latest-run report."""
+    write_json(out_dir / f"report_{source_token}.json", report)
+    write_json(out_dir / "report.json", report)
 
 
 def _normalize_wav(
@@ -107,6 +132,9 @@ def dry_run_build(
 ) -> dict[str, Any]:
     """Parse SRT and estimate cost without calling TTS."""
     config.validate()
+    source_token, track_stem, source_id = _source_output_names(
+        config.srt_path, config.lang
+    )
     token = cancel_token or CancellationToken()
     token.check()
     emit(
@@ -153,6 +181,7 @@ def dry_run_build(
         "language_code": config.language_code,
         "provider": config.provider,
         "voice_id": voice_id,
+        "source_id": source_id,
         "srt_path": str(config.srt_path),
         "source_encoding": srt_encoding,
         "out_dir": str(config.out_dir),
@@ -166,13 +195,13 @@ def dry_run_build(
         "strip_emoticons": bool(config.strip_emoticons),
         "fit": config.fit,
         "limit": config.limit,
-        "track": track_filename(config.lang),
+        "track": track_filename(config.lang, stem=track_stem),
         "cues": cue_rows,
     }
 
     out_dir = Path(config.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    write_json(out_dir / "report.json", report)
+    _write_build_report(out_dir, source_token, report)
     emit(
         progress_cb,
         stage="report",
@@ -192,6 +221,9 @@ def run_build(
 ) -> dict[str, Any]:
     """Full pipeline: parse → TTS(+cache) → fit → timeline → report."""
     config.validate()
+    source_token, track_stem, source_id = _source_output_names(
+        config.srt_path, config.lang
+    )
     if not api_key or not api_key.strip():
         raise ValueError("api_key is required for full build")
 
@@ -272,10 +304,10 @@ def run_build(
 
     out_dir = ensure_dir(_out_lang_dir(config))
     work_dir = ensure_dir(_work_lang_dir(config))
-    raw_dir = ensure_dir(work_dir / "raw")
+    raw_dir = ensure_dir(work_dir / "raw" / source_token)
     cache_dir = ensure_dir(work_dir / "cache")
-    cues_dir = ensure_dir(out_dir / "cues")
-    fitted_dir = ensure_dir(out_dir / "fitted")
+    cues_dir = ensure_dir(out_dir / "cues" / source_token)
+    fitted_dir = ensure_dir(out_dir / "fitted" / source_token)
 
     cue_rows: list[dict[str, Any]] = []
     fitted_paths: dict[int, Path] = {}
@@ -434,7 +466,7 @@ def run_build(
             lang=config.lang,
         )
 
-        track_name = track_filename(config.lang)
+        track_name = track_filename(config.lang, stem=track_stem)
         track_path = out_dir / track_name
         write_timeline_wav(
             out_path=track_path,
@@ -446,7 +478,7 @@ def run_build(
         )
 
         if config.also_mp3:
-            mp3_path = out_dir / track_filename(config.lang, mp3=True)
+            mp3_path = out_dir / track_filename(config.lang, stem=track_stem, mp3=True)
             _maybe_mp3(track_path, mp3_path, ffmpeg=tools.ffmpeg, sample_rate=effective_sr, channels=base_channels)
 
         track_duration_ms = wav_duration_ms(track_path, sample_rate=effective_sr)
@@ -472,7 +504,7 @@ def run_build(
             stage="tts" if processed < total else "fit",
             stage_fraction=(processed / total) if total else 0.0,
         )
-        track_path = out_dir / track_filename(config.lang)
+        track_path = out_dir / track_filename(config.lang, stem=track_stem)
         track_duration_ms = None
         if config.base_wav:
             target_duration_ms = wav_duration_ms(
@@ -511,6 +543,7 @@ def run_build(
         "lang": config.lang,
         "language_code": config.language_code,
         "voice_id": voice_id,
+        "source_id": source_id,
         "provider": config.provider,
         "srt_path": str(config.srt_path),
         "source_encoding": srt_encoding,
@@ -523,7 +556,7 @@ def run_build(
         "limit": config.limit,
         "cue_count": total,
         "processed_count": processed,
-        "track_path": str(out_dir / track_filename(config.lang)),
+        "track_path": str(out_dir / track_filename(config.lang, stem=track_stem)),
         "track_duration_ms": track_duration_ms,
         "target_duration_ms": target_duration_ms,
         "duration_error_ms": duration_error_ms,
@@ -533,7 +566,7 @@ def run_build(
         "warnings": warnings,
         "cues": cue_rows,
     }
-    write_json(out_dir / "report.json", report)
+    _write_build_report(out_dir, source_token, report)
     emit(
         progress_cb,
         stage="report",
