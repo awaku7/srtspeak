@@ -9,6 +9,7 @@ import pytest
 
 from srtspeak.core.ja_yomi import (
     JaYomiError,
+    _call_chat_json,
     apply_ja_yomi,
     convert_cues_batch,
     should_apply_ja_yomi,
@@ -21,6 +22,20 @@ def test_should_apply_only_for_ja() -> None:
     assert should_apply_ja_yomi(enabled=True, lang="ja") is True
     assert should_apply_ja_yomi(enabled=True, lang="en") is False
     assert should_apply_ja_yomi(enabled=False, lang="ja") is False
+
+
+def test_ja_yomi_uses_responses_structured_output() -> None:
+    with patch(
+        "srtspeak.core.ja_yomi.request_responses_text",
+        return_value='{"cues":[{"index":1,"text":"こうやさん"}]}',
+    ) as request:
+        result = _call_chat_json([{"index": 1, "text": "高野山"}], "test-key")
+
+    assert result["cues"][0]["text"] == "こうやさん"
+    assert request.call_args.kwargs["model"] == "grok-4.7"
+    assert request.call_args.kwargs["schema_name"] == "hiragana_cues"
+    assert request.call_args.kwargs["strict"] is True
+    assert request.call_args.kwargs["max_output_tokens"] == 8000
 
 
 def test_apply_ja_yomi_noop_when_disabled() -> None:
@@ -129,4 +144,39 @@ def test_apply_ja_yomi_no_cache_ignores_file(tmp_path: Path) -> None:
         )
     assert m.called
     assert out[0].text == "こうやさん"
+
+
+def test_apply_ja_yomi_invalidates_cache_from_another_model(tmp_path: Path) -> None:
+    cues = [Cue(1, 0, 1000, "高野山")]
+    work = tmp_path / "work"
+    work.mkdir()
+    cache_path = work / "ja_yomi_cache.json"
+    import hashlib
+    import json
+
+    input_hash = hashlib.sha256("高野山".encode("utf-8")).hexdigest()[:16]
+    cache_path.write_text(
+        json.dumps(
+            {"_srt_hash": input_hash, "_model": "grok-4.5", "1": "old reading"},
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    response = {"cues": [{"index": 1, "text": "こうやさん"}]}
+
+    with patch(
+        "srtspeak.core.ja_yomi._call_chat_json", return_value=response
+    ) as call:
+        out = apply_ja_yomi(
+            cues,
+            enabled=True,
+            lang="ja",
+            api_key="test-key",
+            work_dir=work,
+        )
+
+    assert call.called
+    assert out[0].text == "こうやさん"
+    updated = json.loads(cache_path.read_text(encoding="utf-8"))
+    assert updated["_model"] == "grok-4.7"
 

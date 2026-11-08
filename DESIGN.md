@@ -1,7 +1,7 @@
 # srtspeak 設計書（実装準拠）
 
 **状態:** 実装済み（パッケージ版 `0.1.6`）。本ドキュメントはコードと同期した仕様の正本。  
-**目的:** 多言語 SRT を xAI Grok TTS で音声化し、各キューの開始・終了時刻へ **強制フィット** したナレーション WAV を生成する。加えて SRT→SRT 翻訳と用語集提案を Grok Chat で提供する。
+**目的:** 多言語 SRT を xAI Grok TTS で音声化し、各キューの開始・終了時刻へ **強制フィット** したナレーション WAV を生成する。SRT→SRT 翻訳・日本語よみ・用語集提案には Grok 4.7 の Responses REST API を使う。
 
 関連:
 
@@ -17,7 +17,7 @@
 |------|------|
 | 入力 | SRT（UTF-8 / BOM 可） |
 | TTS | xAI Grok unary REST のみ `POST https://api.x.ai/v1/tts` |
-| 翻訳 / よみ / 用語集 | Grok Chat `POST /v1/chat/completions`（同一 `XAI_API_KEY`） |
+| 翻訳 / よみ / 用語集 / 言語検出 | Grok 4.7 Responses REST `POST /v1/responses`（`store: false`、同一 `XAI_API_KEY`） |
 | フィット | ffmpeg CLI（`atempo` 0.5–2.0 多段 + pad/stretch + hard_trim/pad） |
 | タイムライン | 無音キャンバス（または base WAV）へ PCM 配置・加算ミックス |
 | UI | CLI（argparse）+ GUI（PySide6、Build / Translate タブ。本体依存） |
@@ -39,7 +39,7 @@ cli.py / gui/app.py
         ├─ translate ────────────────────────────────────────┐
         │                                                    ▼
         │   core/srt_translate.py  (run_translate)
-        │     parse → limit → per target: cache → Chat batches
+        │     parse → limit → per target: cache → Responses API batches
         │       → structure lock → format_srt → translate_report.json
         │
         └─ glossary-suggest ─────────────────────────────────┐
@@ -198,8 +198,8 @@ GUI は **BCP-47 を1つ選ぶ** UI。内部 `lang` は `internal_lang_from_code
 | `targets` | 必須 | BCP-47 リスト（1 件以上） |
 | `out_dir` | 必須 | 出力ルート（CLI 既定 `out/srt_gen`） |
 | `work_dir` | `None`→`out/work` | 作業ルート。実体 `out/work/translate/by_out/`（出力ファイル名キー） |
-| `model` | `grok-4.5` | Grok Chat モデル |
-| `batch_size` | `8` | 1 Chat バッチのキュー数 |
+| `model` | `grok-4.7` | Responses API モデル |
+| `batch_size` | `8` | Responses API 1 リクエストのキュー数 |
 | `glossary_path` | `None` | 用語集 JSON |
 | `length_mode` | `hint` | `off` \| `hint` \| `enforce` \| `report-only` |
 | `on_empty` | `fail` | `fail` \| `keep-source` |
@@ -222,9 +222,9 @@ GUI は **BCP-47 を1つ選ぶ** UI。内部 `lang` は `internal_lang_from_code
 | 項目 | 内容 |
 |------|------|
 | 条件 | `ja_yomi=True` かつ `lang=="ja"` かつ API キーあり |
-| 手段 | Grok Chat `POST /v1/chat/completions`、model `grok-4.5`、structured JSON |
+| 手段 | Grok 4.7 Responses REST `POST /v1/responses`、structured JSON、`store: false` |
 | 単位 | 漢字を含む cue のみ。バッチサイズ 5 |
-| キャッシュ | `out/work/{lang}/ja_yomi_cache.json`（SRT テキストハッシュで無効化） |
+| キャッシュ | `out/work/{lang}/ja_yomi_cache.json`（SRT テキストハッシュまたは Responses モデル ID 変更で無効化） |
 | ログ | `out/work/{lang}/srtspeak_ja_yomi.log`（任意） |
 | CLI | `--ja-yomi` / `--no-ja-yomi`（既定オン） |
 | GUI | チェックボックス（既定オン、`gui_settings.json` に保存可） |
@@ -476,7 +476,7 @@ srtspeak [--locale en|ja] [--verbose|--quiet] <command>
 | `--length-mode` | `hint` | off\|hint\|enforce\|report-only |
 | `--on-empty` | `fail` | fail\|keep-source |
 | `--batch-size` | `8` | |
-| `--model` | `grok-4.5` | |
+| `--model` | `grok-4.7` | |
 | `--limit` | 全件 | |
 | `--dry-run` | off | |
 | `--fail-fast` | off | |
@@ -494,7 +494,7 @@ srtspeak [--locale en|ja] [--verbose|--quiet] <command>
 | `--merge` | なし | 既存優先マージ |
 | `--force` | off | 上書き（マージ無し） |
 | `--min-count` | `2` | |
-| `--model` | `grok-4.5` | |
+| `--model` | `grok-4.7` | |
 | `--limit` | 全件 | |
 
 終了コード: `0` 成功 / `1` 実行時 / `2` 設定・ffmpeg・キー・SRT / `130` キャンセル。  
@@ -556,7 +556,7 @@ optional extras（`pyproject.toml`）:
 - 本体依存: PySide6 + keyring
 - `ffmpeg` → imageio-ffmpeg
 - `dev` → pytest / ruff / Babel + keyring  
-- **`gui` / `ja` extra は存在しない**（GUI は標準。旧 kanjiconv は廃止。よみは Grok Chat）
+- **`gui` / `ja` extra は存在しない**（GUI は標準。旧 kanjiconv は廃止。よみは Responses REST API）
 
 ---
 

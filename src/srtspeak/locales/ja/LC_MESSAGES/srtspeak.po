@@ -1435,3 +1435,15 @@ msgstr "中止"
 #: src/srtspeak/gui/app.py:1604
 msgid "Operation was cancelled."
 msgstr "操作は中止されました。"
+
+#: src/srtspeak/gui/app.py
+msgid "Change / Override"
+msgstr "変更／上書き"
+
+#: src/srtspeak/gui/app.py
+msgid "API key ready — use Change / Override to replace"
+msgstr "APIキー準備完了 — 変更／上書きから差し替えできます"
+
+#: src/srtspeak/gui/app.py
+msgid "Type an API key to override the current key"
+msgstr "現在のAPIキーを上書きするキーを入力してください"

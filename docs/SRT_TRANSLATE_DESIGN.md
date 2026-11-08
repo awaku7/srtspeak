@@ -1,6 +1,6 @@
 # 多言語 SRT 生成 — 設計と srtspeak アダプト方針
 
-**状態:** 実装済み（パッケージ `0.1.5`）・設計版 0.6  
+**状態:** 実装済み（パッケージ `0.1.6`）・設計版 0.6  
 **目的:** 入力 SRT 1 本から、**タイムコードを保持したまま**他言語 SRT を高精度に生成し、既存の `build` / `build-all`（Grok TTS + 強制フィット）へそのまま流す。  
 **関連:** [DESIGN.md](../DESIGN.md)（TTS パイプライン正本）  
 **必須:** TDD（P9）・progress（P5）・multi-target（P5b）・**言語以外同一（P0）**  
@@ -17,7 +17,7 @@
 | できること | 本設計で追加済み |
 |------------|------------------|
 | 言語ごとの **既存 SRT** → TTS → 尺フィット → 完成 WAV | SRT テキストの **翻訳・生成**（`translate`） |
-| `ja_yomi`（ja のみ・漢字→ひらがな・意味非変更） | 言語間の意味転送（Grok Chat） |
+| `ja_yomi`（ja のみ・漢字→ひらがな・意味非変更） | 言語間の意味転送（Grok 4.7 Responses REST API） |
 | `build-all --map ja=… --map en=…` | ソース 1 本から map 用 SRT を自動生成 + `glossary-suggest` |
 
 前提ワークフロー（現行）:
@@ -57,7 +57,7 @@ source.srt（例: ja）
 | P2 | **Cue-atomic** | 1 キュー = 1 翻訳単位。結合・分割しない（index 対応が壊れる） |
 | P3 | **Context-aware** | 前後キュー・作品 glossary を渡し、用語ゆれを抑える |
 | P4 | **Length-aware（推奨オン）** | 窓 ms と言語別話速から予算文字数を渡し、過長を抑制 |
-| P5 | **ja_yomi と同型** | Grok Chat + structured JSON + バッチ + ディスクキャッシュ + **progress 必須** + cancel |
+| P5 | **ja_yomi と同型** | xAI Responses REST (`/v1/responses`, default `grok-4.7`) + structured JSON + バッチ + ディスクキャッシュ + **progress 必須** + cancel |
 | P5a | **Progress 必須** | 全長時間処理で `ProgressEvent` を必ず発火。CLI 進捗表示・cancel 連携の前提。省略・サイレント実行は不可 |
 | P5b | **Multi-target 必須** | 1 実行で N 言語。直列・キャッシュ分離・部分失敗継続。progress は全 tgt 合算 |
 | P6 | **TTS パイプライン非侵襲** | 翻訳は **前段コマンド or 明示ステージ**。既存 `BuildConfig` の必須経路を壊さない |
@@ -183,9 +183,9 @@ merge 後に件数・index 集合・各 ms をソースと突合。不一致は�
 
 ### 4.2 意味正確（モデル + 制約）
 
-**API:** 既存と同じ Grok Chat  
-`POST https://api.x.ai/v1/chat/completions`  
-**model（案）:** `grok-4.5`（ja_yomi と共通。変更時は cache キーに model id を含める）
+**API:** xAI Responses REST API（HTTP、gRPC SDK は使用しない）  
+`POST https://api.x.ai/v1/responses`（`store: false`）  
+**model:** `grok-4.7`（ja_yomi と共通。変更時は cache キーに model id を含める）
 
 **structured output:** ja_yomi と同型スキーマ。
 
@@ -467,7 +467,7 @@ glossary を YAML にしたい場合のみ optional `pyyaml` — **v1 は JSON �
 ```text
 srt_path, source_lang, targets: list[str]
 out_dir, work_dir
-model=grok-4.5, batch_size=8
+model=grok-4.7, batch_size=8
 glossary_path: Path | None
 length_mode: off|hint|enforce|report-only   # default hint
 on_empty: fail|keep-source                  # default fail
@@ -509,7 +509,7 @@ srtspeak glossary-suggest \
 | `--length-mode` | `hint` | |
 | `--on-empty` | `fail` | |
 | `--batch-size` | `8` | |
-| `--model` | `grok-4.5` | |
+| `--model` | `grok-4.7` | |
 | `--limit` | 全件 | |
 | `--dry-run` | off | |
 | `--fail-fast` | off | |

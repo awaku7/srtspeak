@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -13,11 +13,32 @@ from srtspeak.core.srt_parser import Cue, format_srt, parse_srt
 from srtspeak.core.srt_translate import (
     TranslateError,
     budget_chars,
+    default_chat_fn,
     merge_translated_cues,
     quality_warnings,
     run_translate,
     validate_structure_lock,
 )
+
+
+def test_default_chat_fn_uses_responses_json_schema() -> None:
+    with patch(
+        "srtspeak.core.srt_translate.request_responses_text",
+        return_value='{"cues":[{"index":1,"text":"Hello"}]}',
+    ) as request:
+        result = default_chat_fn(
+            [{"index": 1, "text": "こんにちは"}],
+            target_lang="en",
+            source_lang="ja",
+            api_key="test-key",
+            model="grok-4.7",
+        )
+
+    assert result == {"cues": [{"index": 1, "text": "Hello"}]}
+    assert request.call_args.kwargs["model"] == "grok-4.7"
+    assert request.call_args.kwargs["schema_name"] == "translated_cues"
+    assert request.call_args.kwargs["strict"] is True
+    assert request.call_args.kwargs["max_output_tokens"] == 8000
 
 
 def _cues() -> list[Cue]:

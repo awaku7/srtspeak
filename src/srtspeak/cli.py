@@ -33,6 +33,7 @@ from srtspeak.core.voices import (
     resolve_voice_id,
     validate_voice_id,
 )
+from srtspeak.core.xai_responses import DEFAULT_GROK_MODEL
 from srtspeak.i18n import _, setup_i18n
 from srtspeak.progress_i18n import localize_message, localize_stage
 
@@ -485,7 +486,7 @@ def cmd_translate(args: argparse.Namespace) -> int:
             targets=targets,
             out_dir=out_dir,
             work_dir=work_dir,
-            model=str(getattr(args, "model", None) or "grok-4.5"),
+            model=str(getattr(args, "model", None) or DEFAULT_GROK_MODEL),
             batch_size=int(getattr(args, "batch_size", 8) or 8),
             glossary_path=glossary,
             length_mode=str(getattr(args, "length_mode", "hint") or "hint"),
@@ -629,7 +630,7 @@ def cmd_glossary_suggest(args: argparse.Namespace) -> int:
             source_lang=source,
             targets=targets,
             api_key=api_key,
-            model=str(getattr(args, "model", None) or "grok-4.5"),
+            model=str(getattr(args, "model", None) or DEFAULT_GROK_MODEL),
             min_count=max(1, int(getattr(args, "min_count", 2) or 2)),
             progress_cb=_progress_printer,
         )
@@ -869,7 +870,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     sp_tr.add_argument(
         "--model",
-        default="grok-4.5",
+        default=DEFAULT_GROK_MODEL,
         help=_("Grok Chat model id"),
     )
     sp_tr.add_argument(
@@ -940,7 +941,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     sp_gs.add_argument(
         "--model",
-        default="grok-4.5",
+        default=DEFAULT_GROK_MODEL,
         help=_("Grok Chat model id"),
     )
     sp_gs.add_argument(

@@ -11,12 +11,34 @@ import pytest
 from srtspeak.core.srt_parser import Cue
 from srtspeak.core.translate_glossary import (
     GlossaryError,
+    _call_glossary_chat,
     extract_term_candidates,
     load_glossary,
     merge_glossary,
     save_glossary,
     suggest_glossary,
 )
+
+
+def test_glossary_chat_uses_responses_structured_output() -> None:
+    with patch(
+        "srtspeak.core.translate_glossary.request_responses_text",
+        return_value='{"tone":"documentary","terms":[]}',
+    ) as request:
+        result = _call_glossary_chat(
+            sample_lines=["source sample"],
+            candidates=[],
+            source_lang="en",
+            targets=["ja"],
+            api_key="test-key",
+            model="grok-4.7",
+        )
+
+    assert result == {"tone": "documentary", "terms": []}
+    assert request.call_args.kwargs["model"] == "grok-4.7"
+    assert request.call_args.kwargs["schema_name"] == "glossary"
+    assert request.call_args.kwargs["strict"] is False
+    assert request.call_args.kwargs["max_output_tokens"] == 6000
 
 
 def test_load_save_roundtrip(tmp_path: Path) -> None:

@@ -1,4 +1,4 @@
-"""Glossary JSON load/save/merge and LLM suggest for SRT translate."""
+"""Glossary JSON load/save/merge and Responses API suggestions for SRT translate."""
 
 from __future__ import annotations
 
@@ -6,14 +6,13 @@ import json
 import re
 import threading
 import time
-import urllib.error
-import urllib.request
 from collections import Counter
 from pathlib import Path
 from typing import Any, Callable, Sequence
 
 from srtspeak.core.progress import ProgressEvent
 from srtspeak.core.srt_parser import Cue
+from srtspeak.core.xai_responses import DEFAULT_GROK_MODEL, ResponsesAPIError, request_responses_text
 
 ProgressCb = Callable[[ProgressEvent], None]
 
@@ -22,7 +21,6 @@ class GlossaryError(ValueError):
     """Glossary load/suggest failure."""
 
 
-_GROK_CHAT_URL = "https://api.x.ai/v1/chat/completions"
 _TIMEOUT_S = 300
 
 _JSON_SCHEMA: dict[str, Any] = {
@@ -310,48 +308,29 @@ def _call_glossary_chat(
         "candidates": json.loads(cand_s),
         "sample_cues": sample,
     }
-    body = json.dumps(
-        {
-            "model": model,
-            "messages": [
-                {"role": "system", "content": system},
-                {
-                    "role": "user",
-                    "content": json.dumps(user, ensure_ascii=False),
-                },
-            ],
-            "response_format": {
-                "type": "json_schema",
-                "json_schema": {
-                    "name": "glossary",
-                    "schema": _JSON_SCHEMA,
-                    "strict": False,
-                },
-            },
-            "temperature": 0.2,
-            "max_tokens": 6000,
-        },
-        ensure_ascii=False,
-    ).encode("utf-8")
-    req = urllib.request.Request(
-        _GROK_CHAT_URL,
-        data=body,
-        headers={
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-        },
-        method="POST",
-    )
     try:
-        with urllib.request.urlopen(req, timeout=_TIMEOUT_S) as resp:
-            raw = resp.read().decode("utf-8")
-        data = json.loads(raw)
-        return json.loads(data["choices"][0]["message"]["content"])
-    except urllib.error.HTTPError as e:
-        err_body = e.read().decode("utf-8", errors="replace")[:500]
-        raise GlossaryError(f"Grok Chat API error {e.code}: {err_body}") from e
-    except (KeyError, IndexError, json.JSONDecodeError, OSError) as e:
-        raise GlossaryError(f"Grok Chat glossary parse failed: {e}") from e
+        text = request_responses_text(
+            api_key=api_key,
+            model=model,
+            input=[
+                {"role": "system", "content": system},
+                {"role": "user", "content": json.dumps(user, ensure_ascii=False)},
+            ],
+            schema_name="glossary",
+            schema=_JSON_SCHEMA,
+            strict=False,
+            temperature=0.2,
+            max_output_tokens=6000,
+            timeout=_TIMEOUT_S,
+        )
+        result = json.loads(text)
+        if not isinstance(result, dict):
+            raise ValueError("expected a JSON object")
+        return result
+    except ResponsesAPIError as exc:
+        raise GlossaryError(f"Grok Responses API error: {exc}") from exc
+    except (json.JSONDecodeError, ValueError) as exc:
+        raise GlossaryError(f"Grok Responses glossary parse failed: {exc}") from exc
 
 
 def suggest_glossary(
@@ -360,7 +339,7 @@ def suggest_glossary(
     source_lang: str,
     targets: Sequence[str],
     api_key: str,
-    model: str = "grok-4.5",
+    model: str = DEFAULT_GROK_MODEL,
     min_count: int = 2,
     progress_cb: ProgressCb | None = None,
     chat_fn: Callable[..., dict[str, Any]] | None = None,

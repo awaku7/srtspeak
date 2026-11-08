@@ -235,7 +235,7 @@ def run_build(
         warnings.append("strip_emoticons: kaomoji stripped for TTS only; emoji kept (SRT unchanged)")
     if config.ja_yomi and config.lang == "ja":
         if api_key:
-            warnings.append("ja_yomi: kanji converted to hiragana via Grok Chat API")
+            warnings.append("ja_yomi: kanji converted to hiragana via xAI Responses API")
         else:
             warnings.append("ja_yomi: enabled but no api_key; skipping conversion")
 

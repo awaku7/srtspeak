@@ -71,6 +71,7 @@ def main() -> int:
     )
     from srtspeak.core.util import resolve_out_dir, DEFAULT_OUT_ROOT, DEFAULT_WORK_DIR, DEFAULT_SRT_GEN_DIR
     from srtspeak.core.voices import DEFAULT_VOICE_ID, list_builtin_voices
+    from srtspeak.core.xai_responses import DEFAULT_GROK_MODEL, request_responses_text
     from srtspeak.i18n import _, setup_i18n
     from srtspeak.progress_i18n import format_gui_progress_label, localize_message, localize_stage
 
@@ -311,6 +312,7 @@ def main() -> int:
             self._thread: QThread | None = None
             self._worker: QObject | None = None
             self._session_key: str | None = None
+            self._key_override_enabled = False
             self._pending_result: tuple[str, object] | None = None
             self._job_kind: str | None = None
             self._last_result_kind: str = "build"
@@ -334,7 +336,11 @@ def main() -> int:
             self.key_edit = QLineEdit()
             self.key_edit.setEchoMode(QLineEdit.EchoMode.Password)
             self.key_edit.setMinimumWidth(280)
+            self.change_key_btn = QPushButton(_("Change / Override"))
+            self.change_key_btn.setVisible(False)
+            self.change_key_btn.clicked.connect(self._toggle_key_override)
             key_row.addWidget(self.key_edit, 1)
+            key_row.addWidget(self.change_key_btn)
             self.save_key_btn = QPushButton(_("Save on this PC"))
             self.save_key_btn.setEnabled(secure_store_available())
             self.save_key_btn.setToolTip(
@@ -420,22 +426,41 @@ def main() -> int:
             if hasattr(self, "clear_key_btn"):
                 self.clear_key_btn.setEnabled(avail and has_api_key_secure())
             st = api_key_status()
-            if st == "set (env)":
-                ph = _("Already set via env — typing optional")
-            elif st == "set (keyring)":
-                ph = _("Already loaded — typing optional")
-            elif st == "set (dpapi)":
-                ph = _("Already loaded — typing optional")
-            elif self._session_key:
-                ph = _("Session key ready — typing optional")
+            ready = st in ("set (env)", "set (keyring)", "set (dpapi)") or bool(
+                self._session_key
+            )
+            self.key_edit.setEnabled(not ready or self._key_override_enabled)
+            show_change = ready or self._key_override_enabled
+            self.change_key_btn.setVisible(show_change)
+            self.change_key_btn.setEnabled(show_change)
+            self.change_key_btn.setText(
+                _("Cancel") if self._key_override_enabled else _("Change / Override")
+            )
+            if self._key_override_enabled:
+                ph = _("Type an API key to override the current key")
+            elif ready:
+                ph = _("API key ready — use Change / Override to replace")
             else:
                 ph = _("Paste API key here")
             self.key_edit.setPlaceholderText(ph)
 
+        def _toggle_key_override(self) -> None:
+            self._key_override_enabled = not self._key_override_enabled
+            self.key_edit.clear()
+            self._refresh_key_ui()
+            if self._key_override_enabled:
+                self.key_edit.setFocus()
+
         def _current_api_key(self) -> str:
             """Resolve key for GUI actions: field > session > env/keyring/dpapi."""
             typed = normalize_api_key(self.key_edit.text())
-            self._session_key = typed or self._session_key
+            if self._key_override_enabled and not typed:
+                return ""
+            if typed:
+                self._session_key = typed
+                self._key_override_enabled = False
+                self.key_edit.clear()
+                self._refresh_key_ui()
             return resolve_api_key(prompt=False, session_key=self._session_key) or ""
 
         def _save_api_key_secure(self) -> None:
@@ -470,6 +495,7 @@ def main() -> int:
                 )
                 return
             self._session_key = key
+            self._key_override_enabled = False
             # Do not leave plaintext lingering in the field after save.
             self.key_edit.clear()
             self._refresh_key_ui()
@@ -1019,20 +1045,16 @@ def main() -> int:
                     _("API key required for language detection."),
                 )
                 return
-            import json as _json
-            import urllib.request
-
-            payload = _json.dumps(
-                {
-                    "model": "grok-4.5",
-                    "messages": [
+            try:
+                result_text = request_responses_text(
+                    api_key=api_key,
+                    model=DEFAULT_GROK_MODEL,
+                    input=[
                         {
                             "role": "system",
                             "content": (
-                                "You are a language detection assistant. "
-                                "Respond with ONLY the BCP-47 language code "
-                                "(e.g., ja, en, id, zh, ko, th, vi). "
-                                "No explanation, no extra text."
+                                "Identify the language of the supplied text. "
+                                "Return its BCP-47 language code."
                             ),
                         },
                         {
@@ -1040,22 +1062,19 @@ def main() -> int:
                             "content": f"What language is this text?\n\n{sample}",
                         },
                     ],
-                    "temperature": 0.0,
-                    "max_tokens": 10,
-                }
-            ).encode("utf-8")
-            req = urllib.request.Request(
-                "https://api.x.ai/v1/chat/completions",
-                data=payload,
-                headers={
-                    "Authorization": f"Bearer {api_key}",
-                    "Content-Type": "application/json",
-                },
-            )
-            try:
-                with urllib.request.urlopen(req, timeout=30) as resp:
-                    result = _json.loads(resp.read().decode("utf-8"))
-                code = result["choices"][0]["message"]["content"].strip().lower()
+                    schema_name="language_detection",
+                    schema={
+                        "type": "object",
+                        "properties": {"language_code": {"type": "string"}},
+                        "required": ["language_code"],
+                        "additionalProperties": False,
+                    },
+                    strict=True,
+                    temperature=0.0,
+                    max_output_tokens=128,
+                    timeout=30,
+                )
+                code = json.loads(result_text)["language_code"].strip().lower()
                 try:
                     code = resolve_language_code(lang=code, explicit=code)
                 except ValueError:

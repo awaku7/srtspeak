@@ -1,6 +1,6 @@
 """Multilingual SRT translation (timing-lock, language-only delta).
 
-Uses Grok Chat structured JSON, same pattern as ja_yomi.
+Uses xAI Responses REST structured JSON, same pattern as ja_yomi.
 """
 
 from __future__ import annotations
@@ -10,8 +10,6 @@ import json
 import math
 import threading
 import time
-import urllib.error
-import urllib.request
 from dataclasses import replace
 from pathlib import Path
 from typing import Any, Callable, Sequence
@@ -23,6 +21,7 @@ from srtspeak.core.models import TranslateConfig
 from srtspeak.core.progress import ProgressEvent
 from srtspeak.core.report import write_json
 from srtspeak.core.srt_parser import Cue, apply_limit, format_srt, parse_srt, read_srt_text
+from srtspeak.core.xai_responses import ResponsesAPIError, request_responses_text
 
 ProgressCb = Callable[[ProgressEvent], None]
 ChatFn = Callable[..., dict[str, Any]]
@@ -32,7 +31,6 @@ class TranslateError(ValueError):
     """Translation pipeline failure."""
 
 
-_GROK_CHAT_URL = "https://api.x.ai/v1/chat/completions"
 _TIMEOUT_S = 300
 
 _JSON_SCHEMA: dict[str, Any] = {
@@ -316,7 +314,7 @@ def default_chat_fn(
     length_mode: str = "off",
     context_items: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
-    """Call Grok Chat with structured JSON (index+text only)."""
+    """Call Grok Responses with structured JSON (index+text only)."""
     glossary = glossary or {}
     gloss_block = _glossary_prompt_block(glossary, target_lang)
     length_note = ""
@@ -340,48 +338,32 @@ def default_chat_fn(
     user_payload: dict[str, Any] = {"cues": items}
     if context_items:
         user_payload["context_previous"] = context_items
-    body = json.dumps(
-        {
-            "model": model,
-            "messages": [
+    try:
+        text = request_responses_text(
+            api_key=api_key,
+            model=model,
+            input=[
                 {"role": "system", "content": system},
                 {
                     "role": "user",
                     "content": json.dumps(user_payload, ensure_ascii=False),
                 },
             ],
-            "response_format": {
-                "type": "json_schema",
-                "json_schema": {
-                    "name": "translated_cues",
-                    "schema": _JSON_SCHEMA,
-                    "strict": True,
-                },
-            },
-            "temperature": 0.2,
-            "max_tokens": 8000,
-        },
-        ensure_ascii=False,
-    ).encode("utf-8")
-    req = urllib.request.Request(
-        _GROK_CHAT_URL,
-        data=body,
-        headers={
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-        },
-        method="POST",
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=_TIMEOUT_S) as resp:
-            raw = resp.read().decode("utf-8")
-        data = json.loads(raw)
-        return json.loads(data["choices"][0]["message"]["content"])
-    except urllib.error.HTTPError as e:
-        err_body = e.read().decode("utf-8", errors="replace")[:500]
-        raise TranslateError(f"Grok Chat API error {e.code}: {err_body}") from e
-    except (KeyError, IndexError, json.JSONDecodeError, OSError) as e:
-        raise TranslateError(f"Grok Chat response parse failed: {e}") from e
+            schema_name="translated_cues",
+            schema=_JSON_SCHEMA,
+            strict=True,
+            temperature=0.2,
+            max_output_tokens=8000,
+            timeout=_TIMEOUT_S,
+        )
+        result = json.loads(text)
+        if not isinstance(result, dict):
+            raise ValueError("expected a JSON object")
+        return result
+    except ResponsesAPIError as exc:
+        raise TranslateError(f"Grok Responses API error: {exc}") from exc
+    except (json.JSONDecodeError, ValueError) as exc:
+        raise TranslateError(f"Grok Responses output parse failed: {exc}") from exc
 
 
 def _normalize_targets(

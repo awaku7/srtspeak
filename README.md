@@ -2,7 +2,7 @@
 
 Multilingual SRT TTS. Forces each cue into its exact start/end window (xAI Grok TTS + ffmpeg).
 
-Also includes **SRT→SRT translation** (`translate`) and **glossary suggestion** (`glossary-suggest`) via Grok Chat (same `XAI_API_KEY`).
+Also includes **SRT→SRT translation** (`translate`) and **glossary suggestion** (`glossary-suggest`) via xAI's **Responses REST API** (default model `grok-4.7`, same `XAI_API_KEY`).
 
 Authoritative design: `DESIGN.md` (implementation-aligned).  
 Translate design: `docs/SRT_TRANSLATE_DESIGN.md`.
@@ -16,9 +16,9 @@ Translate design: `docs/SRT_TRANSLATE_DESIGN.md`.
 | OS | Windows / macOS / Linux (developed and verified on Windows) |
 | Python | 3.11+ |
 | ffmpeg / ffprobe | Prefer on `PATH`; optional fallback via `imageio-ffmpeg` |
-| API key | `XAI_API_KEY` only for real TTS / translate / glossary / ja_yomi (not needed for dry-run without Chat) |
+| API key | `XAI_API_KEY` only for real TTS / translate / glossary / ja_yomi (dry-run makes no text-model request) |
 
-Package version: **0.1.5** (`pyproject.toml`).
+Package version: **0.1.6** (`pyproject.toml`).
 
 ## Install
 
@@ -62,7 +62,7 @@ set PYTHONPATH=src
 python -m srtspeak --help
 ```
 
-There is **no** `[ja]` extra. Japanese kanji→hiragana preprocess (`ja_yomi`) uses the **Grok Chat API** with the same `XAI_API_KEY` (default on for `lang=ja`).
+There is **no** `[ja]` extra. Japanese kanji→hiragana preprocess (`ja_yomi`) uses the **Responses REST API** with the same `XAI_API_KEY` (default on for `lang=ja`). Text generation defaults to `grok-4.7`; TTS continues to use the separate `/v1/tts` endpoint. Responses are sent with `store: false`. No xAI SDK or gRPC dependency is required.
 
 ## Launch
 
@@ -120,10 +120,10 @@ srtspeak doctor
 
 `doctor` shows `source: path` for system ffmpeg, or `source: imageio_ffmpeg` for the pip bundle.
 
-## xAI (Grok TTS / Chat) signup and API key
+## xAI (Grok TTS / Responses API) signup and API key
 
 TTS is **xAI Grok only** (`POST https://api.x.ai/v1/tts`).  
-Japanese yomi, SRT translate, and glossary-suggest use Grok Chat (`/v1/chat/completions`). Create the key in the console.
+Japanese yomi, SRT translate, glossary-suggest, and language detection use Grok 4.7 via the Responses REST API (`POST /v1/responses`, `store: false`). TTS remains on the separate `/v1/tts` endpoint. Create the key in the console.
 
 ### 1. Account
 
@@ -157,7 +157,7 @@ Official docs:
 | Resolve order | env → session → **OS keyring** → legacy Windows DPAPI (migrate) → CLI `getpass` / GUI mask |
 | dry-run | Key optional (Chat APIs skipped if missing) |
 | Real TTS / translate / glossary | resolve chain; missing → exit code 2 |
-| GUI | **Save on this PC** / **Clear saved** via keyring (core dependency) |
+| GUI | Key-ready state locks the field; **Change / Override** enables a session override. **Save on this PC** writes to OS storage; **Clear saved** removes only the stored key, not environment/session keys. |
 
 Windows cmd (current window only):
 
@@ -224,8 +224,8 @@ srtspeak glossary-suggest --help
 | `dry-run` | Parse + char count + TTS cost estimate (no ffmpeg) |
 | `build` | Generate one language (TTS) |
 | `build-all` | Generate multiple languages in sequence |
-| `translate` | SRT→SRT multi-target translation (Grok Chat; timing-locked) |
-| `glossary-suggest` | Propose glossary JSON from source SRT via Grok Chat |
+| `translate` | SRT→SRT multi-target translation (Grok 4.7 Responses; timing-locked) |
+| `glossary-suggest` | Propose glossary JSON from source SRT via Grok 4.7 Responses |
 | `gui` | PySide6 GUI (Build + Translate tabs) |
 
 Global options:
@@ -329,7 +329,7 @@ Main options:
 | `--max-speed` | Cap on atempo product; over → hard_trim | none |
 | `--tail-pad-ms` | Silence after last cue end (no base_wav) | `0` |
 | `--base-wav` | Mix narration onto this WAV (keeps base rate/ch) | none |
-| `--ja-yomi` / `--no-ja-yomi` | JA kanji→hiragana via Grok Chat | **on** |
+| `--ja-yomi` / `--no-ja-yomi` | JA kanji→hiragana via Grok 4.7 Responses REST API | **on** |
 | `--strip-emoticons` / `--no-strip-emoticons` | Strip kaomoji for TTS only; emoji kept; SRT unchanged | **on** |
 | `--no-cache` | Ignore existing TTS/ja_yomi caches (still write after success) | off |
 | `--limit N` | First N cues only | all |
@@ -389,7 +389,7 @@ srtspeak build-all ^
 
 ### Translate (SRT→SRT)
 
-Timing-locked multi-target translation. Cue count / index / start-end ms stay identical; only text changes. Provider: Grok Chat structured JSON (`grok-4.5` default). Separate from the TTS pipeline.
+Timing-locked multi-target translation. Cue count / index / start-end ms stay identical; only text changes. Provider: xAI Responses REST with structured JSON (`grok-4.7` default, `store: false`). Separate from the TTS pipeline. Existing translation cache/output may contain results from the previous model; pass `--no-cache` to regenerate through Grok 4.7.
 
 ```bat
 set "XAI_API_KEY=xai-..."
@@ -413,10 +413,10 @@ srtspeak translate ^
 | `--glossary` | Glossary JSON path | none |
 | `--length-mode` | `off` / `hint` / `enforce` / `report-only` | `hint` |
 | `--on-empty` | `fail` / `keep-source` | `fail` |
-| `--batch-size` | Cues per Chat batch | `8` |
-| `--model` | Grok Chat model id | `grok-4.5` |
+| `--batch-size` | Cues per Responses request | `8` |
+| `--model` | Grok model id | `grok-4.7` |
 | `--limit N` | First N cues only | all |
-| `--dry-run` | Estimate only (no Chat) | off |
+| `--dry-run` | Estimate only (no API request) | off |
 | `--fail-fast` | Stop on first target error | off |
 | `--no-cache` | Ignore existing translate caches (still write) | off |
 | `--naming` | `stem` → `{source_stem}_{lang}.srt` / `gran_tenku` → `GRAN_TENKU_{lang}.srt` | `stem` |
@@ -457,7 +457,7 @@ srtspeak glossary-suggest ^
 | `--merge` | Merge into existing glossary (existing wins on conflict) | none |
 | `--force` | Overwrite `--out` without merge | off |
 | `--min-count` | Min local term frequency for candidates | `2` |
-| `--model` | Grok Chat model id | `grok-4.5` |
+| `--model` | Grok model id | `grok-4.7` |
 | `--limit N` | First N cues only | all |
 
 If `--out` already exists and `--force` is not set, new suggestions are merged with existing terms (existing preferred).
@@ -486,7 +486,7 @@ srtspeak gui
 
 - Pipeline: parse → limit → **ja_yomi** (ja) → TTS/cache → normalize → fit → timeline → report
 - TTS: xAI Grok unary REST only (`speed` always 1.0)
-- ja_yomi: Grok Chat structured JSON, batch 5, cache under `out/work/{lang}/`
+- ja_yomi: Grok 4.7 Responses REST structured JSON, batch 5, cache under `out/work/{lang}/`
 - strip_emoticons: kaomoji stripped for **TTS speak text only**; emoji kept; stored SRT cues unchanged; default **on**
 - Fit: ffmpeg CLI only (`atempo` 0.5–2.0 multi-stage; short cues default to pad)
 - Timeline: silence canvas or base_wav; place in half-open `[start, end)`; **PCM add-mix** (clip ±32767)
@@ -498,11 +498,11 @@ srtspeak gui
 
 ### Translate
 
-- Pipeline: parse → limit → per target: cache → Chat batches → structure lock → write SRT → `translate_report.json`
+- Pipeline: parse → limit → per target: cache → Responses API batches → structure lock → write SRT → `translate_report.json`
 - Structure lock: cue count / index / start_ms / end_ms identical to source
 - Glossary optional (`terms` / `do_not_translate` / `tone`)
 - length_mode `hint` (default) injects budget into prompt; `enforce` may run a 2nd compress pass
-- Model default `grok-4.5`; batch_size default 8
+- Model default `grok-4.7`; batch_size default 8
 
 ## Exit codes
 

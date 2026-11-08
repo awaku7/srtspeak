@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+from srtspeak.core.xai_responses import DEFAULT_GROK_MODEL
+
 
 @dataclass(frozen=True)
 class BuildConfig:
@@ -59,7 +61,7 @@ class TranslateConfig:
     targets: list[str]
     out_dir: Path
     work_dir: Path | None = None
-    model: str = "grok-4.5"
+    model: str = DEFAULT_GROK_MODEL
     batch_size: int = 8
     glossary_path: Path | None = None
     length_mode: str = "hint"  # off|hint|enforce|report-only

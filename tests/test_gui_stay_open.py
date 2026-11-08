@@ -15,6 +15,14 @@ def app_src() -> str:
     return APP_PY.read_text(encoding="utf-8")
 
 
+def test_api_key_entry_locks_when_ready_and_can_be_unlocked(app_src: str) -> None:
+    assert "self.key_edit.setEnabled(not ready or self._key_override_enabled)" in app_src
+    assert "show_change = ready or self._key_override_enabled" in app_src
+    assert 'self.change_key_btn.clicked.connect(self._toggle_key_override)' in app_src
+    assert "if self._key_override_enabled and not typed:" in app_src
+    assert "def _toggle_key_override(self) -> None:" in app_src
+
+
 def test_quit_on_last_window_closed_is_false(app_src: str) -> None:
     assert "setQuitOnLastWindowClosed(False)" in app_src
     assert "setQuitOnLastWindowClosed(True)" not in app_src

@@ -2,7 +2,7 @@
 
 SRT 多言語 TTS。各キューの開始・終了時刻へ音声を強制フィットしたナレーションを生成する（xAI Grok TTS + ffmpeg）。
 
-加えて **SRT→SRT 翻訳**（`translate`）と **用語集提案**（`glossary-suggest`）を Grok Chat（同一 `XAI_API_KEY`）で提供する。
+加えて **SRT→SRT 翻訳**（`translate`）と **用語集提案**（`glossary-suggest`）を xAI **Responses REST API**（既定モデル `grok-4.7`、同一 `XAI_API_KEY`）で提供する。
 
 仕様の正本は `DESIGN.md`（実装準拠）。  
 翻訳設計: `docs/SRT_TRANSLATE_DESIGN.md`。
@@ -16,9 +16,9 @@ SRT 多言語 TTS。各キューの開始・終了時刻へ音声を強制フィ
 | OS | Windows / macOS / Linux（開発・検証は Windows） |
 | Python | 3.11 以上 |
 | ffmpeg / ffprobe | PATH 上を推奨。無ければ optional `imageio-ffmpeg` |
-| API キー | 実 TTS / 翻訳 / 用語集 / ja_yomi 時のみ `XAI_API_KEY`（Chat を使わない dry-run なら不要） |
+| API キー | 実 TTS / 翻訳 / 用語集 / ja_yomi 時のみ `XAI_API_KEY`（dry-run ではテキストモデルを呼ばない） |
 
-パッケージ版: **0.1.5**（`pyproject.toml`）。
+パッケージ版: **0.1.6**（`pyproject.toml`）。
 
 ## インストール
 
@@ -62,7 +62,7 @@ set PYTHONPATH=src
 python -m srtspeak --help
 ```
 
-**`[ja]` extra は無い。** 日本語よみ前処理（`ja_yomi`、漢字→ひらがな）は **Grok Chat API** を同じ `XAI_API_KEY` で使う（`lang=ja` のとき既定オン）。
+**`[ja]` extra は無い。** 日本語よみ前処理（`ja_yomi`、漢字→ひらがな）は同じ `XAI_API_KEY` で **Responses REST API** を使う（`lang=ja` のとき既定オン）。テキスト生成の既定モデルは `grok-4.7`。TTS は独立した `/v1/tts` endpoint を引き続き使用し、Responses は `store: false` で送信する。xAI SDK／gRPC 依存は不要。
 
 ## 起動
 
@@ -120,10 +120,10 @@ srtspeak doctor
 
 `doctor` はシステム ffmpeg なら `source: path`、pip 同梱なら `source: imageio_ffmpeg` を表示する。
 
-## xAI（Grok TTS / Chat）アカウントと API キー
+## xAI（Grok TTS / Responses API）アカウントと API キー
 
 TTS は **xAI Grok のみ**（`POST https://api.x.ai/v1/tts`）。  
-日本語よみ・SRT 翻訳・用語集提案は Grok Chat（`/v1/chat/completions`）。キーはコンソールで作成する。
+日本語よみ・SRT 翻訳・用語集提案・言語検出は Grok 4.7 の Responses REST API（`POST /v1/responses`、`store: false`）を使用する。TTS は独立した `/v1/tts` endpoint を使用する。キーはコンソールで作成する。
 
 ### 1. アカウント
 
@@ -157,7 +157,7 @@ TTS は **xAI Grok のみ**（`POST https://api.x.ai/v1/tts`）。
 | 解決順 | env → セッション → **OS keyring** → 旧 Windows DPAPI（移行） → CLI `getpass` / GUI マスク |
 | dry-run | キー任意（Chat API はスキップ） |
 | 実 TTS / 翻訳 / 用語集 | 解決チェーン。無ければ終了コード 2 |
-| GUI | **Save on this PC** / **Clear saved**（keyring。本体依存） |
+| GUI | キー準備済み時は入力欄をロックし、**Change / Override** でセッション上書き。**Save on this PC** はOS資格情報ストアへ保存、**Clear saved** は保存済みキーのみ削除（環境変数／セッションキーは対象外） |
 
 Windows cmd（現在のウィンドウのみ）:
 
@@ -224,7 +224,7 @@ srtspeak glossary-suggest --help
 | `dry-run` | パース + 文字数・TTS 概算コストのみ（ffmpeg 不要） |
 | `build` | 1 言語を生成（TTS） |
 | `build-all` | 複数言語を順に生成 |
-| `translate` | SRT→SRT 多ターゲット翻訳（Grok Chat・タイミング固定） |
+| `translate` | SRT→SRT 多ターゲット翻訳（Grok 4.7 Responses・タイミング固定） |
 | `glossary-suggest` | ソース SRT から用語集 JSON を提案 |
 | `gui` | PySide6 GUI（Build + Translate タブ） |
 
@@ -329,7 +329,7 @@ srtspeak build --srt GRAN_TENKU_Portugus.srt --lang pt --voice-id leo
 | `--max-speed` | atempo 積の上限。超過は hard_trim | なし |
 | `--tail-pad-ms` | 最終キュー end 後の無音（base_wav 無し時） | `0` |
 | `--base-wav` | 既存 WAV にナレーションをミックス（base の rate/ch 維持） | なし |
-| `--ja-yomi` / `--no-ja-yomi` | 日本語 漢字→ひらがな（Grok Chat） | **オン** |
+| `--ja-yomi` / `--no-ja-yomi` | 日本語 漢字→ひらがな（Grok 4.7 Responses REST API） | **オン** |
 | `--strip-emoticons` / `--no-strip-emoticons` | TTS 用のみ顔文字除去。絵文字は保持。SRT は変更しない | **オン** |
 | `--no-cache` | 既存 TTS/ja_yomi キャッシュを無視（成功後は新規書き込み） | off |
 | `--limit N` | 先頭 N キューのみ | 全件 |
@@ -389,7 +389,7 @@ srtspeak build-all ^
 
 ### 翻訳（SRT→SRT）
 
-タイミング固定の多ターゲット翻訳。キュー数 / index / start-end ms は同一で、テキストのみ変更。プロバイダは Grok Chat structured JSON（既定 `grok-4.5`）。TTS パイプラインとは分離。
+タイミング固定の多ターゲット翻訳。キュー数 / index / start-end ms は同一で、テキストのみ変更。プロバイダは xAI Responses REST の structured JSON（既定 `grok-4.7`、`store: false`）。TTS パイプラインとは分離。既存の翻訳キャッシュや出力 SRT は旧モデルの結果を再利用する場合があるため、Grok 4.7 で再生成する場合は `--no-cache` を指定する。
 
 ```bat
 set "XAI_API_KEY=xai-..."
@@ -413,10 +413,10 @@ srtspeak translate ^
 | `--glossary` | 用語集 JSON | なし |
 | `--length-mode` | `off` / `hint` / `enforce` / `report-only` | `hint` |
 | `--on-empty` | `fail` / `keep-source` | `fail` |
-| `--batch-size` | Chat 1 バッチのキュー数 | `8` |
-| `--model` | Grok Chat モデル ID | `grok-4.5` |
+| `--batch-size` | Responses API 1 リクエストのキュー数 | `8` |
+| `--model` | Grok モデル ID | `grok-4.7` |
 | `--limit N` | 先頭 N キューのみ | 全件 |
-| `--dry-run` | 見積もりのみ（Chat なし） | off |
+| `--dry-run` | 見積もりのみ（API 呼び出しなし） | off |
 | `--fail-fast` | 最初の対象言語エラーで停止 | off |
 | `--no-cache` | 既存翻訳キャッシュを無視（成功後は書き込み） | off |
 | `--naming` | `stem` → `{source_stem}_{lang}.srt` / `gran_tenku` → `GRAN_TENKU_{lang}.srt` | `stem` |
@@ -457,7 +457,7 @@ srtspeak glossary-suggest ^
 | `--merge` | 既存用語集へマージ（衝突時は既存優先） | なし |
 | `--force` | マージせず `--out` を上書き | off |
 | `--min-count` | ローカル候補の最小出現回数 | `2` |
-| `--model` | Grok Chat モデル ID | `grok-4.5` |
+| `--model` | Grok モデル ID | `grok-4.7` |
 | `--limit N` | 先頭 N キューのみ | 全件 |
 
 `--out` が既に存在し `--force` が無い場合、既存 terms とマージ（既存優先）。
@@ -486,7 +486,7 @@ srtspeak gui
 
 - パイプライン: parse → limit → **ja_yomi**（ja）→ TTS/cache → 正規化 → fit → timeline → report
 - TTS: xAI Grok unary REST のみ（`speed` は常に 1.0）
-- ja_yomi: Grok Chat の structured JSON、バッチ 5、`out/work/{lang}/` にキャッシュ
+- ja_yomi: Grok 4.7 Responses REST の structured JSON、バッチ 5、`out/work/{lang}/` にキャッシュ
 - strip_emoticons: **TTS 発話テキストのみ**顔文字除去。絵文字は保持。SRT キュー本文は変更しない。既定 **オン**
 - 尺合わせ: ffmpeg CLI のみ（`atempo` 0.5–2.0 多段、不足は pad 既定）
 - タイムライン: 無音キャンバスまたは base_wav。配置区間は半開 `[start, end)`。**PCM 加算ミックス**（±32767 クリップ）
@@ -498,11 +498,11 @@ srtspeak gui
 
 ### 翻訳
 
-- パイプライン: parse → limit → ターゲット毎: cache → Chat バッチ → 構造ロック → SRT 書き出し → `translate_report.json`
+- パイプライン: parse → limit → ターゲット毎: cache → Responses API バッチ → 構造ロック → SRT 書き出し → `translate_report.json`
 - 構造ロック: キュー数 / index / start_ms / end_ms がソースと同一
 - glossary 任意（`terms` / `do_not_translate` / `tone`）
 - length_mode `hint`（既定）は予算をプロンプトへ。`enforce` は 2nd compress pass 可
-- モデル既定 `grok-4.5`、batch_size 既定 8
+- モデル既定 `grok-4.7`、batch_size 既定 8
 
 ## 終了コード
 
