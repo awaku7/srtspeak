@@ -1,6 +1,6 @@
 # srtspeak 設計書（実装準拠）
 
-**状態:** 実装済み（パッケージ版 `0.1.7`）。本ドキュメントはコードと同期した仕様の正本。  
+**状態:** 実装済み（パッケージ版 `0.1.9`）。本ドキュメントはコードと同期した仕様の正本。  
 **目的:** 多言語 SRT を xAI Grok TTS で音声化し、各キューの開始・終了時刻へ **強制フィット** したナレーション WAV を生成する。SRT→SRT 翻訳・日本語よみ・用語集提案には Grok 4.7 の Responses REST API を使う。
 
 関連:
@@ -648,3 +648,6 @@ optional extras（`pyproject.toml`）:
 | 0.1.4 同期 | 版番号 0.1.4。`__version__` を pyproject と同期。PySide6/keyring を本体依存化（`[gui]` extra 廃止）。API キー空白正規化。GUI キー状態表示・絶対パス出力フォルダ・非モーダル完了。UTF-8 既定。Windows bat ヘルパ削除 |
 | 0.1.5 同期 | 版番号 0.1.5。既定 work/srt_gen を out/ 配下へ（out/work, out/srt_gen）。gettext en/ja 修復 |
 | 0.1.6 同期 | 版番号 0.1.6。track_filename に入力SRT stem 採用。重複cue clip-last 自動修正。GUI Browse 開始フォルダ改善。設定自動保存。 |
+| 0.1.7 同期 | テキスト処理を xAI Responses REST (`grok-4.7`) へ移行。SRT 検証、出力名衝突対策、GUI API キー置換操作を追加 |
+| 0.1.8 同期 | GUI に声の性別フィルターを追加。性別不明の声は推測せず「すべて」で選択可能 |
+| 0.1.9 同期 | WAV の LUFS 測定・正規化、よみ変換/TTS API の並列数設定、翻訳並列数の既定値変更、出力命名規則の表示を追加 |
