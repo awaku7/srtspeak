@@ -24,7 +24,7 @@ def test_build_config_defaults() -> None:
     )
     assert cfg.provider == "xai_grok"
     assert cfg.voice_id == "leo"
-    assert cfg.sample_rate == 24000
+    assert cfg.sample_rate == 48000
     assert cfg.codec == "wav"
     assert cfg.tts_speed == 1.0
     assert cfg.text_normalization is True

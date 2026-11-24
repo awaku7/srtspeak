@@ -57,6 +57,48 @@ def test_translate_parser_accepts_no_cache() -> None:
     assert args.no_cache is True
 
 
+def test_translate_parser_accepts_parallel_requests() -> None:
+    setup_i18n("en")
+    p = build_parser()
+    args = p.parse_args(
+        [
+            "translate",
+            "--srt",
+            "a.srt",
+            "--to",
+            "en",
+        ]
+    )
+    assert args.parallel_requests == 2
+
+
+def test_build_parser_accepts_parallel_requests() -> None:
+    setup_i18n("en")
+    p = build_parser()
+    default_args = p.parse_args(
+        [
+            "build",
+            "--srt",
+            "a.srt",
+            "--lang",
+            "ja",
+        ]
+    )
+    assert default_args.parallel_requests == 2
+    args = p.parse_args(
+        [
+            "build",
+            "--srt",
+            "a.srt",
+            "--lang",
+            "ja",
+            "--parallel-requests",
+            "3",
+        ]
+    )
+    assert args.parallel_requests == 3
+
+
 def test_build_parser_accepts_no_cache() -> None:
     setup_i18n("en")
     p = build_parser()

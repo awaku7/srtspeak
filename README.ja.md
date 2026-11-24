@@ -18,7 +18,7 @@ SRT 多言語 TTS。各キューの開始・終了時刻へ音声を強制フィ
 | ffmpeg / ffprobe | PATH 上を推奨。無ければ optional `imageio-ffmpeg` |
 | API キー | 実 TTS / 翻訳 / 用語集 / ja_yomi 時のみ `XAI_API_KEY`（dry-run ではテキストモデルを呼ばない） |
 
-パッケージ版: **0.1.6**（`pyproject.toml`）。
+パッケージ版: **0.1.9**（`pyproject.toml`）。
 
 ## インストール
 
@@ -155,7 +155,7 @@ TTS は **xAI Grok のみ**（`POST https://api.x.ai/v1/tts`）。
 | CLI フラグ | `--api-key` なし（シェル履歴回避） |
 | 永続化 | `.env` なし。report/ログ/`gui_settings.json` に平文キーを書かない |
 | 解決順 | env → セッション → **OS keyring** → 旧 Windows DPAPI（移行） → CLI `getpass` / GUI マスク |
-| dry-run | キー任意（Chat API はスキップ） |
+| dry-run | キー任意（テキストモデルへのAPIリクエストはスキップ） |
 | 実 TTS / 翻訳 / 用語集 | 解決チェーン。無ければ終了コード 2 |
 | GUI | キー準備済み時は入力欄をロックし、**Change / Override** でセッション上書き。**Save on this PC** はOS資格情報ストアへ保存、**Clear saved** は保存済みキーのみ削除（環境変数／セッションキーは対象外） |
 
@@ -295,9 +295,9 @@ srtspeak doctor
 
 - `XAI_API_KEY: set (env)`（実 TTS / 翻訳前）
 - `ffmpeg:` にパスと `source: path`（または `imageio_ffmpeg`）
-- `ja_yomi: grok-chat (Grok Chat API)`
-- `translate: grok-chat (same XAI_API_KEY)`
-- `glossary-suggest: grok-chat (same XAI_API_KEY)`
+- `ja_yomi: xAI Responses REST (Grok 4.7)`
+- `translate: xAI Responses REST（同一 XAI_API_KEY）`
+- `glossary-suggest: xAI Responses REST（同一 XAI_API_KEY）`
 
 ### コスト見積もり（ffmpeg 不要）
 
@@ -335,7 +335,9 @@ srtspeak build --srt GRAN_TENKU_Portugus.srt --lang pt --voice-id leo
 | `--limit N` | 先頭 N キューのみ | 全件 |
 | `--dry-run` | 生成せず見積もり | off |
 | `--also-mp3` | 完成トラックの mp3 も出力 | off |
-| `--jobs` | 並列（MVP は **1** のみ） | `1` |
+| `--target-lufs` | 重畳後の完成トラックを2パスで測定・正規化（例: `-14`）。True Peak は `-1.5 dBTP` | なし（オフ） |
+| `--jobs` | 複数言語ビルドの並列数（MVP は **1** のみ） | `1` |
+| `--parallel-requests` | 日本語よみ変換/TTS APIへの同時リクエスト数（1〜4）。音声の尺合わせ・配置は順次処理 | `2` |
 
 試しに数キューだけ:
 
@@ -414,9 +416,10 @@ srtspeak translate ^
 | `--length-mode` | `off` / `hint` / `enforce` / `report-only` | `hint` |
 | `--on-empty` | `fail` / `keep-source` | `fail` |
 | `--batch-size` | Responses API 1 リクエストのキュー数 | `8` |
+| `--parallel-requests` | 同時に実行する翻訳APIリクエスト数（1〜4） | `2` |
 | `--model` | Grok モデル ID | `grok-4.7` |
 | `--limit N` | 先頭 N キューのみ | 全件 |
-| `--dry-run` | 見積もりのみ（API 呼び出しなし） | off |
+| `--dry-run` | キュー数・文字数・予算超過・バッチ数のみ（API 呼び出し・トークン数・費用は見積もらない） | off |
 | `--fail-fast` | 最初の対象言語エラーで停止 | off |
 | `--no-cache` | 既存翻訳キャッシュを無視（成功後は書き込み） | off |
 | `--naming` | `stem` → `{source_stem}_{lang}.srt` / `gran_tenku` → `GRAN_TENKU_{lang}.srt` | `stem` |
@@ -468,8 +471,9 @@ srtspeak glossary-suggest ^
 srtspeak gui
 ```
 
-- タブ: **Build**（TTS）と **Translate**
+- タブ: **Build**（TTS）、**Translate**、**音量**
 - Build: SRT、言語（BCP-47 + Detect）、ボイス、**絶対パス**出力フォルダ + ディレクトリ選択、Base WAV、Max cues、dry-run、ja_yomi、顔文字除去、no-cache
+- 音量: WAVを個別にLUFS測定・正規化。正規化では元ファイルを保持し、同じフォルダーにコピーを出力
 - Translate: ソース SRT、元言語、多ターゲット選択、**絶対パス**出力フォルダ + ディレクトリ選択、glossary パス + Suggest、length mode、batch size、naming（`stem` / `gran_tenku`）、fail-fast、no-cache、dry-run
 - 共有: API キー（マスク）+ 読み込み元を示すステータス/プレースホルダ（env / keyring / DPAPI / session）+ **Save on this PC** / **Clear saved**
 - キー入力: 空白・改行を除去（`normalize_api_key`）。言語検出も build/translate と同じ解決チェーン
@@ -488,12 +492,13 @@ srtspeak gui
 - TTS: xAI Grok unary REST のみ（`speed` は常に 1.0）
 - ja_yomi: Grok 4.7 Responses REST の structured JSON、バッチ 5、`out/work/{lang}/` にキャッシュ
 - strip_emoticons: **TTS 発話テキストのみ**顔文字除去。絵文字は保持。SRT キュー本文は変更しない。既定 **オン**
+- インライン音声タグ: SRT本文に xAI のタグを記述できます。例: `<whisper>秘密です。</whisper>[pause]`。`[long-pause]`、`[laugh]`、`[chuckle]`、`[giggle]`、`[cry]`、`[tsk]`、`[tongue-click]`、`[hum-tune]` など。日本語読み変換ではタグを保護し、読み変換後に元のタグを戻します。
 - 尺合わせ: ffmpeg CLI のみ（`atempo` 0.5–2.0 多段、不足は pad 既定）
 - タイムライン: 無音キャンバスまたは base_wav。配置区間は半開 `[start, end)`。**PCM 加算ミックス**（±32767 クリップ）
 - トラック長: 最終キュー end + `tail_pad_ms`。`--base-wav` 時は base の長さ
-- 音声（base 無し）: mono s16le 24 kHz WAV。base 有り時は base の rate/ch を維持
+- 音声（base 無し）: mono s16le 48 kHz WAV。base 有り時は base の rate/ch を維持
 - 料金目安（dry-run）: $15 / 1M chars（TTS 文字。Chat よみ分は含まない）
-- ボイス: builtin に男女あり。既定 `leo`
+- ボイス: xAI公式カタログの声質・用途を表示（未記載の性別は推測しない）。既定 `leo`
 - `--no-cache`: TTS/ja_yomi キャッシュ読みをスキップ。成功後は書き込む
 
 ### 翻訳

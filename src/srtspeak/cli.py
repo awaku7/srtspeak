@@ -180,7 +180,8 @@ def cmd_voices(args: argparse.Namespace) -> int:
             if filt not in v.description.lower() and filt not in v.name.lower():
                 continue
         tags = ",".join(v.tags) if v.tags else ""
-        print(f"{v.voice_id:12s}  {v.name:16s}  {_(v.description)}  [{tags}]")
+        description = _(v.description) if v.description else ""
+        print(f"{v.voice_id:12s}  {v.name:16s}  {description}  [{tags}]")
     return 0
 
 
@@ -200,20 +201,20 @@ def cmd_doctor(_args: argparse.Namespace) -> int:
         from srtspeak.core.ja_yomi import apply_ja_yomi  # noqa: F401
 
         print(
-            _("ja_yomi: grok-chat (Grok Chat API)").format()
+            _("ja_yomi: xAI Responses REST (Grok 4.7)").format()
         )
     except Exception as exc:
         print(_("ja_yomi: error ({exc})").format(exc=exc))
     try:
         from srtspeak.core.srt_translate import run_translate  # noqa: F401
 
-        print(_("translate: grok-chat (same XAI_API_KEY)"))
+        print(_("translate: xAI Responses REST (same XAI_API_KEY)"))
     except Exception as exc:
         print(_("translate: error ({exc})").format(exc=exc))
     try:
         from srtspeak.core.translate_glossary import suggest_glossary  # noqa: F401
 
-        print(_("glossary-suggest: grok-chat (same XAI_API_KEY)"))
+        print(_("glossary-suggest: xAI Responses REST (same XAI_API_KEY)"))
     except Exception as exc:
         print(_("glossary-suggest: error ({exc})").format(exc=exc))
     try:
@@ -260,7 +261,9 @@ def _build_one(
         dry_run=bool(args.dry_run),
         keep_raw=not bool(getattr(args, "no_keep_raw", False)),
         also_mp3=bool(args.also_mp3),
+        target_lufs=getattr(args, "target_lufs", None),
         jobs=1,
+        parallel_requests=int(getattr(args, "parallel_requests", 1) or 1),
         tail_pad_ms=int(args.tail_pad_ms),
         work_dir=Path(args.work_dir) if args.work_dir else None,
         max_speed=args.max_speed,
@@ -488,6 +491,7 @@ def cmd_translate(args: argparse.Namespace) -> int:
             work_dir=work_dir,
             model=str(getattr(args, "model", None) or DEFAULT_GROK_MODEL),
             batch_size=int(getattr(args, "batch_size", 8) or 8),
+            parallel_requests=int(getattr(args, "parallel_requests", 2) or 2),
             glossary_path=glossary,
             length_mode=str(getattr(args, "length_mode", "hint") or "hint"),
             on_empty=str(getattr(args, "on_empty", "fail") or "fail"),
@@ -710,7 +714,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--out",
             default=None,
             help=_(
-                "output root directory (lang id always appended; default: out)"
+                "output root (lang appended; WAV: <SRT stem>_<source ID>_<lang>.wav; default: out)"
             ),
         )
         sp.add_argument(
@@ -742,6 +746,12 @@ def build_parser() -> argparse.ArgumentParser:
             help=_("also write MP3 alongside WAV"),
         )
         sp.add_argument(
+            "--target-lufs",
+            type=float,
+            default=None,
+            help=_("normalize final audio to integrated loudness (e.g. -16 LUFS; off by default)"),
+        )
+        sp.add_argument(
             "--tail-pad-ms",
             type=int,
             default=0,
@@ -771,11 +781,18 @@ def build_parser() -> argparse.ArgumentParser:
             help=_("MVP must be 1"),
         )
         sp.add_argument(
+            "--parallel-requests",
+            type=int,
+            choices=(1, 2, 3, 4),
+            default=2,
+            help=_("maximum concurrent API requests for TTS and Japanese yomi (default: 2)"),
+        )
+        sp.add_argument(
             "--ja-yomi",
             action=argparse.BooleanOptionalAction,
             default=True,
             help=_(
-                "JA only: convert kanji to hiragana via Grok Chat API before TTS "
+                "JA only: convert kanji to hiragana via xAI Responses API before TTS "
                 "(default: on)"
             ),
         )
@@ -866,12 +883,19 @@ def build_parser() -> argparse.ArgumentParser:
         "--batch-size",
         type=int,
         default=8,
-        help=_("cues per Chat batch (default: 8)"),
+        help=_("cues per Responses request (default: 8)"),
+    )
+    sp_tr.add_argument(
+        "--parallel-requests",
+        type=int,
+        choices=(1, 2, 3, 4),
+        default=2,
+        help=_("maximum concurrent translation requests (default: 2)"),
     )
     sp_tr.add_argument(
         "--model",
         default=DEFAULT_GROK_MODEL,
-        help=_("Grok Chat model id"),
+        help=_("Grok model id (default: grok-4.7)"),
     )
     sp_tr.add_argument(
         "--limit",
@@ -882,7 +906,7 @@ def build_parser() -> argparse.ArgumentParser:
     sp_tr.add_argument(
         "--dry-run",
         action="store_true",
-        help=_("estimate only, no Chat API"),
+        help=_("estimate only, no text-model API request"),
     )
     sp_tr.add_argument(
         "--fail-fast",
@@ -898,13 +922,13 @@ def build_parser() -> argparse.ArgumentParser:
         "--naming",
         choices=("stem", "gran_tenku"),
         default="stem",
-        help=_("output SRT naming (default: stem)"),
+        help=_("stem = <input stem>_<lang>.srt; gran_tenku = GRAN_TENKU_<lang>.srt"),
     )
     sp_tr.set_defaults(func=cmd_translate)
 
     sp_gs = sub.add_parser(
         "glossary-suggest",
-        help=_("suggest glossary JSON from SRT via Grok Chat"),
+        help=_("suggest glossary JSON from SRT via xAI Responses API"),
     )
     sp_gs.add_argument("--srt", required=True, help=_("source SRT path"))
     sp_gs.add_argument(
@@ -942,7 +966,7 @@ def build_parser() -> argparse.ArgumentParser:
     sp_gs.add_argument(
         "--model",
         default=DEFAULT_GROK_MODEL,
-        help=_("Grok Chat model id"),
+        help=_("Grok model id (default: grok-4.7)"),
     )
     sp_gs.add_argument(
         "--limit",

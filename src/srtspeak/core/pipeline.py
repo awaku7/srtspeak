@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import hashlib
+import json
+import math
 import os
 import shutil
 import subprocess
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -97,7 +100,7 @@ def _maybe_mp3(
     mp3_path: Path,
     *,
     ffmpeg: str,
-    sample_rate: int = 24000,
+    sample_rate: int = 48000,
     channels: int = 1,
 ) -> None:
     args = [
@@ -124,6 +127,252 @@ def _maybe_mp3(
         raise RuntimeError(f"ffmpeg mp3 failed: {err[:500]}")
 
 
+def _loudnorm_stats(output: str) -> dict[str, Any]:
+    """Extract the JSON stats emitted by FFmpeg's loudnorm filter."""
+    decoder = json.JSONDecoder()
+    offset = 0
+    while (start := output.find("{", offset)) >= 0:
+        try:
+            data, _end = decoder.raw_decode(output[start:])
+        except json.JSONDecodeError:
+            offset = start + 1
+            continue
+        if isinstance(data, dict) and "input_i" in data:
+            return data
+        offset = start + 1
+    raise RuntimeError("ffmpeg loudnorm did not return measurement JSON")
+
+
+def _finite_float(value: Any) -> float | None:
+    try:
+        result = float(value)
+    except (TypeError, ValueError):
+        return None
+    return result if math.isfinite(result) else None
+
+
+def _measure_loudness_stats(
+    wav_path: Path, *, target_lufs: float, ffmpeg: str
+) -> dict[str, Any]:
+    filter_base = f"loudnorm=I={target_lufs:g}:TP=-1.5:LRA=11"
+    args = [
+        ffmpeg,
+        "-hide_banner",
+        "-nostats",
+        "-loglevel",
+        "info",
+        "-i",
+        str(wav_path),
+        "-af",
+        f"{filter_base}:print_format=json",
+        "-f",
+        "null",
+        "-",
+    ]
+    proc = subprocess.run(
+        args,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        check=False,
+    )
+    if proc.returncode != 0:
+        err = (proc.stderr or proc.stdout or "").strip()
+        raise RuntimeError(f"ffmpeg loudness measurement failed: {err[:500]}")
+    return _loudnorm_stats(proc.stderr or "")
+
+
+def measure_loudness(
+    wav_path: Path | str,
+    *,
+    target_lufs: float = -14.0,
+    ffmpeg: str | None = None,
+) -> dict[str, float | None]:
+    """Measure integrated loudness and peak of one WAV file without modifying it."""
+    executable = ffmpeg or resolve_ffmpeg().ffmpeg
+    stats = _measure_loudness_stats(
+        Path(wav_path), target_lufs=target_lufs, ffmpeg=executable
+    )
+    return {
+        "integrated_lufs": _finite_float(stats.get("input_i")),
+        "true_peak_dbtp": _finite_float(stats.get("input_tp")),
+        "lra_lu": _finite_float(stats.get("input_lra")),
+    }
+
+
+def _normalize_loudness(
+    wav_path: Path,
+    *,
+    output_path: Path | None = None,
+    target_lufs: float,
+    ffmpeg: str,
+    sample_rate: int,
+    channels: int,
+    sample_width: int = 2,
+) -> dict[str, Any]:
+    """Measure and normalize the final mixed track using FFmpeg's two-pass mode."""
+    pcm_codec = {1: "pcm_u8", 2: "pcm_s16le", 3: "pcm_s24le", 4: "pcm_s32le"}.get(
+        sample_width
+    )
+    if pcm_codec is None:
+        raise ValueError(f"unsupported WAV sample width: {sample_width}")
+
+    destination = Path(output_path) if output_path is not None else wav_path
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    filter_base = f"loudnorm=I={target_lufs:g}:TP=-1.5:LRA=11"
+    measure_args = [
+        ffmpeg,
+        "-hide_banner",
+        "-nostats",
+        "-loglevel",
+        "info",
+        "-i",
+        str(wav_path),
+        "-af",
+        f"{filter_base}:print_format=json",
+        "-f",
+        "null",
+        "-",
+    ]
+    measured = subprocess.run(
+        measure_args,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        check=False,
+    )
+    if measured.returncode != 0:
+        err = (measured.stderr or measured.stdout or "").strip()
+        raise RuntimeError(f"ffmpeg loudness measurement failed: {err[:500]}")
+    stats = _loudnorm_stats(measured.stderr or "")
+
+    measured_fields = {
+        "measured_I": "input_i",
+        "measured_TP": "input_tp",
+        "measured_LRA": "input_lra",
+        "measured_thresh": "input_thresh",
+        "offset": "target_offset",
+    }
+    try:
+        numeric_stats = {
+            key: float(stats[source]) for key, source in measured_fields.items()
+        }
+    except (KeyError, TypeError, ValueError):
+        numeric_stats = {}
+    use_linear_two_pass = bool(numeric_stats) and all(
+        math.isfinite(value) for value in numeric_stats.values()
+    )
+    if use_linear_two_pass:
+        second_filter = filter_base + ":" + ":".join(
+            f"{key}={numeric_stats[key]:.6f}" for key in measured_fields
+        ) + ":linear=true"
+        mode = "linear_two_pass"
+    else:
+        # Silence or unusable measurements cannot be used for linear gain.
+        second_filter = filter_base
+        mode = "dynamic_fallback"
+
+    tmp_path = destination.with_name(f"{destination.stem}.loudnorm.tmp.wav")
+    args = [
+        ffmpeg,
+        "-y",
+        "-hide_banner",
+        "-loglevel",
+        "info",
+        "-i",
+        str(wav_path),
+        "-af",
+        f"{second_filter}:print_format=json",
+        "-ac",
+        str(channels),
+        "-ar",
+        str(sample_rate),
+        "-c:a",
+        pcm_codec,
+        str(tmp_path),
+    ]
+    try:
+        proc = subprocess.run(
+            args,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=False,
+        )
+        if proc.returncode != 0:
+            err = (proc.stderr or proc.stdout or "").strip()
+            raise RuntimeError(f"ffmpeg loudness normalization failed: {err[:500]}")
+        try:
+            output_stats = _loudnorm_stats(proc.stderr or "")
+        except RuntimeError:
+            output_stats = {}
+        ffmpeg_mode = output_stats.get("normalization_type")
+        if use_linear_two_pass:
+            if ffmpeg_mode == "linear":
+                mode = "linear_two_pass"
+            elif ffmpeg_mode == "dynamic":
+                mode = "dynamic_two_pass_fallback"
+            else:
+                mode = "linear_two_pass_unverified"
+        else:
+            mode = (
+                "dynamic_fallback"
+                if ffmpeg_mode == "dynamic"
+                else "dynamic_fallback_unverified"
+            )
+        os.replace(tmp_path, destination)
+        return {
+            "target_lufs": target_lufs,
+            "true_peak_limit_dbtp": -1.5,
+            "mode": mode,
+            "input_lufs": _finite_float(stats.get("input_i")),
+            "input_true_peak_dbtp": _finite_float(stats.get("input_tp")),
+            "input_lra_lu": _finite_float(stats.get("input_lra")),
+            "ffmpeg_normalization_type": ffmpeg_mode,
+            "output_lufs": _finite_float(output_stats.get("output_i")),
+            "output_true_peak_dbtp": _finite_float(output_stats.get("output_tp")),
+            "output_lra_lu": _finite_float(output_stats.get("output_lra")),
+        }
+    finally:
+        try:
+            tmp_path.unlink(missing_ok=True)
+        except OSError:
+            pass
+
+
+def normalize_loudness_file(
+    wav_path: Path | str,
+    output_path: Path | str,
+    *,
+    target_lufs: float = -14.0,
+    ffmpeg: str | None = None,
+) -> dict[str, Any]:
+    """Normalize one PCM WAV independently and save a separate WAV copy."""
+    import wave
+
+    source = Path(wav_path)
+    destination = Path(output_path)
+    if destination.suffix.lower() != ".wav":
+        raise ValueError("normalized audio output must use a .wav extension")
+    with wave.open(str(source), "rb") as wav_file:
+        channels = wav_file.getnchannels()
+        sample_rate = wav_file.getframerate()
+        sample_width = wav_file.getsampwidth()
+    executable = ffmpeg or resolve_ffmpeg().ffmpeg
+    return _normalize_loudness(
+        source,
+        output_path=destination,
+        target_lufs=target_lufs,
+        ffmpeg=executable,
+        sample_rate=sample_rate,
+        channels=channels,
+        sample_width=sample_width,
+    )
+
+
 def dry_run_build(
     config: BuildConfig,
     *,
@@ -148,7 +397,13 @@ def dry_run_build(
     text, srt_encoding = read_srt_text(config.srt_path)
     cues = apply_limit(parse_srt(text), config.limit)
     init_ja_yomi_log(_work_lang_dir(config))
-    cues = apply_ja_yomi(cues, enabled=config.ja_yomi, lang=config.lang, work_dir=_work_lang_dir(config))
+    cues = apply_ja_yomi(
+        cues,
+        enabled=config.ja_yomi,
+        lang=config.lang,
+        work_dir=_work_lang_dir(config),
+        parallel_requests=config.parallel_requests,
+    )
     token.check()
     emit(
         progress_cb,
@@ -185,6 +440,7 @@ def dry_run_build(
         "srt_path": str(config.srt_path),
         "source_encoding": srt_encoding,
         "out_dir": str(config.out_dir),
+        "parallel_requests": config.parallel_requests,
         "cue_count": len(cues),
         "processed_count": len(cues),
         "total_chars": total_chars,
@@ -210,6 +466,102 @@ def dry_run_build(
         lang=config.lang,
     )
     return report
+
+
+def _parallel_synthesize_missing(
+    cues: list[Cue],
+    config: BuildConfig,
+    *,
+    voice_id: str,
+    api_key: str,
+    work_dir: Path,
+    raw_dir: Path,
+    progress_cb: ProgressCallback | None,
+    cancel_token: CancellationToken,
+) -> dict[str, Path]:
+    """Synthesize cache-miss cue groups concurrently; cue timing stays independent."""
+    total = len(cues)
+    specs: dict[str, dict[str, Any]] = {}
+    cache_hits = 0
+    for cue in cues:
+        cancel_token.check()
+        speak_text = tts_speak_text(cue.text, enabled=bool(config.strip_emoticons))
+        key = cache_key_hex(
+            provider=config.provider,
+            voice_id=voice_id,
+            language_code=config.language_code,
+            text=speak_text,
+            sample_rate=config.sample_rate,
+            codec=config.codec,
+            tts_speed=config.tts_speed,
+            text_normalization=config.text_normalization,
+        )
+        cpath = cache_path(work_dir, key)
+        if not config.no_cache and cpath.is_file() and cpath.stat().st_size > 0:
+            cache_hits += 1
+            continue
+        spec = specs.get(key)
+        if spec is None:
+            temp_path = raw_dir / f".parallel_{key[:24]}.wav"
+            temp_path.unlink(missing_ok=True)
+            spec = {"text": speak_text, "temp_path": temp_path, "cue_count": 0}
+            specs[key] = spec
+        spec["cue_count"] += 1
+
+    completed_cues = cache_hits
+    emit(
+        progress_cb,
+        stage="tts",
+        stage_fraction=completed_cues / total if total else 1.0,
+        current=completed_cues,
+        total=total,
+        message="tts done" if cache_hits else "tts",
+        lang=config.lang,
+    )
+    if not specs:
+        return {}
+
+    succeeded = False
+    try:
+        with ThreadPoolExecutor(max_workers=config.parallel_requests) as executor:
+            futures = {
+                executor.submit(
+                    synthesize_to_file,
+                    text=spec["text"],
+                    voice_id=voice_id,
+                    language_code=config.language_code,
+                    api_key=api_key,
+                    out_path=spec["temp_path"],
+                    sample_rate=config.sample_rate,
+                    codec=config.codec,
+                    tts_speed=config.tts_speed,
+                    text_normalization=config.text_normalization,
+                ): key
+                for key, spec in specs.items()
+            }
+            for future in as_completed(futures):
+                cancel_token.check()
+                key = futures[future]
+                future.result()
+                completed_cues += int(specs[key]["cue_count"])
+                emit(
+                    progress_cb,
+                    stage="tts",
+                    stage_fraction=completed_cues / total if total else 1.0,
+                    current=completed_cues,
+                    total=total,
+                    message="tts api",
+                    lang=config.lang,
+                )
+        succeeded = True
+        return {key: Path(spec["temp_path"]) for key, spec in specs.items()}
+    finally:
+        if not succeeded:
+            for spec in specs.values():
+                try:
+                    Path(spec["temp_path"]).unlink(missing_ok=True)
+                except OSError:
+                    pass
 
 
 def run_build(
@@ -267,6 +619,7 @@ def run_build(
         cancel_token=token,
         progress_cb=progress_cb,
         no_cache=bool(config.no_cache),
+        parallel_requests=config.parallel_requests,
     )
     emit(
         progress_cb,
@@ -300,6 +653,7 @@ def run_build(
     else:
         effective_sr = config.sample_rate
         base_channels = 1
+        base_sampwidth = 2
         base_wav_used = None
 
     out_dir = ensure_dir(_out_lang_dir(config))
@@ -315,21 +669,35 @@ def run_build(
     processed = 0
     status = "ok"
     cancelled_at_percent: float | None = None
+    loudness_report: dict[str, Any] | None = None
+    parallel_tts_paths: dict[str, Path] = {}
 
     try:
+        if config.parallel_requests > 1:
+            parallel_tts_paths = _parallel_synthesize_missing(
+                cues,
+                config,
+                voice_id=voice_id,
+                api_key=api_key,
+                work_dir=work_dir,
+                raw_dir=raw_dir,
+                progress_cb=progress_cb,
+                cancel_token=token,
+            )
         for i, cue in enumerate(cues):
             token.check()
             frac = i / total if total else 1.0
-            emit(
-                progress_cb,
-                stage="tts",
-                stage_fraction=frac,
-                current=i,
-                total=total,
-                message="tts",
-                cue_index=cue.index,
-                lang=config.lang,
-            )
+            if config.parallel_requests == 1:
+                emit(
+                    progress_cb,
+                    stage="tts",
+                    stage_fraction=frac,
+                    current=i,
+                    total=total,
+                    message="tts",
+                    cue_index=cue.index,
+                    lang=config.lang,
+                )
 
             speak_text = tts_speak_text(
                 cue.text, enabled=bool(config.strip_emoticons)
@@ -356,6 +724,8 @@ def run_build(
             )
             if cache_hit:
                 shutil.copyfile(cpath, raw_path)
+            elif key in parallel_tts_paths:
+                shutil.copyfile(parallel_tts_paths[key], raw_path)
             else:
                 synthesize_to_file(
                     text=speak_text,
@@ -382,16 +752,17 @@ def run_build(
             if not cache_hit:
                 shutil.copyfile(cue_out, cpath)
 
-            emit(
-                progress_cb,
-                stage="tts",
-                stage_fraction=(i + 1) / total if total else 1.0,
-                current=i + 1,
-                total=total,
-                message="tts done" if cache_hit else "tts api",
-                cue_index=cue.index,
-                lang=config.lang,
-            )
+            if config.parallel_requests == 1:
+                emit(
+                    progress_cb,
+                    stage="tts",
+                    stage_fraction=(i + 1) / total if total else 1.0,
+                    current=i + 1,
+                    total=total,
+                    message="tts done" if cache_hit else "tts api",
+                    cue_index=cue.index,
+                    lang=config.lang,
+                )
 
             token.check()
             emit(
@@ -477,6 +848,16 @@ def run_build(
             base_wav=base_wav_used,
         )
 
+        if config.target_lufs is not None:
+            loudness_report = _normalize_loudness(
+                track_path,
+                target_lufs=config.target_lufs,
+                ffmpeg=tools.ffmpeg,
+                sample_rate=effective_sr,
+                channels=base_channels,
+                sample_width=base_sampwidth,
+            )
+
         if config.also_mp3:
             mp3_path = out_dir / track_filename(config.lang, stem=track_stem, mp3=True)
             _maybe_mp3(track_path, mp3_path, ffmpeg=tools.ffmpeg, sample_rate=effective_sr, channels=base_channels)
@@ -536,6 +917,12 @@ def run_build(
                 )
             except Exception:
                 pass
+    finally:
+        for temp_path in parallel_tts_paths.values():
+            try:
+                temp_path.unlink(missing_ok=True)
+            except OSError:
+                pass
 
     finished_at = _utc_now_iso()
     report: dict[str, Any] = {
@@ -551,6 +938,9 @@ def run_build(
         "short_mode": config.short_mode,
         "ja_yomi": bool(config.ja_yomi and config.lang == "ja"),
         "strip_emoticons": bool(config.strip_emoticons),
+        "target_lufs": config.target_lufs,
+        "loudness": loudness_report,
+        "parallel_requests": config.parallel_requests,
         "base_wav": str(config.base_wav) if config.base_wav else None,
         "fit": config.fit,
         "limit": config.limit,

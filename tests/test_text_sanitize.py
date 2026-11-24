@@ -25,6 +25,12 @@ def test_preserves_normal_punctuation() -> None:
     assert sanitize_for_tts(s, collapse_ws=True) == s
 
 
+def test_preserves_inline_speech_tags() -> None:
+    text = "<whisper>秘密です。</whisper>[pause][laugh]"
+    assert sanitize_for_tts(text) == text
+    assert tts_speak_text(text, enabled=True) == text
+
+
 def test_empty_after_strip_kaomoji_only() -> None:
     assert sanitize_for_tts("m(_ _)m") == ""
     # emoji-only is not stripped

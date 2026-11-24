@@ -61,7 +61,7 @@ def test_localize_message_exact_ja() -> None:
     assert localize_message("start") == "開始"
     assert localize_message("done") == "完了"
     assert localize_message("extract candidates") == "候補抽出"
-    assert localize_message("chat suggest") == "Chat提案"
+    assert localize_message("Responses API glossary suggestion") == "Responses API 用語集提案"
     assert localize_message("finalize glossary") == "用語集確定"
 
 
@@ -71,7 +71,10 @@ def test_localize_message_patterns_en() -> None:
     assert localize_message("en batch 2/5") == "en batch 2/5"
     assert localize_message("en batch 2/5 done") == "en batch 2/5 done"
     assert localize_message("pt-BR compress index 7") == "pt-BR compress index 7"
-    assert localize_message("waiting chat... 12s") == "waiting chat... 12s"
+    assert (
+        localize_message("waiting for API response... 12s")
+        == "waiting for API response... 12s"
+    )
     assert localize_message("candidates=42") == "candidates=42"
     assert localize_message("write foo_en.srt") == "write foo_en.srt"
     assert localize_message("en finished") == "en finished"
@@ -85,7 +88,10 @@ def test_localize_message_patterns_ja() -> None:
     assert localize_message("en batch 2/5") == "en バッチ 2/5"
     assert localize_message("en batch 2/5 done") == "en バッチ 2/5 完了"
     assert localize_message("pt-BR compress index 7") == "pt-BR 圧縮 index 7"
-    assert localize_message("waiting chat... 12s") == "Chat待機中… 12s"
+    assert (
+        localize_message("waiting for API response... 12s")
+        == "API応答待ち… 12s"
+    )
     assert localize_message("candidates=42") == "候補数=42"
     assert localize_message("write foo_en.srt") == "書き込み foo_en.srt"
     assert localize_message("en finished") == "en 完了"
@@ -102,15 +108,15 @@ def test_localize_message_unknown_passthrough() -> None:
 def test_localize_message_batch_waiting() -> None:
     set_locale("en")
     assert (
-        localize_message("en batch 2/5 waiting chat... 12s")
-        == "en batch 2/5 waiting chat... 12s"
+        localize_message("en batch 2/5 waiting for API response... 12s")
+        == "en batch 2/5 waiting for API response... 12s"
     )
     set_locale("ja")
     assert (
-        localize_message("en batch 2/5 waiting chat... 12s")
-        == "en バッチ 2/5 Chat待機中… 12s"
+        localize_message("en batch 2/5 waiting for API response... 12s")
+        == "en バッチ 2/5 API応答待ち… 12s"
     )
     assert (
-        localize_message("pt-BR batch 1/3 waiting chat... 3s")
-        == "pt-BR バッチ 1/3 Chat待機中… 3s"
+        localize_message("pt-BR batch 1/3 waiting for API response... 3s")
+        == "pt-BR バッチ 1/3 API応答待ち… 3s"
     )

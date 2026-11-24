@@ -1,6 +1,6 @@
 # srtspeak 設計書（実装準拠）
 
-**状態:** 実装済み（パッケージ版 `0.1.6`）。本ドキュメントはコードと同期した仕様の正本。  
+**状態:** 実装済み（パッケージ版 `0.1.7`）。本ドキュメントはコードと同期した仕様の正本。  
 **目的:** 多言語 SRT を xAI Grok TTS で音声化し、各キューの開始・終了時刻へ **強制フィット** したナレーション WAV を生成する。SRT→SRT 翻訳・日本語よみ・用語集提案には Grok 4.7 の Responses REST API を使う。
 
 関連:
@@ -228,7 +228,7 @@ GUI は **BCP-47 を1つ選ぶ** UI。内部 `lang` は `internal_lang_from_code
 | ログ | `out/work/{lang}/srtspeak_ja_yomi.log`（任意） |
 | CLI | `--ja-yomi` / `--no-ja-yomi`（既定オン） |
 | GUI | チェックボックス（既定オン、`gui_settings.json` に保存可） |
-| doctor | `ja_yomi: grok-chat (Grok Chat API)` |
+| doctor | `ja_yomi: xAI Responses REST (Grok 4.7)` |
 | dry-run | キー無しなら変換スキップ（原文のまま文字数カウント） |
 | `no_cache` | 既存キャッシュを読まない。成功後は書く |
 

@@ -7,12 +7,17 @@ import re
 import threading
 import time
 from collections import Counter
+from collections.abc import Callable, Sequence
 from pathlib import Path
-from typing import Any, Callable, Sequence
+from typing import Any
 
 from srtspeak.core.progress import ProgressEvent
 from srtspeak.core.srt_parser import Cue
-from srtspeak.core.xai_responses import DEFAULT_GROK_MODEL, ResponsesAPIError, request_responses_text
+from srtspeak.core.xai_responses import (
+    DEFAULT_GROK_MODEL,
+    ResponsesAPIError,
+    request_responses_text,
+)
 
 ProgressCb = Callable[[ProgressEvent], None]
 
@@ -175,7 +180,7 @@ def extract_term_candidates(
                 counts[m] += 1
             if len(m) > 4:
                 for n in (2, 3, 4):
-                    for i in range(0, len(m) - n + 1):
+                    for i in range(len(m) - n + 1):
                         counts[m[i : i + n]] += 1
 
     stop = {
@@ -325,7 +330,7 @@ def _call_glossary_chat(
         )
         result = json.loads(text)
         if not isinstance(result, dict):
-            raise ValueError("expected a JSON object")
+            raise TypeError("expected a JSON object")
         return result
     except ResponsesAPIError as exc:
         raise GlossaryError(f"Grok Responses API error: {exc}") from exc
@@ -345,9 +350,9 @@ def suggest_glossary(
     chat_fn: Callable[..., dict[str, Any]] | None = None,
     heartbeat_s: float = 1.5,
 ) -> dict[str, Any]:
-    """Suggest glossary via heuristics + Grok Chat.
+    """Suggest glossary via heuristics + xAI Responses API.
 
-    Emits progress during the long Chat wait via a background heartbeat so
+    Emits progress during the long Responses API wait via a background heartbeat so
     CLI/GUI do not sit silent between ~40% and finalize.
     """
     if not api_key:
@@ -376,7 +381,7 @@ def suggest_glossary(
     _emit(25.0, f"candidates={len(candidates)}")
 
     call = chat_fn or _call_glossary_chat
-    _emit(40.0, "chat suggest")
+    _emit(40.0, "Responses API glossary suggestion")
 
     result_box: dict[str, Any] = {}
     error_box: list[BaseException] = []
@@ -403,10 +408,10 @@ def suggest_glossary(
         if not worker.is_alive():
             break
         elapsed = time.monotonic() - started
-        # Asymptotic climb 40 -> 90 while waiting on Chat
+        # Asymptotic climb 40 -> 90 while waiting on the Responses API
         frac = 1.0 - (1.0 / (1.0 + elapsed / 30.0))
         pct = min(90.0, 40.0 + 50.0 * frac)
-        _emit(pct, f"waiting chat... {int(elapsed)}s")
+        _emit(pct, f"waiting for API response... {int(elapsed)}s")
 
     if error_box:
         raise error_box[0]

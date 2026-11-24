@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -544,6 +544,70 @@ def test_run_translate_batch_error_detail(tmp_path: Path) -> None:
     assert result["targets"]["en"]["error_detail"]["kind"] == "batch_failure"
 
 
+def test_run_translate_parallel_requests_refill_freed_worker(tmp_path: Path) -> None:
+    import threading
+    import time
+
+    src_cues = _cues()
+    srt_path = tmp_path / "src.srt"
+    srt_path.write_text(format_srt(src_cues), encoding="utf-8")
+    lock = threading.Lock()
+    active = 0
+    max_active = 0
+    first_batch_active = False
+    third_started_before_first_finished = False
+
+    def fake_chat(items: list[dict], *, target_lang: str, **_kw: object) -> dict:
+        nonlocal active, max_active, first_batch_active
+        nonlocal third_started_before_first_finished
+        cue_index = int(items[0]["index"])
+        with lock:
+            active += 1
+            max_active = max(max_active, active)
+            if cue_index == 1:
+                first_batch_active = True
+            if cue_index == 3 and first_batch_active:
+                third_started_before_first_finished = True
+        try:
+            time.sleep({1: 0.4, 2: 0.02, 3: 0.03}[cue_index])
+            return {
+                "cues": [
+                    {"index": item["index"], "text": f"{target_lang}:{item['text']}"}
+                    for item in items
+                ]
+            }
+        finally:
+            with lock:
+                if cue_index == 1:
+                    first_batch_active = False
+                active -= 1
+
+    cfg = TranslateConfig(
+        srt_path=srt_path,
+        source_lang="ja",
+        targets=["en"],
+        out_dir=tmp_path / "out",
+        work_dir=tmp_path / "work",
+        batch_size=1,
+        parallel_requests=2,
+        length_mode="off",
+        heartbeat_s=0.0,
+    )
+    result = run_translate(
+        cfg,
+        api_key="dummy",
+        progress_cb=lambda _event: None,
+        chat_fn=fake_chat,
+    )
+
+    assert result["summary"]["ok"] == 1
+    assert max_active == 2
+    assert third_started_before_first_finished is True
+    target = result["targets"]["en"]
+    assert target["api_calls"] == 3
+    assert target["parallel_requests"] == 2
+
+
 def test_run_translate_batch_chat_heartbeat(tmp_path: Path) -> None:
     """Chat wait must emit waiting heartbeats (not freeze progress)."""
     import time
@@ -580,7 +644,7 @@ def test_run_translate_batch_chat_heartbeat(tmp_path: Path) -> None:
     )
     assert result["summary"]["ok"] == 1
     messages = [e.message for e in events]
-    waiting = [m for m in messages if "waiting chat" in m]
+    waiting = [m for m in messages if "waiting for API response" in m]
     assert waiting, messages
     # batch phase: current/total are batch counters, not raw cue totals only
     batch_evs = [

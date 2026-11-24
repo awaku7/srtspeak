@@ -6,6 +6,7 @@ Presentation layers call these helpers before showing progress to users.
 
 from __future__ import annotations
 
+import math
 import re
 
 from srtspeak.i18n import _
@@ -21,7 +22,7 @@ def format_gui_progress_label(ev: object) -> str:
         percent = float(getattr(ev, "percent", 0.0) or 0.0)
     except (TypeError, ValueError):
         percent = 0.0
-    if percent != percent:  # NaN
+    if math.isnan(percent):
         percent = 0.0
     percent = max(0.0, min(100.0, percent))
     stage = str(getattr(ev, "stage", "") or "")
@@ -110,8 +111,8 @@ def localize_message(message: str) -> str:
         return _("done")
     if message == "extract candidates":
         return _("extract candidates")
-    if message == "chat suggest":
-        return _("chat suggest")
+    if message == "Responses API glossary suggestion":
+        return _("Responses API glossary suggestion")
     if message == "finalize glossary":
         return _("finalize glossary")
 
@@ -130,7 +131,9 @@ def localize_message(message: str) -> str:
 
     m = _RE_BATCH_WAITING.match(message)
     if m:
-        return _("{target} batch {current}/{total} waiting chat... {seconds}s").format(
+        return _(
+            "{target} batch {current}/{total} waiting for API response... {seconds}s"
+        ).format(
             target=m.group(1),
             current=m.group(2),
             total=m.group(3),
@@ -157,7 +160,9 @@ def localize_message(message: str) -> str:
 
     m = _RE_WAITING.match(message)
     if m:
-        return _("waiting chat... {seconds}s").format(seconds=m.group(1))
+        return _("waiting for API response... {seconds}s").format(
+            seconds=m.group(1)
+        )
 
     m = _RE_CANDIDATES.match(message)
     if m:
@@ -183,12 +188,12 @@ _TARGET = r"([A-Za-z0-9][A-Za-z0-9-]*)"
 
 _RE_CACHE_HIT = re.compile(r"^cache hit (\d+)/(\d+)$")
 _RE_BATCH_WAITING = re.compile(
-    rf"^{_TARGET} batch (\d+)/(\d+) waiting chat\.\.\. (\d+)s$"
+    rf"^{_TARGET} batch (\d+)/(\d+) waiting for API response\.\.\. (\d+)s$"
 )
 _RE_BATCH_DONE = re.compile(rf"^{_TARGET} batch (\d+)/(\d+) done$")
 _RE_BATCH = re.compile(rf"^{_TARGET} batch (\d+)/(\d+)$")
 _RE_COMPRESS = re.compile(rf"^{_TARGET} compress index (\d+)$")
-_RE_WAITING = re.compile(r"^waiting chat\.\.\. (\d+)s$")
+_RE_WAITING = re.compile(r"^waiting for API response\.\.\. (\d+)s$")
 _RE_CANDIDATES = re.compile(r"^candidates=(\d+)$")
 _RE_WRITE = re.compile(r"^write (.+)$")
 _RE_FINISHED = re.compile(rf"^{_TARGET} finished$")

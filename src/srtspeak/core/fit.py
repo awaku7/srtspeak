@@ -94,7 +94,7 @@ def force_fit_wav(
     *,
     window_ms: int,
     short_mode: str = "pad",
-    sample_rate: int = 24000,
+    sample_rate: int = 48000,
     tolerance_ms: int = 10,
     ffmpeg_path: str | None = None,
     max_speed: float | None = None,

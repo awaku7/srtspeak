@@ -6,9 +6,13 @@ from pathlib import Path
 
 import pytest
 
+from srtspeak.core.srt_parser import (
+    SrtParseError,
+    apply_limit,
+    parse_srt,
+    parse_timestamp_ms,
+)
 from srtspeak.i18n import _, available_locales, get_locale, set_locale
-from srtspeak.core.srt_parser import SrtParseError, parse_srt, parse_timestamp_ms, apply_limit
-
 
 LOCALES_DIR = Path(__file__).resolve().parents[1] / "src" / "srtspeak" / "locales"
 
@@ -45,6 +49,39 @@ def test_set_locale_ja_translates() -> None:
     assert get_locale() == "ja"
     assert _("{label}: text is empty") == "{label}: テキストが空です"
     assert "SRT解析エラー" in _("SRT parse error: {detail}").format(detail="x")
+
+
+def test_parallel_request_control_translates() -> None:
+    set_locale("en")
+    assert _("Parallel requests") == "Parallel requests"
+
+    set_locale("ja")
+    assert _("Parallel requests") == "並列リクエスト数"
+    assert "同時に実行" in _(
+        "Maximum concurrent translation API requests; 1 = serial"
+    )
+
+
+def test_documented_voice_descriptions_translate() -> None:
+    descriptions = {
+        "Elegant, refined, and effortlessly premium": "優雅で洗練され、上質さが際立つ",
+        "Sharp, focused, and driven": "鋭く、集中力があり、意欲的",
+        "Upbeat, energetic, and endlessly versatile": "陽気でエネルギッシュ、幅広く活躍",
+        "Bright, curious, and easy to follow": "明るく好奇心旺盛で、聞き取りやすい",
+        "Compassionate, confident, and reassuring": "思いやりがあり、自信に満ち、安心感を与える",
+        "Friendly, warm, and steadfast": "親しみやすく温かで、頼もしい",
+        "Quick-witted, clever, and playful": "機転が利き、賢く、遊び心がある",
+        "Warm, articulate, and engaging": "温かみがあり、明瞭で、惹きつける",
+        "Serene, steady, and radiant": "穏やかで安定感があり、輝きのある",
+        "Calm, grounded, and luminous": "落ち着きがあり、地に足のついた、明るい声",
+    }
+    set_locale("en")
+    for msgid in descriptions:
+        assert _(msgid) == msgid
+
+    set_locale("ja")
+    for msgid, translation in descriptions.items():
+        assert _(msgid) == translation
 
 
 def test_parse_error_english() -> None:

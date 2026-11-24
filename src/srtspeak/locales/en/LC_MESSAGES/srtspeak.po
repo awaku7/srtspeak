@@ -73,8 +73,8 @@ msgid "ffmpeg: MISSING ({exc})"
 msgstr "ffmpeg: MISSING ({exc})"
 
 #: src/srtspeak/cli.py:202
-msgid "ja_yomi: grok-chat (Grok Chat API)"
-msgstr "ja_yomi: grok-chat (Grok Chat API)"
+msgid "ja_yomi: xAI Responses REST (Grok 4.7)"
+msgstr "ja_yomi: xAI Responses REST (Grok 4.7)"
 
 #: src/srtspeak/cli.py:205
 #, python-brace-format
@@ -82,8 +82,8 @@ msgid "ja_yomi: error ({exc})"
 msgstr "ja_yomi: error ({exc})"
 
 #: src/srtspeak/cli.py:209
-msgid "translate: grok-chat (same XAI_API_KEY)"
-msgstr "translate: grok-chat (same XAI_API_KEY)"
+msgid "translate: xAI Responses REST (same XAI_API_KEY)"
+msgstr "translate: xAI Responses REST (same XAI_API_KEY)"
 
 #: src/srtspeak/cli.py:211
 #, python-brace-format
@@ -91,8 +91,8 @@ msgid "translate: error ({exc})"
 msgstr "translate: error ({exc})"
 
 #: src/srtspeak/cli.py:215
-msgid "glossary-suggest: grok-chat (same XAI_API_KEY)"
-msgstr "glossary-suggest: grok-chat (same XAI_API_KEY)"
+msgid "glossary-suggest: xAI Responses REST (same XAI_API_KEY)"
+msgstr "glossary-suggest: xAI Responses REST (same XAI_API_KEY)"
 
 #: src/srtspeak/cli.py:217
 #, python-brace-format
@@ -299,8 +299,8 @@ msgid "MVP must be 1"
 msgstr "MVP must be 1"
 
 #: src/srtspeak/cli.py:777
-msgid "JA only: convert kanji to hiragana via Grok Chat API before TTS (default: on)"
-msgstr "JA only: convert kanji to hiragana via Grok Chat API before TTS (default: on)"
+msgid "JA only: convert kanji to hiragana via xAI Responses API before TTS (default: on)"
+msgstr "JA only: convert kanji to hiragana via xAI Responses API before TTS (default: on)"
 
 #: src/srtspeak/cli.py:786
 msgid "Strip kaomoji for TTS only; emoji kept; SRT unchanged (default: on)"
@@ -375,16 +375,16 @@ msgid "empty translation policy (default: fail)"
 msgstr "empty translation policy (default: fail)"
 
 #: src/srtspeak/cli.py:868
-msgid "cues per Chat batch (default: 8)"
-msgstr "cues per Chat batch (default: 8)"
+msgid "cues per Responses request (default: 8)"
+msgstr "cues per Responses request (default: 8)"
 
 #: src/srtspeak/cli.py:873 src/srtspeak/cli.py:944
-msgid "Grok Chat model id"
-msgstr "Grok Chat model id"
+msgid "Grok model id (default: grok-4.7)"
+msgstr "Grok model id (default: grok-4.7)"
 
 #: src/srtspeak/cli.py:884
-msgid "estimate only, no Chat API"
-msgstr "estimate only, no Chat API"
+msgid "estimate only, no text-model API request"
+msgstr "estimate only, no text-model API request"
 
 #: src/srtspeak/cli.py:889
 msgid "stop on first target failure"
@@ -399,8 +399,8 @@ msgid "output SRT naming (default: stem)"
 msgstr "output SRT naming (default: stem)"
 
 #: src/srtspeak/cli.py:906
-msgid "suggest glossary JSON from SRT via Grok Chat"
-msgstr "suggest glossary JSON from SRT via Grok Chat"
+msgid "suggest glossary JSON from SRT via xAI Responses API"
+msgstr "suggest glossary JSON from SRT via xAI Responses API"
 
 #: src/srtspeak/cli.py:923
 msgid "output glossary JSON path (default: glossary.json)"
@@ -516,8 +516,8 @@ msgid "extract candidates"
 msgstr "extract candidates"
 
 #: src/srtspeak/progress_i18n.py:114
-msgid "chat suggest"
-msgstr "chat suggest"
+msgid "Responses API glossary suggestion"
+msgstr "Responses API glossary suggestion"
 
 #: src/srtspeak/progress_i18n.py:116
 msgid "finalize glossary"
@@ -535,8 +535,8 @@ msgstr "hiragana batch {current}/{total}"
 
 #: src/srtspeak/progress_i18n.py:133
 #, python-brace-format
-msgid "{target} batch {current}/{total} waiting chat... {seconds}s"
-msgstr "{target} batch {current}/{total} waiting chat... {seconds}s"
+msgid "{target} batch {current}/{total} waiting for API response... {seconds}s"
+msgstr "{target} batch {current}/{total} waiting for API response... {seconds}s"
 
 #: src/srtspeak/progress_i18n.py:142
 #, python-brace-format
@@ -555,8 +555,8 @@ msgstr "{target} compress index {index}"
 
 #: src/srtspeak/progress_i18n.py:160
 #, python-brace-format
-msgid "waiting chat... {seconds}s"
-msgstr "waiting chat... {seconds}s"
+msgid "waiting for API response... {seconds}s"
+msgstr "waiting for API response... {seconds}s"
 
 #: src/srtspeak/progress_i18n.py:164
 #, python-brace-format
@@ -838,12 +838,45 @@ msgstr "Gentle, patient"
 msgid "Friendly, upbeat"
 msgstr "Friendly, upbeat"
 
-#: src/srtspeak/core/voices.py:51 src/srtspeak/core/voices.py:52
-#: src/srtspeak/core/voices.py:53 src/srtspeak/core/voices.py:54
-#: src/srtspeak/core/voices.py:55 src/srtspeak/core/voices.py:56
-#: src/srtspeak/core/voices.py:57 src/srtspeak/core/voices.py:58
-msgid "Docs catalog voice"
-msgstr "Docs catalog voice"
+#: src/srtspeak/core/voices.py:54
+msgid "Elegant, refined, and effortlessly premium"
+msgstr "Elegant, refined, and effortlessly premium"
+
+#: src/srtspeak/core/voices.py:60
+msgid "Sharp, focused, and driven"
+msgstr "Sharp, focused, and driven"
+
+#: src/srtspeak/core/voices.py:66
+msgid "Upbeat, energetic, and endlessly versatile"
+msgstr "Upbeat, energetic, and endlessly versatile"
+
+#: src/srtspeak/core/voices.py:72
+msgid "Bright, curious, and easy to follow"
+msgstr "Bright, curious, and easy to follow"
+
+#: src/srtspeak/core/voices.py:78
+msgid "Compassionate, confident, and reassuring"
+msgstr "Compassionate, confident, and reassuring"
+
+#: src/srtspeak/core/voices.py:84
+msgid "Friendly, warm, and steadfast"
+msgstr "Friendly, warm, and steadfast"
+
+#: src/srtspeak/core/voices.py:90
+msgid "Quick-witted, clever, and playful"
+msgstr "Quick-witted, clever, and playful"
+
+#: src/srtspeak/core/voices.py:96
+msgid "Warm, articulate, and engaging"
+msgstr "Warm, articulate, and engaging"
+
+#: src/srtspeak/core/voices.py:103
+msgid "Serene, steady, and radiant"
+msgstr "Serene, steady, and radiant"
+
+#: src/srtspeak/core/voices.py:109
+msgid "Calm, grounded, and luminous"
+msgstr "Calm, grounded, and luminous"
 
 #: src/srtspeak/gui/app.py:332
 msgid "API key (XAI_API_KEY)"
@@ -995,6 +1028,15 @@ msgstr "Language"
 msgid "Voice"
 msgstr "Voice"
 
+msgid "Gender"
+msgstr "Gender"
+
+msgid "Male"
+msgstr "Male"
+
+msgid "Female"
+msgstr "Female"
+
 #: src/srtspeak/gui/app.py:562 src/srtspeak/gui/app.py:667
 msgid "Output folder"
 msgstr "Output folder"
@@ -1056,8 +1098,8 @@ msgid "Suggest"
 msgstr "Suggest"
 
 #: src/srtspeak/gui/app.py:674
-msgid "Generate glossary from source SRT via Grok Chat"
-msgstr "Generate glossary from source SRT via Grok Chat"
+msgid "Generate glossary from source SRT via xAI Responses API"
+msgstr "Generate glossary from source SRT via xAI Responses API"
 
 #: src/srtspeak/gui/app.py:683
 msgid "Glossary (JSON)"
@@ -1083,13 +1125,25 @@ msgstr "Report only"
 msgid "Length mode"
 msgstr "Length mode"
 
-#: src/srtspeak/gui/app.py:705
+#: src/srtspeak/gui/app.py:735
 msgid "Batch size"
 msgstr "Batch size"
 
+#: src/srtspeak/gui/app.py:744
+msgid "Maximum concurrent translation API requests; 1 = serial"
+msgstr "Maximum concurrent translation API requests; 1 = serial"
+
+#: src/srtspeak/gui/app.py:746
+msgid "Parallel requests"
+msgstr "Parallel requests"
+
+#: src/srtspeak/cli.py:878
+msgid "maximum concurrent translation requests (default: 1)"
+msgstr "maximum concurrent translation requests (default: 1)"
+
 #: src/srtspeak/gui/app.py:707
-msgid "Dry-run (estimate only, no Chat)"
-msgstr "Dry-run (estimate only, no Chat)"
+msgid "Dry-run (estimate only, no API request)"
+msgstr "Dry-run (estimate only, no API request)"
 
 #: src/srtspeak/gui/app.py:709
 msgid "Fail fast (stop on first target error)"

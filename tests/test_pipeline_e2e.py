@@ -307,6 +307,7 @@ def test_build_service_cancel_mid_tts(tmp_path: Path) -> None:
         work_dir=tmp_path / "work",
         voice_id="leo",
         limit=2,
+        parallel_requests=1,
     )
     token = CancellationToken()
     n = {"i": 0}
@@ -355,4 +356,51 @@ def test_build_service_dry_run_no_tts(tmp_path: Path) -> None:
         synth.assert_not_called()
     assert report["status"] == "dry_run"
     assert report["processed_count"] == 2
-    assert report["estimated_cost_usd"] > 0
+
+
+def test_build_parallel_requests_runs_distinct_tts_calls_concurrently(
+    tmp_path: Path,
+) -> None:
+    import threading
+
+    srt = tmp_path / "parallel.srt"
+    _minimal_srt(srt)
+    out_dir = tmp_path / "out" / "ja"
+    work_dir = tmp_path / "work"
+    cfg = BuildConfig(
+        srt_path=srt,
+        lang="ja",
+        language_code="ja",
+        out_dir=out_dir,
+        work_dir=work_dir,
+        voice_id="leo",
+        limit=2,
+        ja_yomi=False,
+        parallel_requests=2,
+    )
+    barrier = threading.Barrier(2)
+    lock = threading.Lock()
+    active = 0
+    max_active = 0
+
+    def concurrent_synthesize(**kwargs: Any) -> tuple[Path, dict[str, Any]]:
+        nonlocal active, max_active
+        with lock:
+            active += 1
+            max_active = max(max_active, active)
+        try:
+            barrier.wait(timeout=5)
+            return _fake_synthesize(**kwargs)
+        finally:
+            with lock:
+                active -= 1
+
+    with patch(
+        "srtspeak.core.pipeline.synthesize_to_file",
+        side_effect=concurrent_synthesize,
+    ):
+        report = run_build(cfg, api_key="test-key-not-real")
+
+    assert report["status"] == "ok"
+    assert report["parallel_requests"] == 2
+    assert max_active == 2

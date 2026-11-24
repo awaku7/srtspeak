@@ -47,15 +47,68 @@ BUILTIN_VOICES: list[VoiceOption] = [
     VoiceOption("carina", "Carina", N_("Soft, empathetic"), ("female",)),
     VoiceOption("luna", "Luna", N_("Gentle, patient"), ("female",)),
     VoiceOption("iris", "Iris", N_("Friendly, upbeat"), ("female",)),
-    # docs extras
-    VoiceOption("altair", "Altair", N_("Docs catalog voice"), ()),
-    VoiceOption("zenith", "Zenith", N_("Docs catalog voice"), ()),
-    VoiceOption("helios", "Helios", N_("Docs catalog voice"), ()),
-    VoiceOption("cosmo", "Cosmo", N_("Docs catalog voice"), ()),
-    VoiceOption("celeste", "Celeste", N_("Docs catalog voice"), ()),
-    VoiceOption("ursa", "Ursa", N_("Docs catalog voice"), ()),
-    VoiceOption("sirius", "Sirius", N_("Docs catalog voice"), ()),
-    VoiceOption("lumen", "Lumen", N_("Docs catalog voice"), ()),
+    # Additional voices with official xAI tone and use-case descriptions.
+    VoiceOption(
+        "altair",
+        "Altair",
+        N_("Elegant, refined, and effortlessly premium"),
+        ("advertising", "narration"),
+    ),
+    VoiceOption(
+        "zenith",
+        "Zenith",
+        N_("Sharp, focused, and driven"),
+        ("sales", "advertising"),
+    ),
+    VoiceOption(
+        "helios",
+        "Helios",
+        N_("Upbeat, energetic, and endlessly versatile"),
+        ("assistant", "wellness"),
+    ),
+    VoiceOption(
+        "cosmo",
+        "Cosmo",
+        N_("Bright, curious, and easy to follow"),
+        ("education", "podcast"),
+    ),
+    VoiceOption(
+        "celeste",
+        "Celeste",
+        N_("Compassionate, confident, and reassuring"),
+        ("support", "assistant"),
+    ),
+    VoiceOption(
+        "ursa",
+        "Ursa",
+        N_("Friendly, warm, and steadfast"),
+        ("assistant", "podcast"),
+    ),
+    VoiceOption(
+        "sirius",
+        "Sirius",
+        N_("Quick-witted, clever, and playful"),
+        ("commentary", "characters"),
+    ),
+    VoiceOption(
+        "lumen",
+        "Lumen",
+        N_("Warm, articulate, and engaging"),
+        ("education", "advertising"),
+    ),
+    # xAI docs describe tone and use case but don't specify gender.
+    VoiceOption(
+        "aurora",
+        "Aurora",
+        N_("Serene, steady, and radiant"),
+        ("support", "assistant"),
+    ),
+    VoiceOption(
+        "liora",
+        "Liora",
+        N_("Calm, grounded, and luminous"),
+        ("wellness", "assistant"),
+    ),
 ]
 
 DEFAULT_VOICE_ID = "leo"
@@ -63,8 +116,13 @@ DEFAULT_VOICE_ID = "leo"
 _BUILTIN_IDS = frozenset(v.voice_id for v in BUILTIN_VOICES)
 
 
-def list_builtin_voices() -> list[VoiceOption]:
-    return list(BUILTIN_VOICES)
+def list_builtin_voices(gender: str | None = None) -> list[VoiceOption]:
+    """Return built-in voices, optionally filtered by documented gender tags."""
+    if gender is None or gender == "all":
+        return list(BUILTIN_VOICES)
+    if gender not in {"male", "female"}:
+        raise ValueError(f"unknown voice gender: {gender}")
+    return [voice for voice in BUILTIN_VOICES if gender in voice.tags]
 
 
 def normalize_voice_id(voice_id: str) -> str:

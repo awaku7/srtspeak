@@ -8,19 +8,29 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import queue
 import threading
 import time
+from collections.abc import Callable, Sequence
 from dataclasses import replace
+from functools import partial
 from pathlib import Path
-from typing import Any, Callable, Sequence
+from typing import Any
 
 from srtspeak.core.cancel import BuildCancelled, CancellationToken
-from srtspeak.core.util import DEFAULT_WORK_DIR
 from srtspeak.core.languages import normalize_language_code
 from srtspeak.core.models import TranslateConfig
+from srtspeak.core.perf import log_perf
 from srtspeak.core.progress import ProgressEvent
 from srtspeak.core.report import write_json
-from srtspeak.core.srt_parser import Cue, apply_limit, format_srt, parse_srt, read_srt_text
+from srtspeak.core.srt_parser import (
+    Cue,
+    apply_limit,
+    format_srt,
+    parse_srt,
+    read_srt_text,
+)
+from srtspeak.core.util import DEFAULT_WORK_DIR
 from srtspeak.core.xai_responses import ResponsesAPIError, request_responses_text
 
 ProgressCb = Callable[[ProgressEvent], None]
@@ -74,7 +84,7 @@ def budget_chars(window_ms: int, language_code: str, *, safety: float = _SAFETY)
     primary = language_code.split("-", 1)[0].lower()
     cps = _CHARS_PER_SEC.get(primary, _CHARS_PER_SEC["default"])
     raw = (max(window_ms, 0) / 1000.0) * cps * safety
-    return max(8, int(math.floor(raw)))
+    return max(8, math.floor(raw))
 
 
 def validate_structure_lock(src: Sequence[Cue], out: Sequence[Cue]) -> None:
@@ -166,12 +176,6 @@ def merge_translated_cues(
     return out
 
 
-def _srt_input_hash(cues: Sequence[Cue]) -> str:
-    """Fingerprint of source cue texts (report / debug only)."""
-    payload = "|".join(f"{c.index}:{c.text}" for c in cues)
-    return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
-
-
 def _cache_file_token(target: str, out_name: str) -> str:
     """Stable file token from output SRT path pieces (target dir + file name)."""
     tgt = _target_dir_name(target)
@@ -251,10 +255,7 @@ def _seed_cache_from_output_srt(
         if not tgt_text:
             continue
         prev = cache.get(key)
-        if prev is None:
-            cache[key] = {"src": sc.text, "tgt": tgt_text}
-            seeded += 1
-        elif prev.get("src") == sc.text and not (prev.get("tgt") or "").strip():
+        if prev is None or prev.get("src") == sc.text and not (prev.get("tgt") or "").strip():
             cache[key] = {"src": sc.text, "tgt": tgt_text}
             seeded += 1
     return seeded
@@ -358,7 +359,7 @@ def default_chat_fn(
         )
         result = json.loads(text)
         if not isinstance(result, dict):
-            raise ValueError("expected a JSON object")
+            raise TypeError("expected a JSON object")
         return result
     except ResponsesAPIError as exc:
         raise TranslateError(f"Grok Responses API error: {exc}") from exc
@@ -421,6 +422,159 @@ def _emit(
 
 
 
+def _measure_chat_call(
+    call: Callable[[], dict[str, Any]],
+    *,
+    operation: str,
+    target: str,
+    model: str,
+    batch: str,
+    items: list[dict[str, Any]],
+) -> tuple[dict[str, Any], float]:
+    """Time one model request and log counts only (never subtitle text)."""
+    started = time.perf_counter()
+    status = "ok"
+    error_type: str | None = None
+    try:
+        result = call()
+    except BuildCancelled:
+        status = "cancelled"
+        raise
+    except Exception as exc:
+        status = "error"
+        error_type = type(exc).__name__
+        raise
+    finally:
+        elapsed = time.perf_counter() - started
+        event: dict[str, Any] = {
+            "event": "api_call",
+            "operation": operation,
+            "target": target,
+            "model": model,
+            "batch": batch,
+            "cue_count": len(items),
+            "cue_chars": sum(len(str(item.get("text", ""))) for item in items),
+            "elapsed_s": round(elapsed, 3),
+            "status": status,
+        }
+        if error_type:
+            event["error_type"] = error_type
+        log_perf(**event)
+    return result, elapsed
+
+
+def _run_parallel_chat_queue(
+    plans: list[dict[str, Any]],
+    *,
+    max_workers: int,
+    chat_fn: ChatFn,
+    target: str,
+    source_lang: str,
+    api_key: str,
+    model: str,
+    glossary: dict[str, Any],
+    length_mode: str,
+    progress_cb: ProgressCb,
+    heartbeat_s: float,
+    total_batches: int,
+    current_percent: Callable[[], float],
+    current_completed: Callable[[], int],
+    on_submit: Callable[[dict[str, Any]], None],
+    on_result: Callable[
+        [dict[str, Any], dict[str, Any] | None, float, BaseException | None], None
+    ],
+    cancel_token: CancellationToken | None,
+) -> None:
+    """Keep a bounded set of requests busy; handle results as soon as they arrive."""
+    results: queue.Queue[
+        tuple[dict[str, Any], dict[str, Any] | None, float, BaseException | None]
+    ] = queue.Queue()
+    plan_iter = iter(plans)
+    active = 0
+    last_submitted = 0
+
+    def _run_plan(plan: dict[str, Any]) -> None:
+        batch_number = int(plan["batch_number"])
+        items = plan["items"]
+        call = partial(
+            chat_fn,
+            items,
+            target_lang=target,
+            source_lang=source_lang,
+            api_key=api_key,
+            model=model,
+            glossary=glossary,
+            length_mode=length_mode,
+            context_items=plan["context_items"] or None,
+        )
+        try:
+            raw, elapsed = _measure_chat_call(
+                call,
+                operation="translate",
+                target=target,
+                model=model,
+                batch=f"{batch_number}/{total_batches}",
+                items=items,
+            )
+            results.put((plan, raw, elapsed, None))
+        except BaseException as exc:  # noqa: BLE001 — report every worker completion
+            results.put((plan, None, 0.0, exc))
+
+    def _fill_workers() -> None:
+        nonlocal active, last_submitted
+        while active < max_workers:
+            try:
+                plan = next(plan_iter)
+            except StopIteration:
+                return
+            on_submit(plan)
+            threading.Thread(
+                target=_run_plan,
+                args=(plan,),
+                name=f"translate-batch-{plan['batch_number']}",
+                daemon=True,
+            ).start()
+            active += 1
+            last_submitted = int(plan["batch_number"])
+
+    _fill_workers()
+    wait_s = max(0.05, float(heartbeat_s) if heartbeat_s > 0 else 0.1)
+    started = time.perf_counter()
+    last_pulse = started
+    while active:
+        if cancel_token is not None:
+            cancel_token.check()
+        try:
+            plan, raw, elapsed, error = results.get(timeout=wait_s)
+        except queue.Empty:
+            now = time.perf_counter()
+            if heartbeat_s > 0 and now - last_pulse >= heartbeat_s:
+                elapsed = now - started
+                frac = 1.0 - (1.0 / (1.0 + elapsed / 45.0))
+                pct = min(99.0, current_percent() + 4.0 * frac)
+                _emit(
+                    progress_cb,
+                    percent=pct,
+                    stage="translate",
+                    current=min(current_completed() + 1, total_batches),
+                    total=total_batches,
+                    message=(
+                        f"{target} batches through {last_submitted}/{total_batches} "
+                        f"waiting for API response... {int(elapsed)}s"
+                    ),
+                    lang=target,
+                )
+                last_pulse = now
+            continue
+
+        active -= 1
+        if cancel_token is not None:
+            cancel_token.check()
+        if error is None and raw is not None:
+            _fill_workers()
+        on_result(plan, raw, elapsed, error)
+
+
 def _chat_with_heartbeat(
     chat_fn: ChatFn,
     items: list[dict[str, Any]],
@@ -480,11 +634,8 @@ def _chat_with_heartbeat(
     interval = max(0.05, float(heartbeat_s))
     while worker.is_alive():
         if cancel_token is not None:
-            try:
-                cancel_token.check()
-            except BuildCancelled:
-                # leave daemon worker; surface cancel to caller
-                raise
+            # A cancellation leaves the daemon worker and propagates to caller.
+            cancel_token.check()
         worker.join(timeout=interval)
         if not worker.is_alive():
             break
@@ -498,7 +649,7 @@ def _chat_with_heartbeat(
             stage="translate",
             current=current_batch,
             total=total_batches,
-            message=f"{base_msg} waiting chat... {int(elapsed)}s",
+            message=f"{base_msg} waiting for API response... {int(elapsed)}s",
             lang=target_lang,
         )
 
@@ -528,6 +679,7 @@ def _translate_one_target(
     total_all: int,
 ) -> dict[str, Any]:
     del gloss_hash  # retained at call site for report; entry key is out file + src text
+    stage_started = time.perf_counter()
     cache_path = work_root / _cache_file_token(target, out_name)
     cache: dict[str, dict[str, str]] = {}
     if not cfg.no_cache:
@@ -549,6 +701,23 @@ def _translate_one_target(
             pending.append(cue)
 
     processed = len(src_cues) - len(pending)
+    total_batches = math.ceil(len(pending) / cfg.batch_size) if pending else 0
+    api_calls = 0
+    api_seconds = 0.0
+    compress_calls = 0
+    log_perf(
+        event="stage_start",
+        stage="translate",
+        target=target,
+        model=cfg.model,
+        cue_count=len(src_cues),
+        cache_hits=processed,
+        api_cues=len(pending),
+        batch_size=cfg.batch_size,
+        parallel_requests=cfg.parallel_requests,
+        batches=total_batches,
+        no_cache=cfg.no_cache,
+    )
     _emit(
         progress_cb,
         percent=(done_base + processed) / max(total_all, 1) * 100.0,
@@ -560,18 +729,16 @@ def _translate_one_target(
     )
 
     batch_size = cfg.batch_size
+    pos_map = {cue.index: i for i, cue in enumerate(src_cues)}
+    batch_plans: list[dict[str, Any]] = []
     for bi in range(0, len(pending), batch_size):
-        if cancel_token is not None:
-            cancel_token.check()
         batch = pending[bi : bi + batch_size]
-        # context: previous 1-2 source cues (not translated)
         ctx: list[dict[str, Any]] = []
         if batch:
-            pos_map = {c.index: i for i, c in enumerate(src_cues)}
             pos = pos_map.get(batch[0].index, 0)
             for j in range(max(0, pos - 2), pos):
-                c = src_cues[j]
-                ctx.append({"index": c.index, "text": c.text})
+                cue = src_cues[j]
+                ctx.append({"index": cue.index, "text": cue.text})
 
         items: list[dict[str, Any]] = []
         for cue in batch:
@@ -579,80 +746,71 @@ def _translate_one_target(
             if cfg.length_mode in ("hint", "enforce"):
                 item["max_chars"] = budget_chars(cue.window_ms, target)
             items.append(item)
-
-        total_batches = max(1, math.ceil(len(pending) / batch_size))
-        current_batch = bi // batch_size + 1
-        batch_pct = (done_base + processed) / max(total_all, 1) * 100.0
-        _emit(
-            progress_cb,
-            percent=batch_pct,
-            stage="translate",
-            current=current_batch,
-            total=total_batches,
-            message=f"{target} batch {current_batch}/{total_batches}",
-            lang=target,
+        batch_plans.append(
+            {
+                "batch": batch,
+                "items": items,
+                "context_items": ctx,
+                "batch_number": bi // batch_size + 1,
+                "indexes": [cue.index for cue in batch],
+            }
         )
 
-        batch_indexes = [c.index for c in batch]
-        try:
-            result = _chat_with_heartbeat(
-                chat_fn,
-                items,
-                target_lang=target,
-                source_lang=source_lang,
-                api_key=api_key,
-                model=cfg.model,
-                glossary=glossary,
-                length_mode=cfg.length_mode,
-                context_items=ctx or None,
-                progress_cb=progress_cb,
-                heartbeat_s=float(getattr(cfg, "heartbeat_s", 1.5) or 0.0),
-                percent=batch_pct,
-                current_batch=current_batch,
-                total_batches=total_batches,
-                done_base=done_base,
-                processed=processed,
-                total_all=total_all,
-                cancel_token=cancel_token,
-            )
-        except BuildCancelled:
-            raise
-        except Exception as exc:  # noqa: BLE001
-            raise TranslateError(
-                f"batch {current_batch}/{total_batches} target={target} "
-                f"indexes={batch_indexes} chat error: {exc}"
-            ) from exc
+    completed_batches = 0
+
+    def _process_batch_response(
+        plan: dict[str, Any], result: dict[str, Any], elapsed: float
+    ) -> None:
+        nonlocal processed, api_calls, api_seconds, compress_calls, completed_batches
+        batch = plan["batch"]
+        items = plan["items"]
+        batch_number = int(plan["batch_number"])
+        batch_indexes = plan["indexes"]
+        api_calls += 1
+        api_seconds += elapsed
+
         cues_out = result.get("cues", []) if isinstance(result, dict) else []
         if len(cues_out) != len(batch):
-            # one retry
+            batch_pct = (done_base + processed) / max(total_all, 1) * 100.0
             try:
-                result = _chat_with_heartbeat(
-                    chat_fn,
-                    items,
-                    target_lang=target,
-                    source_lang=source_lang,
-                    api_key=api_key,
+                api_calls += 1
+                retry_result, retry_elapsed = _measure_chat_call(
+                    partial(
+                        _chat_with_heartbeat,
+                        chat_fn,
+                        items,
+                        target_lang=target,
+                        source_lang=source_lang,
+                        api_key=api_key,
+                        model=cfg.model,
+                        glossary=glossary,
+                        length_mode=cfg.length_mode,
+                        context_items=plan["context_items"] or None,
+                        progress_cb=progress_cb,
+                        heartbeat_s=float(getattr(cfg, "heartbeat_s", 1.5) or 0.0),
+                        percent=batch_pct,
+                        current_batch=batch_number,
+                        total_batches=total_batches,
+                        done_base=done_base,
+                        processed=processed,
+                        total_all=total_all,
+                        cancel_token=cancel_token,
+                    ),
+                    operation="translate_retry",
+                    target=target,
                     model=cfg.model,
-                    glossary=glossary,
-                    length_mode=cfg.length_mode,
-                    context_items=ctx or None,
-                    progress_cb=progress_cb,
-                    heartbeat_s=float(getattr(cfg, "heartbeat_s", 1.5) or 0.0),
-                    percent=batch_pct,
-                    current_batch=current_batch,
-                    total_batches=total_batches,
-                    done_base=done_base,
-                    processed=processed,
-                    total_all=total_all,
-                    cancel_token=cancel_token,
+                    batch=f"{batch_number}/{total_batches}",
+                    items=items,
                 )
+                api_seconds += retry_elapsed
             except BuildCancelled:
                 raise
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 raise TranslateError(
-                    f"batch {current_batch}/{total_batches} target={target} "
+                    f"batch {batch_number}/{total_batches} target={target} "
                     f"indexes={batch_indexes} chat retry error: {exc}"
                 ) from exc
+            result = retry_result
             cues_out = result.get("cues", []) if isinstance(result, dict) else []
         if len(cues_out) != len(batch):
             got_idx = []
@@ -661,10 +819,11 @@ def _translate_one_target(
                     if isinstance(entry, dict) and entry.get("index") is not None:
                         got_idx.append(entry.get("index"))
             raise TranslateError(
-                f"batch {current_batch}/{total_batches} target={target} "
+                f"batch {batch_number}/{total_batches} target={target} "
                 f"count mismatch: got {len(cues_out)} expected {len(batch)}; "
                 f"expected_indexes={batch_indexes} got_indexes={got_idx}"
             )
+
         index_map: dict[int, str] = {}
         for entry in cues_out:
             if not isinstance(entry, dict):
@@ -677,7 +836,7 @@ def _translate_one_target(
         for cue in batch:
             if cue.index not in index_map:
                 raise TranslateError(
-                    f"batch {current_batch}/{total_batches} target={target} "
+                    f"batch {batch_number}/{total_batches} target={target} "
                     f"missing index in API response: {cue.index}; "
                     f"expected_indexes={batch_indexes} got_indexes={sorted(index_map)}"
                 )
@@ -685,7 +844,6 @@ def _translate_one_target(
             max_c = None
             if cfg.length_mode in ("hint", "enforce"):
                 max_c = budget_chars(cue.window_ms, target)
-            # optional compress pass
             if (
                 cfg.length_mode == "enforce"
                 and max_c is not None
@@ -702,24 +860,28 @@ def _translate_one_target(
                     message=f"{target} compress index {cue.index}",
                     lang=target,
                 )
-                comp_items = [
-                    {
-                        "index": cue.index,
-                        "text": text,
-                        "max_chars": max_c,
-                    }
-                ]
-                # reuse chat with enforce instruction via length_mode
-                comp = chat_fn(
-                    comp_items,
-                    target_lang=target,
-                    source_lang=source_lang,
-                    api_key=api_key,
+                comp_items = [{"index": cue.index, "text": text, "max_chars": max_c}]
+                compress_calls += 1
+                api_calls += 1
+                comp, comp_elapsed = _measure_chat_call(
+                    partial(
+                        chat_fn,
+                        comp_items,
+                        target_lang=target,
+                        source_lang=source_lang,
+                        api_key=api_key,
+                        model=cfg.model,
+                        glossary=glossary,
+                        length_mode="enforce",
+                        context_items=None,
+                    ),
+                    operation="translate_compress",
+                    target=target,
                     model=cfg.model,
-                    glossary=glossary,
-                    length_mode="enforce",
-                    context_items=None,
+                    batch=f"{batch_number}/{total_batches}:cue{cue.index}",
+                    items=comp_items,
                 )
+                api_seconds += comp_elapsed
                 comp_cues = comp.get("cues") or []
                 if comp_cues:
                     text = str(comp_cues[0].get("text", text))
@@ -728,27 +890,155 @@ def _translate_one_target(
             cache[str(cue.index)] = {"src": cue.text, "tgt": text.strip()}
             processed += 1
 
-        _save_out_cache(
-            cache_path, cache, out_name=out_name, target=target
-        )
+        completed_batches += 1
+        _save_out_cache(cache_path, cache, out_name=out_name, target=target)
         _emit(
             progress_cb,
             percent=(done_base + processed) / max(total_all, 1) * 100.0,
             stage="translate",
-            current=current_batch,
+            current=completed_batches,
             total=total_batches,
-            message=f"{target} batch {current_batch}/{total_batches} done",
+            message=f"{target} batch {batch_number}/{total_batches} done",
             lang=target,
+        )
+
+    parallel_requests = cfg.parallel_requests
+    heartbeat_s = float(getattr(cfg, "heartbeat_s", 1.5) or 0.0)
+    if parallel_requests == 1:
+        for plan in batch_plans:
+            if cancel_token is not None:
+                cancel_token.check()
+            batch_number = int(plan["batch_number"])
+            batch_pct = (done_base + processed) / max(total_all, 1) * 100.0
+            _emit(
+                progress_cb,
+                percent=batch_pct,
+                stage="translate",
+                current=batch_number,
+                total=total_batches,
+                message=f"{target} batch {batch_number}/{total_batches}",
+                lang=target,
+            )
+            try:
+                result, elapsed = _measure_chat_call(
+                    partial(
+                        _chat_with_heartbeat,
+                        chat_fn,
+                        plan["items"],
+                        target_lang=target,
+                        source_lang=source_lang,
+                        api_key=api_key,
+                        model=cfg.model,
+                        glossary=glossary,
+                        length_mode=cfg.length_mode,
+                        context_items=plan["context_items"] or None,
+                        progress_cb=progress_cb,
+                        heartbeat_s=heartbeat_s,
+                        percent=batch_pct,
+                        current_batch=batch_number,
+                        total_batches=total_batches,
+                        done_base=done_base,
+                        processed=processed,
+                        total_all=total_all,
+                        cancel_token=cancel_token,
+                    ),
+                    operation="translate",
+                    target=target,
+                    model=cfg.model,
+                    batch=f"{batch_number}/{total_batches}",
+                    items=plan["items"],
+                )
+            except BuildCancelled:
+                raise
+            except Exception as exc:
+                raise TranslateError(
+                    f"batch {batch_number}/{total_batches} target={target} "
+                    f"indexes={plan['indexes']} chat error: {exc}"
+                ) from exc
+            _process_batch_response(plan, result, elapsed)
+    elif batch_plans:
+        def _on_submit(plan: dict[str, Any]) -> None:
+            batch_number = int(plan["batch_number"])
+            _emit(
+                progress_cb,
+                percent=(done_base + processed) / max(total_all, 1) * 100.0,
+                stage="translate",
+                current=min(completed_batches + 1, total_batches),
+                total=total_batches,
+                message=f"{target} batch {batch_number}/{total_batches}",
+                lang=target,
+            )
+
+        def _on_result(
+            plan: dict[str, Any],
+            result: dict[str, Any] | None,
+            elapsed: float,
+            error: BaseException | None,
+        ) -> None:
+            batch_number = int(plan["batch_number"])
+            if error is not None:
+                if isinstance(error, BuildCancelled):
+                    raise error
+                raise TranslateError(
+                    f"batch {batch_number}/{total_batches} target={target} "
+                    f"indexes={plan['indexes']} chat error: {error}"
+                ) from error
+            if result is None:
+                raise TranslateError(
+                    f"batch {batch_number}/{total_batches} target={target} "
+                    "chat returned no result"
+                )
+            _process_batch_response(plan, result, elapsed)
+
+        _run_parallel_chat_queue(
+            batch_plans,
+            max_workers=parallel_requests,
+            chat_fn=chat_fn,
+            target=target,
+            source_lang=source_lang,
+            api_key=api_key,
+            model=cfg.model,
+            glossary=glossary,
+            length_mode=cfg.length_mode,
+            progress_cb=progress_cb,
+            heartbeat_s=heartbeat_s,
+            total_batches=total_batches,
+            current_percent=lambda: (
+                done_base + processed
+            ) / max(total_all, 1) * 100.0,
+            current_completed=lambda: completed_batches,
+            on_submit=_on_submit,
+            on_result=_on_result,
+            cancel_token=cancel_token,
         )
 
     out_cues = merge_translated_cues(
         src_cues, translated_map, on_empty=cfg.on_empty
     )
     warnings = quality_warnings(src_cues, out_cues)
+    wall_seconds = time.perf_counter() - stage_started
+    log_perf(
+        event="stage_summary",
+        stage="translate",
+        target=target,
+        parallel_requests=cfg.parallel_requests,
+        cache_hits=len(src_cues) - len(pending),
+        api_cues=len(pending),
+        api_calls=api_calls,
+        compress_calls=compress_calls,
+        api_seconds=round(api_seconds, 3),
+        wall_seconds=round(wall_seconds, 3),
+        non_api_seconds=round(max(0.0, wall_seconds - api_seconds), 3),
+    )
     return {
         "cues": out_cues,
         "cache_hits": len(src_cues) - len(pending),
         "api_cues": len(pending),
+        "parallel_requests": cfg.parallel_requests,
+        "api_calls": api_calls,
+        "api_seconds": round(api_seconds, 3),
+        "wall_seconds": round(wall_seconds, 3),
+        "compress_calls": compress_calls,
         "warnings": warnings,
     }
 
@@ -788,7 +1078,6 @@ def run_translate(
 
     glossary = _load_glossary(config.glossary_path)
     gloss_hash = _glossary_hash(glossary)
-    srt_hash = _srt_input_hash(src_cues)
 
     # Cache files named after output SRT (stable across re-runs / cwd).
     work_root = Path(config.work_dir or DEFAULT_WORK_DIR) / "translate" / "by_out"
@@ -919,6 +1208,11 @@ def run_translate(
                 "cues": len(out_cues),
                 "cache_hits": one["cache_hits"],
                 "api_cues": one["api_cues"],
+                "parallel_requests": one["parallel_requests"],
+                "api_calls": one["api_calls"],
+                "api_seconds": one["api_seconds"],
+                "wall_seconds": one["wall_seconds"],
+                "compress_calls": one["compress_calls"],
                 "warnings": warns,
                 "errors": [],
             }

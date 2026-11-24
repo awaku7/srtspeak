@@ -50,7 +50,7 @@ def place_cues(
     *,
     cues: list[Cue],
     fitted_paths: dict[int, Path | str],
-    sample_rate: int = 24000,
+    sample_rate: int = 48000,
     tail_pad_ms: int = 0,
     base_wav: Path | str | None = None,
 ) -> tuple[bytes, int]:
@@ -116,7 +116,7 @@ def write_timeline_wav(
     out_path: Path | str,
     cues: list[Cue],
     fitted_paths: dict[int, Path | str],
-    sample_rate: int = 24000,
+    sample_rate: int = 48000,
     tail_pad_ms: int = 0,
     base_wav: Path | str | None = None,
 ) -> Path:

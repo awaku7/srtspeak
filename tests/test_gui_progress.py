@@ -26,7 +26,7 @@ def test_format_gui_progress_label_en() -> None:
         stage="translate",
         current=1,
         total=8,
-        message="ja batch 1/2 waiting chat... 3s",
+        message="ja batch 1/2 waiting for API response... 3s",
         lang="ja",
     )
     text = format_gui_progress_label(ev)
@@ -98,7 +98,7 @@ def test_translate_worker_progress_reaches_label() -> None:
     pytest.importorskip("PySide6")
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-    from PySide6.QtCore import QObject, QThread, Qt, QTimer, Signal, Slot
+    from PySide6.QtCore import QObject, Qt, QThread, QTimer, Signal, Slot
     from PySide6.QtWidgets import QApplication, QLabel, QProgressBar
 
     from srtspeak.core.cancel import CancellationToken
@@ -147,9 +147,8 @@ def test_translate_worker_progress_reaches_label() -> None:
 
         @Slot(object)
         def on_progress(self, ev: object) -> None:
-            if not isinstance(ev, ProgressEvent):
-                if type(ev).__name__ != "ProgressEvent":
-                    return
+            if not isinstance(ev, ProgressEvent) and type(ev).__name__ != "ProgressEvent":
+                return
             self.latest = ev  # type: ignore[assignment]
             if not self.seen:
                 self.seen = True
@@ -165,7 +164,7 @@ def test_translate_worker_progress_reaches_label() -> None:
                 text = format_gui_progress_label(ev)
                 self.label.setText(text)
                 self.flushed.append(text)
-            except Exception:
+            except (RuntimeError, TypeError, ValueError):
                 return
             self.latest = None
 

@@ -18,6 +18,7 @@ def main() -> int:
             QApplication,
             QCheckBox,
             QComboBox,
+            QDoubleSpinBox,
             QFileDialog,
             QFormLayout,
             QGroupBox,
@@ -40,6 +41,7 @@ def main() -> int:
         return 2
 
     from srtspeak.core.cancel import BuildCancelled, CancellationToken
+    from srtspeak.core.ffmpeg_resolve import resolve_ffmpeg
     from srtspeak.core.languages import (
         guess_lang_from_filename,
         internal_lang_from_code,
@@ -48,7 +50,11 @@ def main() -> int:
         resolve_language_code,
     )
     from srtspeak.core.models import BuildConfig, TranslateConfig
-    from srtspeak.core.pipeline import BuildService
+    from srtspeak.core.pipeline import (
+        BuildService,
+        measure_loudness,
+        normalize_loudness_file,
+    )
     from srtspeak.core.progress import ProgressEvent
     from srtspeak.core.secrets import (
         api_key_status,
@@ -86,6 +92,57 @@ def main() -> int:
             return data if isinstance(data, dict) else {}
         except (FileNotFoundError, json.JSONDecodeError):
             return {}
+
+    class WavDropListWidget(QListWidget):
+        files_dropped = Signal(list)
+        delete_requested = Signal()
+
+        def __init__(self) -> None:
+            super().__init__()
+            self.setAcceptDrops(True)
+            self.setDropIndicatorShown(True)
+            self.setDragDropMode(QListWidget.DragDropMode.DropOnly)
+
+        @staticmethod
+        def _has_wav_urls(event: object) -> bool:
+            mime_data = event.mimeData()  # type: ignore[attr-defined]
+            return mime_data.hasUrls() and any(
+                url.isLocalFile()
+                and Path(url.toLocalFile()).suffix.lower() == ".wav"
+                for url in mime_data.urls()
+            )
+
+        def dragEnterEvent(self, event) -> None:  # noqa: N802
+            if self._has_wav_urls(event):
+                event.acceptProposedAction()
+                return
+            super().dragEnterEvent(event)
+
+        def dragMoveEvent(self, event) -> None:  # noqa: N802
+            if self._has_wav_urls(event):
+                event.acceptProposedAction()
+                return
+            super().dragMoveEvent(event)
+
+        def dropEvent(self, event) -> None:  # noqa: N802
+            if not self._has_wav_urls(event):
+                super().dropEvent(event)
+                return
+            files = [
+                url.toLocalFile()
+                for url in event.mimeData().urls()
+                if url.isLocalFile()
+                and Path(url.toLocalFile()).suffix.lower() == ".wav"
+            ]
+            self.files_dropped.emit(files)
+            event.acceptProposedAction()
+
+        def keyPressEvent(self, event) -> None:  # noqa: N802
+            if event.key() == Qt.Key.Key_Delete:
+                self.delete_requested.emit()
+                event.accept()
+                return
+            super().keyPressEvent(event)
 
     def _save_settings(data: dict) -> None:
         try:
@@ -169,6 +226,82 @@ def main() -> int:
                 import traceback
 
                 _log_crash(traceback.format_exc())
+                self.failed.emit(str(exc))
+
+    class VolumeWorker(QObject):
+        progress = Signal(object)
+        finished = Signal(object)
+        failed = Signal(str)
+
+        def __init__(
+            self,
+            paths: list[Path],
+            action: str,
+            target_lufs: float,
+            token: CancellationToken,
+        ) -> None:
+            super().__init__()
+            self.paths = paths
+            self.action = action
+            self.target_lufs = target_lufs
+            self.token = token
+
+        def _output_path(self, source: Path) -> Path:
+            tag = f"_lufs_{self.target_lufs:g}"
+            candidate = source.with_name(f"{source.stem}{tag}.wav")
+            number = 2
+            while candidate.exists() or candidate.resolve() == source.resolve():
+                candidate = source.with_name(f"{source.stem}{tag}_{number}.wav")
+                number += 1
+            return candidate
+
+        @Slot()
+        def run(self) -> None:
+            try:
+                ffmpeg = resolve_ffmpeg().ffmpeg
+                results: list[dict[str, object]] = []
+                total = len(self.paths)
+                for index, source in enumerate(self.paths, start=1):
+                    self.token.check()
+                    result: dict[str, object] = {"path": str(source)}
+                    try:
+                        if self.action == "measure":
+                            result["stats"] = measure_loudness(
+                                source,
+                                target_lufs=self.target_lufs,
+                                ffmpeg=ffmpeg,
+                            )
+                        else:
+                            output_path = self._output_path(source)
+                            result["stats"] = normalize_loudness_file(
+                                source,
+                                output_path,
+                                target_lufs=self.target_lufs,
+                                ffmpeg=ffmpeg,
+                            )
+                            result["output_path"] = str(output_path)
+                    except Exception as exc:  # noqa: BLE001
+                        result["error"] = str(exc)
+                    results.append(result)
+                    self.progress.emit(
+                        ProgressEvent(
+                            percent=100.0 * index / total if total else 100.0,
+                            stage="volume",
+                            current=index,
+                            total=total,
+                            message=f"{self.action}: {source.name}",
+                        )
+                    )
+                self.finished.emit(
+                    {
+                        "action": self.action,
+                        "target_lufs": self.target_lufs,
+                        "results": results,
+                    }
+                )
+            except BuildCancelled:
+                self.failed.emit("cancelled")
+            except Exception as exc:  # noqa: BLE001
                 self.failed.emit(str(exc))
 
     class TranslateWorker(QObject):
@@ -375,11 +508,14 @@ def main() -> int:
 
             self._build_tab = QWidget()
             self._translate_tab = QWidget()
+            self._volume_tab = QWidget()
             self.tabs.addTab(self._build_tab, _("Build"))
             self.tabs.addTab(self._translate_tab, _("Translate"))
+            self.tabs.addTab(self._volume_tab, "音量")
 
             self._init_build_tab()
             self._init_translate_tab()
+            self._init_volume_tab()
 
             # Shared progress + actions
             self.bar = QProgressBar()
@@ -402,7 +538,10 @@ def main() -> int:
             outer.addLayout(btns)
 
             self.tabs.currentChanged.connect(self._on_tab_changed)
+            self._loading_settings = True
             self._load_and_apply_settings()
+            self._loading_settings = False
+            self._refresh_volume_action_buttons()
             self._refresh_key_ui()
             self._on_tab_changed(self.tabs.currentIndex())
 
@@ -530,9 +669,12 @@ def main() -> int:
             if self._job_running():
                 return
             tab = self.tabs.currentWidget()
+            is_volume_tab = tab is self._volume_tab
+            self.start_btn.setVisible(not is_volume_tab)
+            self.cancel_btn.setVisible(not is_volume_tab)
             if tab is self._translate_tab:
                 self.start_btn.setText(_("Translate"))
-            else:
+            elif not is_volume_tab:
                 self.start_btn.setText(_("Start"))
 
         # ----- Build tab -----
@@ -570,11 +712,17 @@ def main() -> int:
             wrap_lang.setLayout(row_lang)
             form.addRow(_("Language"), wrap_lang)
 
+            self.voice_gender_combo = QComboBox()
+            self.voice_gender_combo.addItem(_("all"), "all")
+            self.voice_gender_combo.addItem(_("Male"), "male")
+            self.voice_gender_combo.addItem(_("Female"), "female")
+            self.voice_gender_combo.currentIndexChanged.connect(
+                self._refresh_voice_options
+            )
+            form.addRow(_("Gender"), self.voice_gender_combo)
+
             self.voice_combo = QComboBox()
-            for v in list_builtin_voices():
-                self.voice_combo.addItem(
-                    f"{v.voice_id} — {_(v.description)}", v.voice_id
-                )
+            self._refresh_voice_options()
             idx = self.voice_combo.findData(DEFAULT_VOICE_ID)
             if idx >= 0:
                 self.voice_combo.setCurrentIndex(idx)
@@ -590,6 +738,13 @@ def main() -> int:
             wrap_out = QWidget()
             wrap_out.setLayout(row_out)
             form.addRow(_("Output folder"), wrap_out)
+            audio_naming_help = QLabel(
+                "音声ファイル名: <SRTベース名>_<入力パスID>_<lang>.wav "
+                "（--also-mp3 指定時は同名の.mp3も出力）"
+            )
+            audio_naming_help.setWordWrap(True)
+            audio_naming_help.setToolTip("入力パスIDは入力ファイルパスから作る12桁の識別子です")
+            form.addRow("", audio_naming_help)
 
             self.base_wav_edit = QLineEdit()
             browse_bw = QPushButton("…")
@@ -610,6 +765,14 @@ def main() -> int:
             )
             form.addRow(_("Max cues (0 = all)"), self.limit_spin)
 
+            self.build_parallel_spin = QSpinBox()
+            self.build_parallel_spin.setRange(1, 4)
+            self.build_parallel_spin.setValue(2)
+            self.build_parallel_spin.setToolTip(
+                "同時に実行するAPIリクエスト数。日本語よみ変換とTTSに適用（最大4）"
+            )
+            self.build_parallel_spin.valueChanged.connect(self._save_current_settings)
+            form.addRow("並列APIリクエスト数", self.build_parallel_spin)
             self.dry_run_cb = QCheckBox(_("Dry-run (estimate only, no TTS)"))
             form.addRow("", self.dry_run_cb)
             self.ja_yomi_cb = QCheckBox(_("Japanese yomi (kanji → hiragana)"))
@@ -627,6 +790,221 @@ def main() -> int:
 
             layout.addLayout(form)
             layout.addStretch(1)
+
+        def _refresh_voice_options(self, *_args) -> None:
+            selected_voice = self.voice_combo.currentData() or DEFAULT_VOICE_ID
+            gender = self.voice_gender_combo.currentData()
+            voices = list_builtin_voices(None if gender == "all" else gender)
+            self.voice_combo.clear()
+            for voice in voices:
+                description = _(voice.description) if voice.description else ""
+                label = (
+                    f"{voice.voice_id} — {description}"
+                    if description
+                    else voice.name
+                )
+                self.voice_combo.addItem(label, voice.voice_id)
+            idx = self.voice_combo.findData(selected_voice)
+            self.voice_combo.setCurrentIndex(idx if idx >= 0 else 0)
+
+        def _init_volume_tab(self) -> None:
+            layout = QVBoxLayout(self._volume_tab)
+            note = QLabel(
+                "WAVを追加、またはここにドラッグ＆ドロップしてください。"
+                "選択したファイルを1件ずつ測定・調整します。調整時は元ファイルを残します。"
+            )
+            note.setWordWrap(True)
+            layout.addWidget(note)
+
+            self.volume_files = WavDropListWidget()
+            self.volume_files.files_dropped.connect(self._append_volume_paths)
+            self.volume_files.delete_requested.connect(self._remove_volume_files)
+            self.volume_files.setSelectionMode(
+                QListWidget.SelectionMode.ExtendedSelection
+            )
+            self.volume_files.setMinimumHeight(180)
+            layout.addWidget(self.volume_files, 1)
+
+            file_buttons = QHBoxLayout()
+            add_btn = QPushButton("音声を追加")
+            add_btn.clicked.connect(self._add_volume_files)
+            remove_btn = QPushButton("選択を削除")
+            remove_btn.clicked.connect(self._remove_volume_files)
+            self.volume_clear_btn = QPushButton("一覧をクリア")
+            self.volume_clear_btn.setToolTip("一覧からのみ削除し、音声ファイルは削除しません")
+            self.volume_clear_btn.clicked.connect(self._clear_volume_files)
+            file_buttons.addWidget(add_btn)
+            file_buttons.addWidget(remove_btn)
+            file_buttons.addWidget(self.volume_clear_btn)
+            file_buttons.addStretch(1)
+            layout.addLayout(file_buttons)
+
+            target_row = QHBoxLayout()
+            target_row.addWidget(QLabel("目標ラウドネス"))
+            self.lufs_spin = QDoubleSpinBox()
+            self.lufs_spin.setRange(-36.0, -5.0)
+            self.lufs_spin.setDecimals(1)
+            self.lufs_spin.setSingleStep(0.5)
+            self.lufs_spin.setValue(-14.0)
+            self.lufs_spin.setSuffix(" LUFS")
+            self.lufs_spin.valueChanged.connect(self._save_current_settings)
+            target_row.addWidget(self.lufs_spin)
+            target_row.addStretch(1)
+            layout.addLayout(target_row)
+
+            action_row = QHBoxLayout()
+            self.volume_measure_btn = QPushButton("選択音声を測定")
+            self.volume_measure_btn.clicked.connect(
+                lambda: self._start_volume_action("measure")
+            )
+            self.volume_normalize_btn = QPushButton("選択音声を調整")
+            self.volume_normalize_btn.clicked.connect(
+                lambda: self._start_volume_action("normalize")
+            )
+            action_row.addWidget(self.volume_measure_btn)
+            action_row.addWidget(self.volume_normalize_btn)
+            layout.addLayout(action_row)
+            self.volume_files.itemSelectionChanged.connect(
+                self._refresh_volume_action_buttons
+            )
+            self._refresh_volume_action_buttons()
+
+        def _refresh_volume_action_buttons(self) -> None:
+            has_selection = bool(self.volume_files.selectedItems())
+            self.volume_measure_btn.setEnabled(has_selection)
+            self.volume_normalize_btn.setEnabled(has_selection)
+            self.volume_clear_btn.setEnabled(self.volume_files.count() > 0)
+
+        def _add_volume_files(self) -> None:
+            paths, _selected_filter = QFileDialog.getOpenFileNames(
+                self,
+                "WAVファイルを選択",
+                self._last_browse_dir,
+                "WAV audio (*.wav)",
+            )
+            self._append_volume_paths(paths)
+
+        def _append_volume_paths(self, paths: list[str]) -> None:
+            added = False
+            existing = {
+                str(self.volume_files.item(i).data(Qt.ItemDataRole.UserRole))
+                for i in range(self.volume_files.count())
+            }
+            for raw_path in paths:
+                path = Path(raw_path).expanduser().resolve()
+                if path.suffix.lower() != ".wav" or not path.is_file():
+                    continue
+                key = str(path)
+                if key in existing:
+                    continue
+                item = QListWidgetItem(str(path))
+                item.setData(Qt.ItemDataRole.UserRole, key)
+                self.volume_files.addItem(item)
+                item.setSelected(True)
+                existing.add(key)
+                self._last_browse_dir = str(path.parent)
+                added = True
+            if added:
+                self.volume_files.setFocus()
+                self._save_current_settings()
+
+        def _remove_volume_files(self) -> None:
+            selected_rows = sorted(
+                (self.volume_files.row(item) for item in self.volume_files.selectedItems()),
+                reverse=True,
+            )
+            for row in selected_rows:
+                self.volume_files.takeItem(row)
+            self._save_current_settings()
+
+        def _clear_volume_files(self) -> None:
+            self.volume_files.clear()
+            self._refresh_volume_action_buttons()
+            self._save_current_settings()
+
+        def _start_volume_action(self, action: str) -> None:
+            if self._job_running():
+                return
+            paths = [
+                Path(str(item.data(Qt.ItemDataRole.UserRole)))
+                for item in self.volume_files.selectedItems()
+            ]
+            paths = [path for path in paths if path.is_file()]
+            if not paths:
+                QMessageBox.information(self, "音量", "処理するWAVファイルを選択してください。")
+                return
+            if action not in ("measure", "normalize"):
+                return
+            target_lufs = self.lufs_spin.value()
+            self._begin_job(
+                kind=f"volume_{action}",
+                worker=VolumeWorker(
+                    paths,
+                    action,
+                    target_lufs,
+                    CancellationToken(),
+                ),
+            )
+
+        def _apply_volume_results(self, report: object) -> None:
+            if not isinstance(report, dict):
+                return
+            action = report.get("action")
+            results = report.get("results")
+            if not isinstance(results, list):
+                return
+            item_by_path = {
+                str(self.volume_files.item(i).data(Qt.ItemDataRole.UserRole)): self.volume_files.item(i)
+                for i in range(self.volume_files.count())
+            }
+            for result in results:
+                if not isinstance(result, dict):
+                    continue
+                source = str(result.get("path", ""))
+                item = item_by_path.get(source)
+                if item is None:
+                    continue
+                if result.get("error"):
+                    item.setText(f"{Path(source).name} — エラー: {result['error']}")
+                    continue
+                stats = result.get("stats")
+                if not isinstance(stats, dict):
+                    continue
+                if action == "measure":
+                    measured = stats.get("integrated_lufs")
+                    peak = stats.get("true_peak_dbtp")
+                    measured_text = "未測定" if measured is None else f"{measured:.1f} LUFS"
+                    peak_text = "—" if peak is None else f"TP {peak:.1f} dBTP"
+                    item.setText(f"{Path(source).name} — {measured_text} / {peak_text}")
+                else:
+                    output = str(result.get("output_path", ""))
+                    measured = stats.get("output_lufs")
+                    measured_text = "未測定" if measured is None else f"{measured:.1f} LUFS"
+                    item.setText(
+                        f"{Path(source).name} → {Path(output).name} — {measured_text}"
+                    )
+
+        def _format_volume_summary(self, report: object) -> tuple[str, str, str]:
+            if not isinstance(report, dict):
+                return "音量処理完了", "音量処理が完了しました。", "音量処理が完了しました。"
+            action = report.get("action")
+            results = report.get("results", [])
+            results = results if isinstance(results, list) else []
+            errors = sum(
+                1 for result in results if isinstance(result, dict) and result.get("error")
+            )
+            action_label = "測定" if action == "measure" else "調整"
+            title = f"音量{action_label}完了"
+            label = f"{action_label}: {len(results) - errors}/{len(results)} 件成功"
+            details = [
+                f"{action_label}対象: {len(results)} 件",
+                f"成功: {len(results) - errors} 件",
+                f"エラー: {errors} 件",
+            ]
+            for result in results:
+                if isinstance(result, dict) and result.get("error"):
+                    details.append(f"\n{Path(str(result.get('path', ''))).name}: {result['error']}")
+            return title, label, "\n".join(details)
 
         # ----- Translate tab -----
         def _init_translate_tab(self) -> None:
@@ -702,7 +1080,7 @@ def main() -> int:
             browse_g.clicked.connect(self._browse_glossary)
             suggest_g = QPushButton(_("Suggest"))
             suggest_g.setToolTip(
-                _("Generate glossary from source SRT via Grok Chat")
+                _("Generate glossary from source SRT via xAI Responses API")
             )
             suggest_g.clicked.connect(self._suggest_glossary)
             row_g = QHBoxLayout()
@@ -735,7 +1113,15 @@ def main() -> int:
             self.tr_batch_spin.setValue(8)
             form.addRow(_("Batch size"), self.tr_batch_spin)
 
-            self.tr_dry_run_cb = QCheckBox(_("Dry-run (estimate only, no Chat)"))
+            self.tr_parallel_spin = QSpinBox()
+            self.tr_parallel_spin.setRange(1, 4)
+            self.tr_parallel_spin.setValue(2)
+            self.tr_parallel_spin.setToolTip(
+                _("Maximum concurrent translation API requests; 1 = serial")
+            )
+            form.addRow("並列APIリクエスト数", self.tr_parallel_spin)
+
+            self.tr_dry_run_cb = QCheckBox(_("Dry-run (estimate only, no API request)"))
             form.addRow("", self.tr_dry_run_cb)
             self.tr_fail_fast_cb = QCheckBox(_("Fail fast (stop on first target error)"))
             form.addRow("", self.tr_fail_fast_cb)
@@ -747,6 +1133,12 @@ def main() -> int:
             self.tr_naming_combo = QComboBox()
             self.tr_naming_combo.addItem(_("{stem}_{lang}.srt"), "stem")
             self.tr_naming_combo.addItem("GRAN_TENKU_{lang}.srt", "gran_tenku")
+            naming_help = QLabel(
+                "命名規則: stem → <入力SRT名>_<lang>.srt / "
+                "gran_tenku → GRAN_TENKU_<lang>.srt"
+            )
+            naming_help.setWordWrap(True)
+            form.addRow("", naming_help)
             form.addRow(_("File naming"), self.tr_naming_combo)
 
             layout.addLayout(form)
@@ -814,8 +1206,22 @@ def main() -> int:
                 self.out_edit.setText(self._abs_dir_text(str(s["out_dir"]), str(DEFAULT_OUT_ROOT)))
             if s.get("base_wav"):
                 self.base_wav_edit.setText(s["base_wav"])
+            volume_target = s.get("volume_target_lufs", s.get("target_lufs"))
+            if volume_target is not None:
+                self.lufs_spin.setValue(float(volume_target))
+            volume_files = s.get("volume_files", [])
+            if isinstance(volume_files, list):
+                for raw_path in volume_files:
+                    path = Path(str(raw_path)).expanduser()
+                    if path.is_file() and path.suffix.lower() == ".wav":
+                        resolved = str(path.resolve())
+                        item = QListWidgetItem(resolved)
+                        item.setData(Qt.ItemDataRole.UserRole, resolved)
+                        self.volume_files.addItem(item)
             if "limit" in s:
                 self.limit_spin.setValue(int(s["limit"]))
+            if "build_parallel_requests" in s:
+                self.build_parallel_spin.setValue(int(s["build_parallel_requests"]))
             if "dry_run" in s:
                 self.dry_run_cb.setChecked(bool(s["dry_run"]))
             if "ja_yomi" in s:
@@ -855,6 +1261,8 @@ def main() -> int:
                 self.tr_limit_spin.setValue(int(s["tr_limit"]))
             if "tr_batch_size" in s:
                 self.tr_batch_spin.setValue(int(s["tr_batch_size"]))
+            if "tr_parallel_requests" in s:
+                self.tr_parallel_spin.setValue(int(s["tr_parallel_requests"]))
             if "tr_dry_run" in s:
                 self.tr_dry_run_cb.setChecked(bool(s["tr_dry_run"]))
             if "tr_fail_fast" in s:
@@ -869,6 +1277,8 @@ def main() -> int:
             tab = s.get("active_tab")
             if tab == "translate":
                 self.tabs.setCurrentWidget(self._translate_tab)
+            elif tab == "volume":
+                self.tabs.setCurrentWidget(self._volume_tab)
             lbd = s.get("last_browse_dir", "")
             if lbd:
                 self._last_browse_dir = lbd
@@ -876,12 +1286,20 @@ def main() -> int:
                 self._last_browse_dir = str(Path.cwd())
 
         def _save_current_settings(self) -> None:
+            if getattr(self, "_loading_settings", False):
+                return
             s = {
                 "srt_path": self.srt_edit.text().strip(),
                 "language_code": self._current_code(self.lang_combo),
                 "voice_id": self.voice_combo.currentData() or "",
                 "out_dir": self._abs_dir_text(self.out_edit.text(), str(DEFAULT_OUT_ROOT)),
                 "base_wav": self.base_wav_edit.text().strip(),
+                "volume_target_lufs": self.lufs_spin.value(),
+                "volume_files": [
+                    str(self.volume_files.item(i).data(Qt.ItemDataRole.UserRole))
+                    for i in range(self.volume_files.count())
+                ],
+                "build_parallel_requests": self.build_parallel_spin.value(),
                 "limit": self.limit_spin.value(),
                 "dry_run": self.dry_run_cb.isChecked(),
                 "ja_yomi": self.ja_yomi_cb.isChecked(),
@@ -895,13 +1313,14 @@ def main() -> int:
                 "tr_length_mode": self.tr_length_combo.currentData() or "hint",
                 "tr_limit": self.tr_limit_spin.value(),
                 "tr_batch_size": self.tr_batch_spin.value(),
+                "tr_parallel_requests": self.tr_parallel_spin.value(),
                 "tr_dry_run": self.tr_dry_run_cb.isChecked(),
                 "tr_fail_fast": self.tr_fail_fast_cb.isChecked(),
                 "tr_no_cache": self.tr_no_cache_cb.isChecked(),
                 "tr_naming": self.tr_naming_combo.currentData() or "stem",
                 "active_tab": (
-                    "translate"
-                    if self.tabs.currentWidget() is self._translate_tab
+                    "translate" if self.tabs.currentWidget() is self._translate_tab
+                    else "volume" if self.tabs.currentWidget() is self._volume_tab
                     else "build"
                 ),
                 "last_browse_dir": self._last_browse_dir,
@@ -1229,6 +1648,8 @@ def main() -> int:
                 self._cleanup_worker_thread()
             if self.tabs.currentWidget() is self._translate_tab:
                 self._start_translate()
+            elif self.tabs.currentWidget() is self._volume_tab:
+                return
             else:
                 self._start_build()
 
@@ -1274,6 +1695,7 @@ def main() -> int:
                 voice_id=str(voice_id),
                 limit=limit,
                 dry_run=dry,
+                parallel_requests=int(self.build_parallel_spin.value()),
                 ja_yomi=self.ja_yomi_cb.isChecked(),
                 strip_emoticons=self.strip_emoticons_cb.isChecked(),
                 no_cache=self.no_cache_cb.isChecked(),
@@ -1335,6 +1757,7 @@ def main() -> int:
                     out_dir=Path(self._abs_dir_text(self.tr_out_edit.text(), str(DEFAULT_SRT_GEN_DIR))),
                     work_dir=DEFAULT_WORK_DIR,
                     batch_size=int(self.tr_batch_spin.value()),
+                    parallel_requests=int(self.tr_parallel_spin.value()),
                     glossary_path=Path(gloss) if gloss else None,
                     length_mode=str(self.tr_length_combo.currentData() or "hint"),
                     limit=limit,
@@ -1376,6 +1799,7 @@ def main() -> int:
             self.tabs.setEnabled(False)
             self.cancel_btn.setEnabled(True)
             self.cancel_btn.setText(_("Cancel"))
+            self.cancel_btn.setVisible(True)
             self.label.setText(_("Running…"))
             self.bar.setValue(0)
             self._latest_progress = None
@@ -1627,6 +2051,8 @@ def main() -> int:
                     title, _label, body = self._format_glossary_summary(payload)
                 elif self._last_result_kind == "translate":
                     title, _label, body = self._format_translate_summary(payload)
+                elif self._last_result_kind.startswith("volume_"):
+                    title, _label, body = self._format_volume_summary(payload)
                 else:
                     title, _label, body = self._format_build_summary(payload)
                 box = QMessageBox(self)
@@ -1686,7 +2112,10 @@ def main() -> int:
                 return
             kind, payload = pending
             if kind == "ok":
-                if result_kind == "glossary":
+                if result_kind.startswith("volume_"):
+                    self._apply_volume_results(payload)
+                    _t, label, _b = self._format_volume_summary(payload)
+                elif result_kind == "glossary":
                     _t, label, _b = self._format_glossary_summary(payload)
                     # keep path in glossary field
                     if isinstance(payload, dict) and payload.get("path"):

@@ -2,6 +2,36 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.1.9] - 2026-11-18
+
+### Changed
+- Add a dedicated GUI volume tab for per-file two-pass LUFS measurement and normalization, with WAV drag-and-drop.
+- Add concurrent API request controls for Japanese yomi and TTS in builds; set translation concurrency to 2 by default.
+- Display build and translation output naming patterns in the GUI and CLI help.
+
+### Tests
+- Full test suite passes (237 tests).
+
+## [0.1.8] - 2026-11-17
+
+### Changed
+- Add a voice-gender filter for male and female voices in the GUI.
+- Keep voices with undocumented gender available under “all” without guessing.
+
+### Tests
+- Full test suite passes (228 tests).
+
+## [0.1.7] - 2026-11-08
+
+### Changed
+- Migrate translation, glossary suggestion, Japanese yomi, and language detection to the xAI Responses REST API; default text model is `grok-4.7`.
+- Keep Responses requests un-stored and preserve the existing TTS `/v1/tts` integration.
+- Add SRT validation and collision-resistant per-input build output names.
+- Make replacing a ready API key an explicit GUI action.
+
+### Tests
+- Full test suite passes (212 tests).
+
 ## [0.1.5] - 2026-07-25
 
 ### Changed

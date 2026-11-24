@@ -1,6 +1,6 @@
 # 多言語 SRT 生成 — 設計と srtspeak アダプト方針
 
-**状態:** 実装済み（パッケージ `0.1.6`）・設計版 0.6  
+**状態:** 実装済み（パッケージ `0.1.7`）・設計版 0.6  
 **目的:** 入力 SRT 1 本から、**タイムコードを保持したまま**他言語 SRT を高精度に生成し、既存の `build` / `build-all`（Grok TTS + 強制フィット）へそのまま流す。  
 **関連:** [DESIGN.md](../DESIGN.md)（TTS パイプライン正本）  
 **必須:** TDD（P9）・progress（P5）・multi-target（P5b）・**言語以外同一（P0）**  
@@ -101,7 +101,7 @@ srtspeak translate --srt src.srt --source-lang ja --to en,pt-BR,es --out out/srt
 | 重複 | 正規化後に同一コードが二度出たら **エラー**（黙ってユニーク化しない） |
 | ソース言語除外 | `target == source_lang` は **スキップ + warning**（ja→ja コピーしない）。全部スキップならエラー |
 | 未知コード | `normalize_language_code` 失敗で **即エラー**（他 tgt に進まない）— 設定ミスを早期発見 |
-| 実行順 | **直列**（tgt を一つずつ）。並列 Chat は非スコープ（レート制限） |
+| 実行順 | **直列**（tgt を一つずつ）。並列 Responses API リクエストは非スコープ（レート制限） |
 | キャッシュ | **出力 SRT ファイル名キー** `out/work/translate/by_out/{tgt}__{out_name}.json`。既存出力 SRT からもシード。言語間で共有しない |
 | 成果物 | `{out}/{tgt}/…srt` を言語ごとに独立書き出し。1 言語成功分は残す |
 | 失敗ポリシー | 既定 **continue**: 1 tgt 失敗 → report に error、他 tgt 続行、終了コードは部分失敗（例: 1）。`--fail-fast` で即中断 |
@@ -185,7 +185,8 @@ merge 後に件数・index 集合・各 ms をソースと突合。不一致は�
 
 **API:** xAI Responses REST API（HTTP、gRPC SDK は使用しない）  
 `POST https://api.x.ai/v1/responses`（`store: false`）  
-**model:** `grok-4.7`（ja_yomi と共通。変更時は cache キーに model id を含める）
+**model:** `grok-4.7`（ja_yomi と共通）
+**cache:** 翻訳 cache は model / glossary をキーに含めない。モデル・用語集を変えて再翻訳する場合は `--no-cache` を指定する（ja_yomi cache は SRT hash とモデル ID の変更で無効化）。
 
 **structured output:** ja_yomi と同型スキーマ。
 
@@ -343,7 +344,7 @@ srtspeak translate
        a. resolve out_path / out_name
        b. load by_out cache + seed from existing out SRT
        c. pending cues をバッチ化
-       d. Chat API（context + glossary + budget）
+       d. Responses API（context + glossary + budget）
           ※ 各バッチ前後で ProgressEvent 必須
        e. validate batch → merge
        f. optional compress pass（ここも progress）
@@ -353,7 +354,7 @@ srtspeak translate
   5. translate_report.json
 ```
 
-dry-run: パース + 予算超過見込み + 概算トークン/コスト（Chat 単価は TTS の $15/1M chars と別。**実価格は xAI の Chat 料金表を参照し report に model 名のみでも可**）。v1 は「キュー数・文字数・バッチ数」必須、USD は任意。dry-run でも progress（parse/budget 集計）を出してよい。
+`--dry-run` は SRT を解析し、キュー数・元テキスト文字数・長さ予算超過の概算・ターゲット別バッチ数を返す。API 呼び出しは行わず、トークン数や費用は現在見積もらない。費用表示を追加する場合は、利用時点の xAI モデル別入出力トークン単価に基づくこと。
 
 ### 5.1-A) Progress（必須・実装契約）
 
@@ -363,7 +364,7 @@ dry-run: パース + 予算超過見込み + 概算トークン/コスト（Chat
 
 | フィールド | translate での使い方 |
 |------------|----------------------|
-| `percent` | 0–100。全ターゲット合算 or ターゲット内。**実装は「全ターゲット × pending キュー」を分母にした全体 % を推奨**（CLI が一本のバーで足りる） |
+| `percent` | 0–100。全ターゲット合算 or ターゲット内。実装は全ターゲットの全対象キュー数（cache hit 含む）を分母とする全体 % |
 | `stage` | 固定文字列: `translate` / `translate_compress` / `translate_write`（必要最小） |
 | `current` / `total` | 処理済みキュー数 / 対象キュー総数（キャッシュヒット分も「処理済み」に含めて % が戻らないようにする） |
 | `message` | 人間可読。例: `en batch 3/12` / `pt-BR compress 2/4` / `cache hit 40/200` |
@@ -372,7 +373,7 @@ dry-run: パース + 予算超過見込み + 概算トークン/コスト（Chat
 **発火タイミング（必須）:**
 
 1. ターゲット開始時（message に tgt）
-2. **各 Chat バッチの直前または直後**（ja_yomi と同じ。バッチ単位が最小粒度）
+2. **各 Responses API バッチの直前または直後**（ja_yomi と同じ。バッチ単位が最小粒度）
 3. compress 第二パスの各バッチ
 4. ターゲット完了・全完了（percent=100）
 5. cancel_token.check() はバッチ境界で必須（progress と対）
@@ -474,7 +475,7 @@ on_empty: fail|keep-source                  # default fail
 limit, dry_run, fail_fast=False
 prompt_version: int = 1
 naming: stem|gran_tenku                     # default stem
-heartbeat_s: float = 1.5                    # Chat wait pulse; 0=off
+heartbeat_s: float = 1.5                    # API response wait pulse; 0=off
 no_cache: bool = False                      # skip read; still write
 ```
 
@@ -523,19 +524,17 @@ srtspeak glossary-suggest \
 
 | 共通化するもの | 分離するもの |
 |----------------|--------------|
-| Chat 呼び出しヘルパ（URL・Authorization・json_schema・リトライ） | system prompt |
+| 共通 xAI Responses REST クライアント（URL・Authorization・JSON Schema・HTTP エラー処理） | 機能別 system prompt / schema |
 | バッチループ + cancel + progress stage | スキーマ名 / キャッシュファイル名 |
 | キャッシュの hash 無効化パターン | length 第二パス |
 | Cue replace マージ | ソース≠ターゲット言語マトリクス |
 
-提案: `core/grok_chat.py` に `_call_chat_json` を抽出。  
-`ja_yomi.py` / `srt_translate.py` がそれを呼ぶ。  
-（リファクタは translate 実装時に小さくやる。巨大リライト禁止。）
+実装では `core/xai_responses.py` に共通の HTTP クライアントを置き、`ja_yomi`、翻訳、用語集提案が個別のプロンプトと JSON Schema を渡す。各機能のキャッシュ・バッチ・検証はそれぞれのモジュールで管理する。
 
 ### 6.5 doctor
 
 ```text
-translate: grok-chat (same XAI_API_KEY)
+translate: xAI Responses REST (same XAI_API_KEY)
 ```
 
 一行追加程度。
@@ -545,7 +544,7 @@ translate: grok-chat (same XAI_API_KEY)
 - タブ **Translate**: ソース SRT、ターゲット複数チェック、glossary + Suggest、out、length mode、batch size、naming、fail-fast、no-cache、dry-run、実行、進捗
 - ソースパス Browse / 確定: `guess_lang_from_filename` → 元言語コンボ
 - 共有 API キー: マスク + **Save on this PC** / **Clear saved**（OS keyring; Windows 旧 DPAPI 移行）
-- 進捗: 下部共有ラベル + bar（0–1000）。worker → `queue.SimpleQueue` + ~80ms drain（Chat heartbeat で「実行中…」固定しない）
+- 進捗: 下部共有ラベル + bar（0–1000）。worker → `queue.SimpleQueue` + ~80ms drain（Responses API heartbeat で「実行中…」固定しない）
 - 診断: `SRTSPEAK_GUI_PROGRESS_LOG=1` → `out/work/gui_progress.log` のみ
 - 生成 SRT パスは `translate_report.json` / 結果ダイアログで確認し、Build タブへ手動で渡す
 - 設定は `gui_settings.json`（キー平文非保存）
@@ -566,7 +565,7 @@ CLI ヘルプ・エラーは既存 gettext。**訳文本体はユーザーコン
 |------|------|
 | 順序 | **Red → Green → Refactor** のみ。実装コードを先に書かない |
 | 単位 | 1 振る舞い = 1（または少数の）失敗テスト → 最小実装 → 整理 |
-| API | 実 Grok 呼び出しはテストに入れない。Chat 層をモック/フェイク注入 |
+| API | 実 xAI API 呼び出しは通常の自動テストに入れない。Responses REST クライアントをモック/フェイク注入 |
 | ゲート | Phase 完了条件 = 該当テスト緑 + 既存スイート非破壊 |
 | 配置 | `tests/` 配下（既存 pytest 構成に合わせる）。新規 `test_srt_translate*.py` 等 |
 | 禁止 | 「あとでテスト」・手動確認のみでの Phase 完了宣言 |
@@ -619,7 +618,7 @@ CLI ヘルプ・エラーは既存 gettext。**訳文本体はユーザーコン
 - 動画焼き込み・字幕プレビュー GUI
 - 翻訳と TTS の完全自動閉ループ最適化
 - 方言・ルビ付き SRT
-- `jobs > 1` の並列 Chat（レート制限。v1 は直列 + 既存 backoff 思想）
+- `jobs > 1` の並列 Responses API リクエスト（レート制限。v1 は直列）
 
 ---
 
@@ -637,50 +636,41 @@ CLI ヘルプ・エラーは既存 gettext。**訳文本体はユーザーコン
 
 ---
 
-## 10. 実装フェーズ
+## 10. 実装フェーズ（v0.1.7 実装状況）
 
-### Phase 0 — 合意（実装前）
+以下は当初の計画を現在のコードに照らして更新したチェックリスト。v0.1.7 では Phase 0–3 の必須機能を実装済み。任意項目と v2 項目は未実装。
 
-- [x] **成果物契約: 言語（text）以外はソースと同一**（P0・§3.3・§4.1）— 合意済
-- [ ] 出力ファイル名 A/B（中身の同一性とは別。パス命名のみ）
-- [ ] length 既定 `hint` でよいか
-- [ ] glossary 形式 JSON でよいか
-- [ ] ターゲット初期リスト（en, pt-BR, …）
-- [ ] **TDD 方針合意**（P9・§7.0。pytest + Chat モック）
+### Phase 0 — 合意事項
 
-### Phase 1 — 基盤（**TDD**: 各項目はテスト赤→実装緑）
+- [x] 出力ファイル命名（`stem` / `gran_tenku`。中身の同一性とは別）
+- [x] length 既定 `hint`
+- [x] glossary 形式 JSON
+- [x] ターゲット言語コードを CLI/GUI から指定
 
-- [ ] `format_srt` / roundtrip テスト → 実装
-- [ ] merge/validate（index・件数）テスト → 実装
-- [ ] **言語以外同一** + timing-lock テスト（件数/index/ms 全一致・text のみ差）→ 出力組み立て
-- [ ] 書き出し後 re-parse 検証テスト → 実装
-- [ ] cache ゼロコール テスト → cache 層
-- [ ] `grok_chat.py` 抽出（ja_yomi から）※注入点をテスト可能に
-- [ ] `srt_translate.py`: **複数 `targets` ループ（v1 必須）**、cache、validate
-- [ ] multi-target / 部分失敗 / `--fail-fast` テスト → 実装
-- [ ] progress 必須・非逆行・バッチ境界テスト → 実装
-- [ ] 全体 progress 分母 = Σ(各 tgt の対象キュー数)（キャッシュ込み）
-- [ ] `cancel_token` バッチ境界チェック
-- [ ] `srtspeak translate` CLI（`--to` 複数回）+ パーサ/CLI テスト
-- [ ] `translate_report.json`（ターゲット別セクション + 全体サマリ）
-- [ ] Phase 1 ゲート: 新規+既存 pytest 全緑
+### Phase 1 — 基盤
 
-### Phase 2 — 正確さ強化（TDD 継続）
+- [x] SRT roundtrip、merge/validate、タイミング固定、書き出し後の再解析
+- [x] cache、複数ターゲット、部分失敗、`--fail-fast`
+- [x] 共通 REST クライアント `core/xai_responses.py`
+- [x] progress、キャンセル、CLI、ターゲット別 report
+- [x] pytest 全スイート（v0.1.7 対応作業で再検証）
 
-- [ ] glossary
-- [ ] バッチ文脈オーバーラップ
-- [ ] length-mode hint/enforce
-- [ ] doctor 行
+### Phase 2 — 正確さ強化
+
+- [x] glossary load / merge / suggest
+- [x] バッチ文脈オーバーラップ
+- [x] length-mode hint/enforce/report-only
+- [x] doctor の API 状態表示
 - [ ] （任意）`--to-all-supported` でカタログ全言語一括
 
 ### Phase 3 — 接続・UX
 
-- [ ] README / DESIGN 追記
-- [ ] `build-all` 用の生成 map 例・ヘルパ（`translate` が `maps.env` や shell 断片を吐く程度で可）
-- [ ] （任意）GUI
+- [x] README / DESIGN / 本設計書の実装反映
+- [x] GUI Translate タブ
+- [ ] build-all 用の自動 map 生成ヘルパ
 - [ ] （任意）`build --translate-from` ラッパ
 
-### Phase 4 — 品質ループ（v2）
+### Phase 4 — 品質ループ（v2・未実装）
 
 - [ ] build report の extreme_speed を translate にフィードバック
 - [ ] 話速テーブルを実データで校正
@@ -692,9 +682,9 @@ CLI ヘルプ・エラーは既存 gettext。**訳文本体はユーザーコン
 | 文書 | 役割 |
 |------|------|
 | DESIGN.md | TTS・フィット・タイムラインの正本（実装済み） |
-| **本ドキュメント** | SRT 多言語生成の正本（設計）。実装後に DESIGN.md へ「前段: translate」節を短くリンク |
+| **本ドキュメント** | SRT 多言語生成の設計・実装詳細。DESIGN.md から「前段: translate」として参照 |
 
-DESIGN.md §1.2 非スコープの「文章リライト」は次のように更新予定:
+DESIGN.md §1.2 の「文章リライト」は以下の責任分離を記載済み:
 
 - 維持: 意味改変リライト一般は TTS 本体の仕事ではない  
 - 追加: **別サブコマンド `translate` がタイミングロック翻訳を担当**（本設計）
@@ -706,13 +696,13 @@ DESIGN.md §1.2 非スコープの「文章リライト」は次のように更�
 1. **翻訳は TTS に混ぜない。** `srtspeak translate` を前段に置き、成果 SRT を人が見られるようにする。  
 2. **言語以外同一。** 件数・index・時刻・並びはソース固定。変わるのは text のみ。  
 3. **時刻・index はコードがロック。** モデルは text のみ。  
-4. **実装パターンは ja_yomi の複製進化。** Chat + JSON schema + batch + cache + **progress 必須** + cancel。  
+4. **テキスト処理は Responses REST API を共有。** 個別 JSON Schema + batch + cache + **progress 必須** + cancel。
 5. **正確さ = 構造同一 + glossary + 長さ予算 + 検証ゲート + 人レビュー。** モデル一発任せにしない。  
 6. **stdlib のみ・`XAI_API_KEY` 共通・BuildConfig 非侵襲。** 既存 build を壊さない。  
 7. **生成 SRT → 既存 `build-all --map` が正規の接続。**
 8. **progress なしの本番経路は作らない。** `run_translate(..., progress_cb=...)` 必須引数。
 9. **複数ターゲットは v1 必須。** `--to` 繰り返し → 直列実行・言語別 cache/SRT・合算 progress・部分失敗継続。
-10. **TDD 必須。** Red→Green→Refactor。Chat はモック。Phase 完了 = テスト緑。
+10. **TDD 必須。** Red→Green→Refactor。xAI API 呼び出しはモック。Phase 完了 = テスト緑。
 
 ---
 
@@ -730,5 +720,6 @@ DESIGN.md §1.2 非スコープの「文章リライト」は次のように更�
 | 0.8 | **translate cache 再設計**: 出力 SRT ファイル名キー `out/work/translate/by_out/{tgt}__{out}.json`、index→{src,tgt}、既存 out SRT シード。旧 sha256 キー廃止 |
 | 0.9 | パッケージ 0.1.4 同期: 版番号 / `__version__` 整合 |
 | 1.0 | パッケージ 0.1.5 同期: 既定 work/srt_gen を out/ 配下へ |
+| 1.1 | パッケージ 0.1.7 同期: テキスト処理を xAI Responses REST (`grok-4.7`) へ移行。cache / dry-run / 進捗 / 実装状況を更新 |
 
 

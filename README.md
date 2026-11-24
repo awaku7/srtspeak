@@ -18,7 +18,7 @@ Translate design: `docs/SRT_TRANSLATE_DESIGN.md`.
 | ffmpeg / ffprobe | Prefer on `PATH`; optional fallback via `imageio-ffmpeg` |
 | API key | `XAI_API_KEY` only for real TTS / translate / glossary / ja_yomi (dry-run makes no text-model request) |
 
-Package version: **0.1.6** (`pyproject.toml`).
+Package version: **0.1.9** (`pyproject.toml`).
 
 ## Install
 
@@ -155,7 +155,7 @@ Official docs:
 | CLI flag | No `--api-key` (avoids shell history) |
 | Persistence | No `.env`; never written to report/logs/`gui_settings.json` |
 | Resolve order | env → session → **OS keyring** → legacy Windows DPAPI (migrate) → CLI `getpass` / GUI mask |
-| dry-run | Key optional (Chat APIs skipped if missing) |
+| dry-run | Key optional (text-model requests are skipped if missing) |
 | Real TTS / translate / glossary | resolve chain; missing → exit code 2 |
 | GUI | Key-ready state locks the field; **Change / Override** enables a session override. **Save on this PC** writes to OS storage; **Clear saved** removes only the stored key, not environment/session keys. |
 
@@ -295,9 +295,9 @@ Before a real build you typically want:
 
 - `XAI_API_KEY: set (env)`
 - `ffmpeg:` path with `source: path` (or `imageio_ffmpeg`)
-- `ja_yomi: grok-chat (Grok Chat API)`
-- `translate: grok-chat (same XAI_API_KEY)`
-- `glossary-suggest: grok-chat (same XAI_API_KEY)`
+- `ja_yomi: xAI Responses REST (Grok 4.7)`
+- `translate: xAI Responses REST (same XAI_API_KEY)`
+- `glossary-suggest: xAI Responses REST (same XAI_API_KEY)`
 
 ### Cost estimate (no ffmpeg)
 
@@ -416,7 +416,7 @@ srtspeak translate ^
 | `--batch-size` | Cues per Responses request | `8` |
 | `--model` | Grok model id | `grok-4.7` |
 | `--limit N` | First N cues only | all |
-| `--dry-run` | Estimate only (no API request) | off |
+| `--dry-run` | Cue/character counts, budget-over estimate and batch count only; no API or token/cost estimate | off |
 | `--fail-fast` | Stop on first target error | off |
 | `--no-cache` | Ignore existing translate caches (still write) | off |
 | `--naming` | `stem` → `{source_stem}_{lang}.srt` / `gran_tenku` → `GRAN_TENKU_{lang}.srt` | `stem` |
@@ -488,12 +488,13 @@ srtspeak gui
 - TTS: xAI Grok unary REST only (`speed` always 1.0)
 - ja_yomi: Grok 4.7 Responses REST structured JSON, batch 5, cache under `out/work/{lang}/`
 - strip_emoticons: kaomoji stripped for **TTS speak text only**; emoji kept; stored SRT cues unchanged; default **on**
+- Inline speech tags: xAI tags can be written directly in SRT cue text, e.g. `<whisper>It is a secret.</whisper>[pause]`; also `[long-pause]`, `[laugh]`, `[chuckle]`, `[giggle]`, `[cry]`, `[tsk]`, `[tongue-click]`, and `[hum-tune]`. The Japanese yomi pass protects these tags and restores them after conversion.
 - Fit: ffmpeg CLI only (`atempo` 0.5–2.0 multi-stage; short cues default to pad)
 - Timeline: silence canvas or base_wav; place in half-open `[start, end)`; **PCM add-mix** (clip ±32767)
 - Track length: last cue end + `tail_pad_ms`, or base_wav length when `--base-wav` is set
-- Audio (no base): mono s16le 24 kHz WAV; with base: base native rate/channels preserved
+- Audio (no base): mono s16le 48 kHz WAV; with base: base native rate/channels preserved
 - Cost estimate (dry-run): $15 / 1M chars (TTS text; Chat yomi not included in that figure)
-- Voices: builtin catalog includes male and female; default `leo`
+- Voices: descriptions and use cases follow the xAI voice catalog; gender is not guessed when undocumented; default `leo`
 - `--no-cache`: skip reading TTS/ja_yomi caches; still write after success
 
 ### Translate

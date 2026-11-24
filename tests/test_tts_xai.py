@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -14,12 +14,23 @@ from srtspeak.core.tts_xai import (
     TtsError,
     build_tts_request_body,
     fetch_voices,
+    merge_voice_catalog,
     synthesize_to_file,
 )
+from srtspeak.core.voices import VoiceOption
 
 
 def test_api_base_hardcoded() -> None:
     assert API_BASE == "https://api.x.ai/v1"
+
+
+def test_tts_default_output_is_wav_48khz() -> None:
+    body = build_tts_request_body(
+        text="hello",
+        voice_id="leo",
+        language_code="ja",
+    )
+    assert body["output_format"] == {"codec": "wav", "sample_rate": 48000}
 
 
 def test_build_tts_request_body_fixed_fields() -> None:
@@ -117,15 +128,17 @@ def test_synthesize_401_raises_no_retry(tmp_path: Path) -> None:
         hdrs=None,  # type: ignore[arg-type]
         fp=None,
     )
-    with patch("srtspeak.core.tts_xai.urllib.request.urlopen", side_effect=err):
-        with pytest.raises(TtsError, match="401"):
-            synthesize_to_file(
-                text="hi",
-                voice_id="leo",
-                language_code="ja",
-                api_key="bad",
-                out_path=out,
-            )
+    with (
+        patch("srtspeak.core.tts_xai.urllib.request.urlopen", side_effect=err),
+        pytest.raises(TtsError, match="401"),
+    ):
+        synthesize_to_file(
+            text="hi",
+            voice_id="leo",
+            language_code="ja",
+            api_key="bad",
+            out_path=out,
+        )
 
 
 def test_fetch_voices_parses_list() -> None:
@@ -155,3 +168,15 @@ def test_fetch_voices_parses_list() -> None:
     assert voices[0].voice_id == "leo"
     assert voices[1].voice_id == "eve"
     assert len(voices) == 2
+
+
+def test_merge_voice_catalog_keeps_builtin_metadata_when_live_metadata_is_empty() -> None:
+    builtin = [VoiceOption("aurora", "Aurora", "Serene and steady", ("support",))]
+    live = [VoiceOption("aurora", "aurora", "", ())]
+
+    merged = merge_voice_catalog(builtin, live)
+
+    assert len(merged) == 1
+    assert merged[0].name == "Aurora"
+    assert merged[0].description == "Serene and steady"
+    assert merged[0].tags == ("support",)

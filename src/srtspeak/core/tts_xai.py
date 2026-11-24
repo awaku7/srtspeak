@@ -36,7 +36,7 @@ class TtsRequest:
     text: str
     voice_id: str
     language_code: str
-    sample_rate: int = 24000
+    sample_rate: int = 48000
     codec: str = "wav"
     tts_speed: float = 1.0
     text_normalization: bool = True
@@ -47,7 +47,7 @@ def build_tts_request_body(
     text: str,
     voice_id: str,
     language_code: str,
-    sample_rate: int = 24000,
+    sample_rate: int = 48000,
     codec: str = "wav",
     tts_speed: float = 1.0,
     text_normalization: bool = True,
@@ -95,7 +95,7 @@ def _read_error_body(exc: urllib.error.HTTPError) -> str:
         text = data.decode("utf-8", errors="replace")
         # never echo secrets; body should not contain key but strip auth-ish tokens
         return text[:500]
-    except Exception:
+    except OSError:
         return ""
 
 
@@ -186,7 +186,7 @@ def synthesize_to_file(
     language_code: str,
     api_key: str,
     out_path: Path | str,
-    sample_rate: int = 24000,
+    sample_rate: int = 48000,
     codec: str = "wav",
     tts_speed: float = 1.0,
     text_normalization: bool = True,
@@ -229,7 +229,7 @@ def fetch_voices(*, api_key: str) -> list[VoiceOption]:
         desc = str(item.get("description") or item.get("desc") or "")
         tags_raw = item.get("tags") or item.get("labels") or ()
         if isinstance(tags_raw, dict):
-            tags = tuple(str(k) for k in tags_raw.keys())
+            tags = tuple(str(k) for k in tags_raw)
         elif isinstance(tags_raw, (list, tuple)):
             tags = tuple(str(t) for t in tags_raw)
         else:
@@ -251,9 +251,21 @@ def merge_voice_catalog(
     builtin: list[VoiceOption],
     live: list[VoiceOption] | None,
 ) -> list[VoiceOption]:
-    """Prefer live API entries; keep builtin for ids not returned."""
+    """Use live entries, filling metadata omitted by the API from builtins."""
     by_id: dict[str, VoiceOption] = {v.voice_id: v for v in builtin}
     if live:
-        for v in live:
-            by_id[v.voice_id] = v
+        for voice in live:
+            previous = by_id.get(voice.voice_id)
+            if previous is None:
+                by_id[voice.voice_id] = voice
+                continue
+            name = voice.name
+            if name.casefold() == voice.voice_id.casefold():
+                name = previous.name
+            by_id[voice.voice_id] = VoiceOption(
+                voice_id=voice.voice_id,
+                name=name,
+                description=voice.description or previous.description,
+                tags=voice.tags or previous.tags,
+            )
     return sorted(by_id.values(), key=lambda v: v.voice_id)

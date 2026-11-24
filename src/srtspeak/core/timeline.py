@@ -57,7 +57,7 @@ def _mix_generic(canvas, overlay_s16, offset, sw):
             canvas[ch_off: ch_off + half] = mixed.to_bytes(half, "little", signed=sw > 1)
 
 
-def place_cues(*, cues, fitted_paths, sample_rate=24000, tail_pad_ms=0, base_wav=None):
+def place_cues(*, cues, fitted_paths, sample_rate=48000, tail_pad_ms=0, base_wav=None):
     """Build PCM canvas and place each fitted cue.
 
     Returns (pcm_bytes, channels, sampwidth).
@@ -114,7 +114,7 @@ def place_cues(*, cues, fitted_paths, sample_rate=24000, tail_pad_ms=0, base_wav
     return bytes(canvas), ch, sw
 
 
-def write_timeline_wav(*, out_path, cues, fitted_paths, sample_rate=24000, tail_pad_ms=0, base_wav=None):
+def write_timeline_wav(*, out_path, cues, fitted_paths, sample_rate=48000, tail_pad_ms=0, base_wav=None):
     """Build timeline PCM and write WAV in base native properties."""
     pcm, ch, sw = place_cues(
         cues=cues, fitted_paths=fitted_paths,

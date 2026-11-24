@@ -4,11 +4,14 @@ from __future__ import annotations
 
 import io
 import sys
+from argparse import Namespace
+from unittest.mock import patch
 
 import pytest
 
-from srtspeak.cli import main
-from srtspeak.i18n import _, get_locale, set_locale
+from srtspeak.cli import cmd_voices, main
+from srtspeak.core.voices import VoiceOption
+from srtspeak.i18n import get_locale, set_locale
 
 
 @pytest.fixture(autouse=True)
@@ -57,6 +60,19 @@ def test_cli_languages_ja_labels() -> None:
     out = buf.getvalue()
     assert "日本語" in out
     assert "英語" in out
+
+
+def test_cli_voices_handles_empty_description(capsys) -> None:
+    voice = VoiceOption("aurora", "Aurora", "", ())
+    with (
+        patch("srtspeak.cli.resolve_api_key", return_value=None),
+        patch("srtspeak.cli.list_builtin_voices", return_value=[voice]),
+    ):
+        assert cmd_voices(Namespace(voice_filter=None)) == 0
+
+    output = capsys.readouterr().out
+    assert "Aurora" in output
+    assert "Project-Id-Version" not in output
 
 
 def test_cli_help_en_keeps_english() -> None:

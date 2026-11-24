@@ -73,8 +73,8 @@ msgid "ffmpeg: MISSING ({exc})"
 msgstr "ffmpeg: 見つかりません（{exc}）"
 
 #: src/srtspeak/cli.py:202
-msgid "ja_yomi: grok-chat (Grok Chat API)"
-msgstr "ja_yomi: grok-chat（Grok Chat API）"
+msgid "ja_yomi: xAI Responses REST (Grok 4.7)"
+msgstr "ja_yomi: xAI Responses REST（Grok 4.7）"
 
 #: src/srtspeak/cli.py:205
 #, python-brace-format
@@ -82,8 +82,8 @@ msgid "ja_yomi: error ({exc})"
 msgstr "ja_yomi: エラー（{exc}）"
 
 #: src/srtspeak/cli.py:209
-msgid "translate: grok-chat (same XAI_API_KEY)"
-msgstr "translate: grok-chat（同一 XAI_API_KEY）"
+msgid "translate: xAI Responses REST (same XAI_API_KEY)"
+msgstr "translate: xAI Responses REST（同一 XAI_API_KEY）"
 
 #: src/srtspeak/cli.py:211
 #, python-brace-format
@@ -91,8 +91,8 @@ msgid "translate: error ({exc})"
 msgstr "translate: エラー（{exc}）"
 
 #: src/srtspeak/cli.py:215
-msgid "glossary-suggest: grok-chat (same XAI_API_KEY)"
-msgstr "glossary-suggest: grok-chat（同一 XAI_API_KEY）"
+msgid "glossary-suggest: xAI Responses REST (same XAI_API_KEY)"
+msgstr "glossary-suggest: xAI Responses REST（同一 XAI_API_KEY）"
 
 #: src/srtspeak/cli.py:217
 #, python-brace-format
@@ -297,8 +297,8 @@ msgid "MVP must be 1"
 msgstr "MVP では 1 固定"
 
 #: src/srtspeak/cli.py:777
-msgid "JA only: convert kanji to hiragana via Grok Chat API before TTS (default: on)"
-msgstr "日本語のみ: TTS 前に Grok Chat API で漢字→ひらがな（既定: オン）"
+msgid "JA only: convert kanji to hiragana via xAI Responses API before TTS (default: on)"
+msgstr "日本語のみ: TTS 前に xAI Responses API で漢字→ひらがな（既定: オン）"
 
 #: src/srtspeak/cli.py:786
 msgid "Strip kaomoji for TTS only; emoji kept; SRT unchanged (default: on)"
@@ -373,16 +373,16 @@ msgid "empty translation policy (default: fail)"
 msgstr "空翻訳の扱い（既定: fail）"
 
 #: src/srtspeak/cli.py:868
-msgid "cues per Chat batch (default: 8)"
-msgstr "Chat 1バッチあたりのキュー数（既定: 8）"
+msgid "cues per Responses request (default: 8)"
+msgstr "Responses API 1リクエストあたりのキュー数（既定: 8）"
 
 #: src/srtspeak/cli.py:873 src/srtspeak/cli.py:944
-msgid "Grok Chat model id"
-msgstr "Grok Chat モデル ID"
+msgid "Grok model id (default: grok-4.7)"
+msgstr "Grok モデル ID（既定: grok-4.7）"
 
 #: src/srtspeak/cli.py:884
-msgid "estimate only, no Chat API"
-msgstr "見積もりのみ（Chat API なし）"
+msgid "estimate only, no text-model API request"
+msgstr "見積もりのみ（テキストモデルAPI呼び出しなし）"
 
 #: src/srtspeak/cli.py:889
 msgid "stop on first target failure"
@@ -397,8 +397,8 @@ msgid "output SRT naming (default: stem)"
 msgstr "出力 SRT 命名（既定: stem）"
 
 #: src/srtspeak/cli.py:906
-msgid "suggest glossary JSON from SRT via Grok Chat"
-msgstr "Grok Chat で SRT から用語集 JSON を提案"
+msgid "suggest glossary JSON from SRT via xAI Responses API"
+msgstr "xAI Responses API で SRT から用語集 JSON を提案"
 
 #: src/srtspeak/cli.py:923
 msgid "output glossary JSON path (default: glossary.json)"
@@ -514,8 +514,8 @@ msgid "extract candidates"
 msgstr "候補抽出"
 
 #: src/srtspeak/progress_i18n.py:114
-msgid "chat suggest"
-msgstr "Chat提案"
+msgid "Responses API glossary suggestion"
+msgstr "Responses API 用語集提案"
 
 #: src/srtspeak/progress_i18n.py:116
 msgid "finalize glossary"
@@ -533,8 +533,8 @@ msgstr "ひらがな バッチ {current}/{total}"
 
 #: src/srtspeak/progress_i18n.py:133
 #, python-brace-format
-msgid "{target} batch {current}/{total} waiting chat... {seconds}s"
-msgstr "{target} バッチ {current}/{total} Chat待機中… {seconds}s"
+msgid "{target} batch {current}/{total} waiting for API response... {seconds}s"
+msgstr "{target} バッチ {current}/{total} API応答待ち… {seconds}s"
 
 #: src/srtspeak/progress_i18n.py:142
 #, python-brace-format
@@ -553,8 +553,8 @@ msgstr "{target} 圧縮 index {index}"
 
 #: src/srtspeak/progress_i18n.py:160
 #, python-brace-format
-msgid "waiting chat... {seconds}s"
-msgstr "Chat待機中… {seconds}s"
+msgid "waiting for API response... {seconds}s"
+msgstr "API応答待ち… {seconds}s"
 
 #: src/srtspeak/progress_i18n.py:164
 #, python-brace-format
@@ -706,7 +706,7 @@ msgstr "字幕番号が重複しています: {index}"
 
 #: src/srtspeak/core/srt_parser.py:154
 #, python-brace-format
-msgid "{label}: start {detail}"
+msgid "block {block_no}: cue index is not a number: {value}"
 msgstr "ブロック{block_no}: キュー番号が数値ではありません: {value}"
 
 #: src/srtspeak/core/srt_parser.py:161
@@ -847,12 +847,45 @@ msgstr "優しく忍耐強い"
 msgid "Friendly, upbeat"
 msgstr "親しみやすく明るい"
 
-#: src/srtspeak/core/voices.py:51 src/srtspeak/core/voices.py:52
-#: src/srtspeak/core/voices.py:53 src/srtspeak/core/voices.py:54
-#: src/srtspeak/core/voices.py:55 src/srtspeak/core/voices.py:56
-#: src/srtspeak/core/voices.py:57 src/srtspeak/core/voices.py:58
-msgid "Docs catalog voice"
-msgstr "ドキュメント掲載の声"
+#: src/srtspeak/core/voices.py:54
+msgid "Elegant, refined, and effortlessly premium"
+msgstr "優雅で洗練され、上質さが際立つ"
+
+#: src/srtspeak/core/voices.py:60
+msgid "Sharp, focused, and driven"
+msgstr "鋭く、集中力があり、意欲的"
+
+#: src/srtspeak/core/voices.py:66
+msgid "Upbeat, energetic, and endlessly versatile"
+msgstr "陽気でエネルギッシュ、幅広く活躍"
+
+#: src/srtspeak/core/voices.py:72
+msgid "Bright, curious, and easy to follow"
+msgstr "明るく好奇心旺盛で、聞き取りやすい"
+
+#: src/srtspeak/core/voices.py:78
+msgid "Compassionate, confident, and reassuring"
+msgstr "思いやりがあり、自信に満ち、安心感を与える"
+
+#: src/srtspeak/core/voices.py:84
+msgid "Friendly, warm, and steadfast"
+msgstr "親しみやすく温かで、頼もしい"
+
+#: src/srtspeak/core/voices.py:90
+msgid "Quick-witted, clever, and playful"
+msgstr "機転が利き、賢く、遊び心がある"
+
+#: src/srtspeak/core/voices.py:96
+msgid "Warm, articulate, and engaging"
+msgstr "温かみがあり、明瞭で、惹きつける"
+
+#: src/srtspeak/core/voices.py:103
+msgid "Serene, steady, and radiant"
+msgstr "穏やかで安定感があり、輝きのある"
+
+#: src/srtspeak/core/voices.py:109
+msgid "Calm, grounded, and luminous"
+msgstr "落ち着きがあり、地に足のついた、明るい声"
 
 #: src/srtspeak/gui/app.py:332
 msgid "API key (XAI_API_KEY)"
@@ -1004,6 +1037,15 @@ msgstr "言語"
 msgid "Voice"
 msgstr "声"
 
+msgid "Gender"
+msgstr "性別"
+
+msgid "Male"
+msgstr "男性"
+
+msgid "Female"
+msgstr "女性"
+
 #: src/srtspeak/gui/app.py:562 src/srtspeak/gui/app.py:667
 msgid "Output folder"
 msgstr "出力フォルダ"
@@ -1065,8 +1107,8 @@ msgid "Suggest"
 msgstr "提案"
 
 #: src/srtspeak/gui/app.py:674
-msgid "Generate glossary from source SRT via Grok Chat"
-msgstr "Grok Chat で元 SRT から用語集を生成"
+msgid "Generate glossary from source SRT via xAI Responses API"
+msgstr "xAI Responses API で元 SRT から用語集を生成"
 
 #: src/srtspeak/gui/app.py:683
 msgid "Glossary (JSON)"
@@ -1092,13 +1134,25 @@ msgstr "レポートのみ"
 msgid "Length mode"
 msgstr "長さモード"
 
-#: src/srtspeak/gui/app.py:705
+#: src/srtspeak/gui/app.py:735
 msgid "Batch size"
 msgstr "バッチサイズ"
 
+#: src/srtspeak/gui/app.py:744
+msgid "Maximum concurrent translation API requests; 1 = serial"
+msgstr "同時に実行する翻訳APIリクエストの最大数（1 = 逐次処理）"
+
+#: src/srtspeak/gui/app.py:746
+msgid "Parallel requests"
+msgstr "並列リクエスト数"
+
+#: src/srtspeak/cli.py:878
+msgid "maximum concurrent translation requests (default: 1)"
+msgstr "翻訳APIの最大同時リクエスト数（既定: 1）"
+
 #: src/srtspeak/gui/app.py:707
-msgid "Dry-run (estimate only, no Chat)"
-msgstr "ドライラン（見積もりのみ・Chat なし）"
+msgid "Dry-run (estimate only, no API request)"
+msgstr "ドライラン（見積もりのみ・API呼び出しなし）"
 
 #: src/srtspeak/gui/app.py:709
 msgid "Fail fast (stop on first target error)"
