@@ -18,7 +18,7 @@ Translate design: `docs/SRT_TRANSLATE_DESIGN.md`.
 | ffmpeg / ffprobe | Prefer on `PATH`; optional fallback via `imageio-ffmpeg` |
 | API key | `XAI_API_KEY` only for real TTS / translate / glossary / ja_yomi (dry-run makes no text-model request) |
 
-Package version: **0.1.9** (`pyproject.toml`).
+Package version: **0.1.10** (`pyproject.toml`).
 
 ## Install
 

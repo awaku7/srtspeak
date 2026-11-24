@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented in this file.
 
-## [Unreleased]
+## [0.1.10] - 2026-11-24
 
 ### Added
 - Add a GUI SRT editor for cue text/timing and per-cue Grok speech direction, with TTS-only sidecar profiles.
@@ -10,6 +10,9 @@ All notable changes to this project are documented in this file.
 - Support applying one delivery style to multiple selected cues in the editor.
 - Add one-action style/speed propagation from a reference SRT to multiple structurally matching translated SRTs.
 - Expose xAI TTS speed (`0.7`–`1.5`) globally and per cue; support expressive xAI speech tags.
+
+### Tests
+- Full test suite passes (269 tests).
 
 ## [0.1.9] - 2026-11-18
 
