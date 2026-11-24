@@ -21,10 +21,15 @@ from srtspeak.core.models import BuildConfig
 from srtspeak.core.progress import ProgressCallback, emit
 from srtspeak.core.report import estimate_cost_usd, track_filename, write_json
 from srtspeak.core.ja_yomi import apply_ja_yomi, init_ja_yomi_log
+from srtspeak.core.speech_profiles import (
+    CueSpeechProfile,
+    effective_tts_speed,
+    load_speech_profiles,
+    prepare_tts_text,
+)
 from srtspeak.core.srt_parser import Cue, apply_limit, parse_srt, read_srt_text
 from srtspeak.core.timeline import write_timeline_wav
 from srtspeak.core.tts_xai import TtsError, synthesize_to_file
-from srtspeak.core.text_sanitize import tts_speak_text
 from srtspeak.core.util import ensure_dir, wav_duration_ms, DEFAULT_WORK_DIR
 from srtspeak.core.voices import resolve_voice_id, validate_voice_id, builtin_voice_ids
 
@@ -40,6 +45,21 @@ def _work_lang_dir(config: BuildConfig) -> Path:
 
 def _out_lang_dir(config: BuildConfig) -> Path:
     return Path(config.out_dir)
+
+
+def _cue_tts_settings(
+    cue: Cue,
+    config: BuildConfig,
+    profiles: dict[int, CueSpeechProfile],
+) -> tuple[str, float]:
+    profile = profiles.get(cue.index)
+    text = prepare_tts_text(
+        cue.text,
+        profile,
+        strip_emoticons=bool(config.strip_emoticons),
+    )
+    speed = effective_tts_speed(profile, config.tts_speed)
+    return text, speed
 
 
 def _source_output_names(srt_path: Path, lang: str) -> tuple[str, str, str]:
@@ -395,7 +415,9 @@ def dry_run_build(
     )
 
     text, srt_encoding = read_srt_text(config.srt_path)
-    cues = apply_limit(parse_srt(text), config.limit)
+    parsed_cues = parse_srt(text)
+    speech_profiles = load_speech_profiles(config.srt_path)
+    cues = apply_limit(parsed_cues, config.limit)
     init_ja_yomi_log(_work_lang_dir(config))
     cues = apply_ja_yomi(
         cues,
@@ -436,6 +458,7 @@ def dry_run_build(
         "language_code": config.language_code,
         "provider": config.provider,
         "voice_id": voice_id,
+        "tts_speed": config.tts_speed,
         "source_id": source_id,
         "srt_path": str(config.srt_path),
         "source_encoding": srt_encoding,
@@ -474,6 +497,7 @@ def _parallel_synthesize_missing(
     *,
     voice_id: str,
     api_key: str,
+    speech_profiles: dict[int, CueSpeechProfile],
     work_dir: Path,
     raw_dir: Path,
     progress_cb: ProgressCallback | None,
@@ -485,7 +509,7 @@ def _parallel_synthesize_missing(
     cache_hits = 0
     for cue in cues:
         cancel_token.check()
-        speak_text = tts_speak_text(cue.text, enabled=bool(config.strip_emoticons))
+        speak_text, cue_speed = _cue_tts_settings(cue, config, speech_profiles)
         key = cache_key_hex(
             provider=config.provider,
             voice_id=voice_id,
@@ -493,7 +517,7 @@ def _parallel_synthesize_missing(
             text=speak_text,
             sample_rate=config.sample_rate,
             codec=config.codec,
-            tts_speed=config.tts_speed,
+            tts_speed=cue_speed,
             text_normalization=config.text_normalization,
         )
         cpath = cache_path(work_dir, key)
@@ -504,7 +528,12 @@ def _parallel_synthesize_missing(
         if spec is None:
             temp_path = raw_dir / f".parallel_{key[:24]}.wav"
             temp_path.unlink(missing_ok=True)
-            spec = {"text": speak_text, "temp_path": temp_path, "cue_count": 0}
+            spec = {
+                "text": speak_text,
+                "tts_speed": cue_speed,
+                "temp_path": temp_path,
+                "cue_count": 0,
+            }
             specs[key] = spec
         spec["cue_count"] += 1
 
@@ -534,7 +563,7 @@ def _parallel_synthesize_missing(
                     out_path=spec["temp_path"],
                     sample_rate=config.sample_rate,
                     codec=config.codec,
-                    tts_speed=config.tts_speed,
+                    tts_speed=spec["tts_speed"],
                     text_normalization=config.text_normalization,
                 ): key
                 for key, spec in specs.items()
@@ -608,7 +637,9 @@ def run_build(
     token.check()
 
     text, srt_encoding = read_srt_text(config.srt_path)
-    cues = apply_limit(parse_srt(text), config.limit)
+    parsed_cues = parse_srt(text)
+    speech_profiles = load_speech_profiles(config.srt_path)
+    cues = apply_limit(parsed_cues, config.limit)
     init_ja_yomi_log(_work_lang_dir(config))
     cues = apply_ja_yomi(
         cues,
@@ -679,6 +710,7 @@ def run_build(
                 config,
                 voice_id=voice_id,
                 api_key=api_key,
+                speech_profiles=speech_profiles,
                 work_dir=work_dir,
                 raw_dir=raw_dir,
                 progress_cb=progress_cb,
@@ -699,8 +731,8 @@ def run_build(
                     lang=config.lang,
                 )
 
-            speak_text = tts_speak_text(
-                cue.text, enabled=bool(config.strip_emoticons)
+            speak_text, cue_speed = _cue_tts_settings(
+                cue, config, speech_profiles
             )
             key = cache_key_hex(
                 provider=config.provider,
@@ -709,7 +741,7 @@ def run_build(
                 text=speak_text,
                 sample_rate=config.sample_rate,
                 codec=config.codec,
-                tts_speed=config.tts_speed,
+                tts_speed=cue_speed,
                 text_normalization=config.text_normalization,
             )
             cpath = cache_path(work_dir, key)
@@ -735,7 +767,7 @@ def run_build(
                     out_path=raw_path,
                     sample_rate=config.sample_rate,
                     codec=config.codec,
-                    tts_speed=config.tts_speed,
+                    tts_speed=cue_speed,
                     text_normalization=config.text_normalization,
                 )
                 shutil.copyfile(raw_path, cpath)
@@ -805,6 +837,7 @@ def run_build(
                     "end_ms": cue.end_ms,
                     "window_ms": cue.window_ms,
                     "text_chars": len(cue.text),
+                    "tts_speed": cue_speed,
                     "raw_duration_ms": fit_result.raw_duration_ms,
                     "fitted_duration_ms": fit_result.fitted_duration_ms,
                     "ratio": fit_result.ratio,
@@ -930,6 +963,7 @@ def run_build(
         "lang": config.lang,
         "language_code": config.language_code,
         "voice_id": voice_id,
+        "tts_speed": config.tts_speed,
         "source_id": source_id,
         "provider": config.provider,
         "srt_path": str(config.srt_path),

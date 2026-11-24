@@ -267,6 +267,7 @@ def _build_one(
         tail_pad_ms=int(args.tail_pad_ms),
         work_dir=Path(args.work_dir) if args.work_dir else None,
         max_speed=args.max_speed,
+        tts_speed=float(getattr(args, "tts_speed", 1.0)),
         ja_yomi=bool(getattr(args, "ja_yomi", True)),
         strip_emoticons=bool(getattr(args, "strip_emoticons", True)),
         base_wav=Path(args.base_wav) if getattr(args, "base_wav", None) else None,
@@ -768,6 +769,12 @@ def build_parser() -> argparse.ArgumentParser:
             type=float,
             default=None,
             help=_("maximum atempo speed factor"),
+        )
+        sp.add_argument(
+            "--tts-speed",
+            type=float,
+            default=1.0,
+            help=_("Grok speech speed multiplier (0.7–1.5; default: 1.0)"),
         )
         sp.add_argument(
             "--dry-run",

@@ -161,9 +161,9 @@ GUI は **BCP-47 を1つ選ぶ** UI。内部 `lang` は `internal_lang_from_code
 | `provider` | `xai_grok` | 固定想定 |
 | `voice_id` | `leo` | |
 | `tts_model` | `None` | 予約。**リクエストに載せない** |
-| `sample_rate` | `24000` | base_wav 無し時の内部レート |
+| `sample_rate` | `48000` | base_wav 無し時の内部レート |
 | `codec` | `wav` | |
-| `tts_speed` | `1.0` | API へ常に 1.0。**1.0 以外は validate エラー** |
+| `tts_speed` | `1.0` | xAI API の合成話速。`0.7`〜`1.5`。字幕ごとの sidecar 指定が優先 |
 | `text_normalization` | `True` | API へ明示 true |
 | `fit` | `force` | |
 | `short_mode` | `pad` | `pad` \| `stretch` |
@@ -246,6 +246,16 @@ GUI は **BCP-47 を1つ選ぶ** UI。内部 `lang` は `internal_lang_from_code
 | CLI | `--strip-emoticons` / `--no-strip-emoticons`（既定オン） |
 | 警告 | 有効時 report warnings に方針を1行追加 |
 
+## 6-B. SRT 編集と音声表現
+
+- GUI Build の **SRT編集 / 音声表現** から字幕本文・タイミングを編集し、字幕の追加・削除を行える。元SRTへの上書き（確認あり）と別名保存を選べ、SRT本文には音声タグを混ぜない。
+- エディターでは Ctrl/Shift による複数選択と、選択字幕へのスタイル一括適用に対応する。
+- Build タブから、保存済みの基準 SRT プロファイルのスタイル/字幕別話速を複数の翻訳 SRT にコピーできる。cue index と start/end が完全一致することを検証し、target の TTS 本文設定は保持する。
+- 音声専用の本文、ラップ型スタイル、字幕ごとの話速は隣接する `<stem>.srtspeak.json` に保存する。SRT の SHA-256 を照合し、SRTが外部変更された古い設定を誤適用しない。
+- 対応スタイルは xAI TTS の `soft`、`whisper`、`loud`、`build-intensity`、`decrease-intensity`、`higher-pitch`、`lower-pitch`、`slow`、`fast`、`sing-song`、`singing`、`emphasis`。TTS本文では `[pause]` / `[laugh]` 等のインラインタグも入力可能。
+- GUI は全体の話速、編集画面は字幕単位の話速を指定できる。API許容範囲は `0.7`〜`1.5`。API話速は初期音声に作用し、完成音声は従来どおり ffmpeg で字幕時間へ強制フィットする。
+- CLI: `--tts-speed`（既定 `1.0`）。キャッシュキーには実際の話速と、音声タグ込みのTTS本文が含まれる。
+
 ---
 
 ## 7. TTS（`core/tts_xai.py`）
@@ -261,7 +271,7 @@ GUI は **BCP-47 を1つ選ぶ** UI。内部 `lang` は `internal_lang_from_code
   "text_normalization": true,
   "output_format": {
     "codec": "wav",
-    "sample_rate": 24000
+    "sample_rate": 48000
   }
 }
 ```
@@ -270,6 +280,7 @@ GUI は **BCP-47 を1つ選ぶ** UI。内部 `lang` は `internal_lang_from_code
 - タイムアウト目安: 接続 30s / 読み取り 180s
 - 空テキスト: パース段階でエラー
 - 15,000 文字超: キュー単位エラー（分割しない）
+- `speed`: 全体既定または字幕単位設定の `0.7`〜`1.5`。音声表現タグは TTS 本文に含めて送信
 
 ### 7.2 リトライ
 
@@ -302,7 +313,7 @@ HTTP は **stdlib `urllib`** のみ。
 - 短い: 既定 `pad`、または `stretch`（減速）
 - 許容: fitted が window ±10ms なら合格。外れは hard_trim / hard_pad
 - `max_speed`: 指定時は必要速度が上限超なら hard_trim + フラグ
-- API `speed` は使わず **ffmpeg のみ**で尺合わせ
+- API `speed` は合成時の話速を調整する。字幕窓への**最終尺合わせは ffmpeg のみ**で行う
 - pydub / av / ffmpeg-python は使わない
 
 ---
@@ -315,7 +326,7 @@ HTTP は **stdlib `urllib`** のみ。
 
 1. 無音キャンバス長 = `last_end_ms + tail_pad_ms`（sample 換算）
 2. 各 fitted を `[start_ms, end_ms)` に配置
-3. フォーマット: mono / s16le / `sample_rate`（既定 24 kHz）
+3. フォーマット: mono / s16le / `sample_rate`（既定 48 kHz）
 4. 配置は **サンプル加算ミックス**（クリップ ±32767）。窓外は書かない
 
 ### 9.2 base_wav 有り（`--base-wav` / GUI）
@@ -406,6 +417,7 @@ out/work/translate/by_out/
 |------------|------|
 | `status` | `ok` / `error` / `cancelled` / `dry_run` |
 | `lang` / `language_code` / `voice_id` / `provider` | |
+| `tts_speed` / `cues[].tts_speed` | 全体の話速設定 / キューごとの実効話速 |
 | `ja_yomi` | 実際に適用対象だったか（bool） |
 | `base_wav` | 使った場合パス |
 | `sample_rate` / `short_mode` / `fit` / `limit` | |

@@ -19,6 +19,7 @@ def main() -> int:
             QCheckBox,
             QComboBox,
             QDoubleSpinBox,
+            QDialog,
             QFileDialog,
             QFormLayout,
             QGroupBox,
@@ -67,7 +68,12 @@ def main() -> int:
         secure_store_backend_label,
     )
     from srtspeak.core.srt_parser import SrtEncodingError, SrtParseError, parse_srt, read_srt_text
+    from srtspeak.core.speech_profiles import (
+        copy_speech_styles,
+        load_speech_profiles,
+    )
     from srtspeak.core.srt_translate import TranslateError, run_translate
+    from srtspeak.gui.srt_editor import SrtEditorDialog
     from srtspeak.core.translate_glossary import (
         GlossaryError,
         load_glossary,
@@ -687,12 +693,23 @@ def main() -> int:
             self.srt_edit.editingFinished.connect(self._save_current_settings)
             browse = QPushButton("…")
             browse.clicked.connect(self._browse_srt)
+            edit_srt_btn = QPushButton("SRT編集 / 音声表現")
+            edit_srt_btn.clicked.connect(self._edit_srt)
             row = QHBoxLayout()
             row.addWidget(self.srt_edit)
             row.addWidget(browse)
+            row.addWidget(edit_srt_btn)
             wrap = QWidget()
             wrap.setLayout(row)
             form.addRow(_("SRT file"), wrap)
+
+            copy_styles_btn = QPushButton("音声スタイルを他言語SRTへコピー")
+            copy_styles_btn.setToolTip(
+                "現在のSRTの字幕番号・タイミングを照合し、複数の翻訳SRTへ"
+                "抑揚と字幕別話速を一括反映します。"
+            )
+            copy_styles_btn.clicked.connect(self._copy_speech_styles)
+            form.addRow("", copy_styles_btn)
 
             self.cue_count_label = QLabel(_("Cues: —"))
             form.addRow("", self.cue_count_label)
@@ -773,6 +790,17 @@ def main() -> int:
             )
             self.build_parallel_spin.valueChanged.connect(self._save_current_settings)
             form.addRow("並列APIリクエスト数", self.build_parallel_spin)
+            self.tts_speed_spin = QDoubleSpinBox()
+            self.tts_speed_spin.setRange(0.7, 1.5)
+            self.tts_speed_spin.setDecimals(2)
+            self.tts_speed_spin.setSingleStep(0.05)
+            self.tts_speed_spin.setValue(1.0)
+            self.tts_speed_spin.setSuffix("×")
+            self.tts_speed_spin.setToolTip(
+                "Grokの音声合成速度。字幕時間への最終フィットは別途行います。"
+            )
+            self.tts_speed_spin.valueChanged.connect(self._save_current_settings)
+            form.addRow("Grok話速 (0.7–1.5)", self.tts_speed_spin)
             self.dry_run_cb = QCheckBox(_("Dry-run (estimate only, no TTS)"))
             form.addRow("", self.dry_run_cb)
             self.ja_yomi_cb = QCheckBox(_("Japanese yomi (kanji → hiragana)"))
@@ -1222,6 +1250,8 @@ def main() -> int:
                 self.limit_spin.setValue(int(s["limit"]))
             if "build_parallel_requests" in s:
                 self.build_parallel_spin.setValue(int(s["build_parallel_requests"]))
+            if "tts_speed" in s:
+                self.tts_speed_spin.setValue(float(s["tts_speed"]))
             if "dry_run" in s:
                 self.dry_run_cb.setChecked(bool(s["dry_run"]))
             if "ja_yomi" in s:
@@ -1300,6 +1330,7 @@ def main() -> int:
                     for i in range(self.volume_files.count())
                 ],
                 "build_parallel_requests": self.build_parallel_spin.value(),
+                "tts_speed": self.tts_speed_spin.value(),
                 "limit": self.limit_spin.value(),
                 "dry_run": self.dry_run_cb.isChecked(),
                 "ja_yomi": self.ja_yomi_cb.isChecked(),
@@ -1356,6 +1387,111 @@ def main() -> int:
                 self._last_browse_dir = os.path.dirname(os.path.normpath(path))
                 self._apply_filename_lang_guess(path, self.lang_combo)
                 self._refresh_cue_count(self.srt_edit, self.cue_count_label)
+
+        def _edit_srt(self) -> None:
+            raw_path = self.srt_edit.text().strip()
+            path = Path(raw_path) if raw_path else None
+            if path is None or not path.is_file():
+                QMessageBox.warning(
+                    self, "SRT編集", "先に編集するSRTファイルを選択してください。"
+                )
+                return
+            try:
+                source_text, _encoding = read_srt_text(path)
+                cues = parse_srt(source_text)
+            except (SrtEncodingError, SrtParseError, OSError) as exc:
+                QMessageBox.warning(
+                    self, "SRT編集", f"SRTを読み込めませんでした:\n{exc}"
+                )
+                return
+            try:
+                profiles = load_speech_profiles(path)
+            except ValueError as exc:
+                answer = QMessageBox.question(
+                    self,
+                    "音声設定を再作成",
+                    "既存の音声設定を読み込めませんでした。古い字幕ごとの設定を破棄し、"
+                    f"編集画面で作り直しますか？\n\n{exc}",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                    QMessageBox.StandardButton.No,
+                )
+                if answer != QMessageBox.StandardButton.Yes:
+                    return
+                profiles = {}
+            dialog = SrtEditorDialog(path, cues, profiles, self)
+            if dialog.exec() == QDialog.DialogCode.Accepted and dialog.saved_path:
+                self.srt_edit.setText(str(dialog.saved_path))
+                self._last_browse_dir = str(dialog.saved_path.parent)
+                self._refresh_cue_count(self.srt_edit, self.cue_count_label)
+                self._save_current_settings()
+
+        def _copy_speech_styles(self) -> None:
+            source = Path(self.srt_edit.text().strip())
+            if not source.is_file():
+                QMessageBox.warning(
+                    self, "音声スタイル", "スタイルの元になるSRTを選択してください。"
+                )
+                return
+            try:
+                profiles = load_speech_profiles(source)
+            except ValueError as exc:
+                QMessageBox.warning(self, "音声スタイル", str(exc))
+                return
+            if not any(p.style or p.speed is not None for p in profiles.values()):
+                QMessageBox.information(
+                    self,
+                    "音声スタイル",
+                    "元のSRTに保存済みの抑揚または字幕別話速がありません。"
+                    "先に「SRT編集 / 音声表現」で設定して保存してください。",
+                )
+                return
+
+            targets, _selected_filter = QFileDialog.getOpenFileNames(
+                self,
+                "スタイルを反映する翻訳SRTを選択（複数可）",
+                str(source.parent),
+                "SRT files (*.srt)",
+            )
+            targets = [
+                item
+                for item in targets
+                if Path(item).expanduser().resolve() != source.resolve()
+            ]
+            if not targets:
+                return
+            answer = QMessageBox.question(
+                self,
+                "音声スタイルをコピー",
+                f"{len(targets)} 個の翻訳SRTへ、字幕番号と時間が一致する字幕の"
+                "抑揚・字幕別話速を反映します。TTS専用本文は翻訳先の設定を保持します。"
+                "\n\n続行しますか？",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No,
+            )
+            if answer != QMessageBox.StandardButton.Yes:
+                return
+
+            copied: list[str] = []
+            errors: list[str] = []
+            for target in targets:
+                try:
+                    count = copy_speech_styles(source, target)
+                    copied.append(f"{Path(target).name}: {count} 件")
+                except (OSError, ValueError) as exc:
+                    errors.append(f"{Path(target).name}: {exc}")
+            details = "\n".join(copied + errors)
+            if errors:
+                QMessageBox.warning(
+                    self,
+                    "音声スタイルのコピー結果",
+                    f"成功 {len(copied)} 件 / 失敗 {len(errors)} 件\n\n{details}",
+                )
+            else:
+                QMessageBox.information(
+                    self,
+                    "音声スタイルのコピー結果",
+                    f"{len(copied)} 個のSRTへ反映しました。\n\n{details}",
+                )
 
         def _browse_tr_srt(self) -> None:
             cur = self.tr_srt_edit.text().strip()
@@ -1696,6 +1832,7 @@ def main() -> int:
                 limit=limit,
                 dry_run=dry,
                 parallel_requests=int(self.build_parallel_spin.value()),
+                tts_speed=float(self.tts_speed_spin.value()),
                 ja_yomi=self.ja_yomi_cb.isChecked(),
                 strip_emoticons=self.strip_emoticons_cb.isChecked(),
                 no_cache=self.no_cache_cb.isChecked(),

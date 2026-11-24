@@ -13,6 +13,7 @@ import pytest
 from srtspeak.core.cancel import BuildCancelled, CancellationToken
 from srtspeak.core.models import BuildConfig
 from srtspeak.core.pipeline import BuildService, run_build
+from srtspeak.core.speech_profiles import CueSpeechProfile, save_speech_profiles
 from srtspeak.core.util import ms_to_samples, wav_duration_ms
 
 
@@ -123,6 +124,46 @@ def test_run_build_mocked_tts_writes_artifacts(tmp_path: Path) -> None:
     assert (out_dir / "fitted" / source_token / "0001.wav").is_file() or (
         out_dir / "cues" / source_token / "0001.wav"
     ).is_file()
+
+
+def test_run_build_applies_per_cue_grok_style_and_speed(tmp_path: Path) -> None:
+    srt = tmp_path / "speech.srt"
+    _minimal_srt(srt)
+    save_speech_profiles(
+        srt,
+        {
+            1: CueSpeechProfile(
+                tts_text="Good morning [pause]", style="whisper", speed=0.8
+            )
+        },
+    )
+    requests: list[tuple[str, float]] = []
+
+    def capture_synthesize(**kwargs: Any) -> tuple[Path, dict[str, Any]]:
+        requests.append((kwargs["text"], kwargs["tts_speed"]))
+        return _fake_synthesize(**kwargs)
+
+    with patch(
+        "srtspeak.core.pipeline.synthesize_to_file", side_effect=capture_synthesize
+    ):
+        report = run_build(
+            BuildConfig(
+                srt_path=srt,
+                lang="en",
+                language_code="en-US",
+                out_dir=tmp_path / "out" / "en",
+                work_dir=tmp_path / "work",
+                ja_yomi=False,
+                parallel_requests=1,
+                tts_speed=1.1,
+            ),
+            api_key="test-key-not-real",
+        )
+
+    assert requests[0] == ("<whisper>Good morning [pause]</whisper>", 0.8)
+    assert requests[1][1] == 1.1
+    assert report["tts_speed"] == 1.1
+    assert [row["tts_speed"] for row in report["cues"]] == [0.8, 1.1]
 
 
 def test_run_build_keeps_artifacts_separate_for_different_input_stems(

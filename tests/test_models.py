@@ -72,3 +72,27 @@ def test_build_config_no_cache_field_present() -> None:
     names = {f.name for f in fields(BuildConfig)}
     assert "no_cache" in names
 
+
+@pytest.mark.parametrize("speed", [0.69, 1.51, float("nan"), float("inf")])
+def test_build_config_validates_grok_speed(speed: float) -> None:
+    cfg = BuildConfig(
+        srt_path=Path("a.srt"),
+        lang="ja",
+        language_code="ja",
+        out_dir=Path("out"),
+        tts_speed=speed,
+    )
+    with pytest.raises(ValueError, match="tts_speed"):
+        cfg.validate()
+
+
+def test_build_config_accepts_grok_speed_range() -> None:
+    cfg = BuildConfig(
+        srt_path=Path("a.srt"),
+        lang="ja",
+        language_code="ja",
+        out_dir=Path("out"),
+        tts_speed=1.2,
+    )
+    cfg.validate()
+

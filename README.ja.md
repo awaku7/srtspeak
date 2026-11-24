@@ -327,6 +327,7 @@ srtspeak build --srt GRAN_TENKU_Portugus.srt --lang pt --voice-id leo
 | `--voice-id` | ボイス ID（build-all は `lang=id` 可） | `leo` |
 | `--short-mode` | `pad` / `stretch` | `pad` |
 | `--max-speed` | atempo 積の上限。超過は hard_trim | なし |
+| `--tts-speed` | Grok の音声合成話速（`0.7`〜`1.5`）。字幕時間への最終フィットは別途適用 | `1.0` |
 | `--tail-pad-ms` | 最終キュー end 後の無音（base_wav 無し時） | `0` |
 | `--base-wav` | 既存 WAV にナレーションをミックス（base の rate/ch 維持） | なし |
 | `--ja-yomi` / `--no-ja-yomi` | 日本語 漢字→ひらがな（Grok 4.7 Responses REST API） | **オン** |
@@ -472,7 +473,10 @@ srtspeak gui
 ```
 
 - タブ: **Build**（TTS）、**Translate**、**音量**
-- Build: SRT、言語（BCP-47 + Detect）、ボイス、**絶対パス**出力フォルダ + ディレクトリ選択、Base WAV、Max cues、dry-run、ja_yomi、顔文字除去、no-cache
+- Build: SRT、言語（BCP-47 + Detect）、ボイス、**絶対パス**出力フォルダ + ディレクトリ選択、Base WAV、Max cues、Grok話速、dry-run、ja_yomi、顔文字除去、no-cache
+- **SRT編集 / 音声表現**: Build のボタンから字幕本文・時間の編集、字幕の追加/削除、TTS専用本文・抑揚スタイル・字幕ごとの話速を設定できます。Ctrl/Shiftで字幕を複数選択し、同じスタイルを一括適用できます。「上書き保存」（確認あり）または「別名でSRT保存」を選べます。保存したSRTには対応する `.srtspeak.json` が付き、音声指示は字幕本文には表示されません。SRTを外部で編集した場合は、編集画面からプロファイルを保存し直してください。
+- **多言語へスタイル反映**: 元SRTでスタイルを保存したあと、Build の **「音声スタイルを他言語SRTへコピー」**から翻訳済みSRTを複数選択します。字幕番号とタイミングを照合し、抑揚・字幕別話速だけをコピーします。各言語のTTS専用本文は保持し、翻訳SRT本文は変更しません。キュー構造が異なるファイルは適用せずエラーとして報告します。
+- 抑揚には xAI の音声タグ（`soft`、`whisper`、`higher-pitch`、`lower-pitch`、`slow`、`fast`、`[pause]` など）を使います。話速は `0.7`〜`1.5`。`--tts-speed` は全体の既定値で、字幕ごとの設定が優先されます。([xAI Text to Speech](https://docs.x.ai/developers/model-capabilities/audio/text-to-speech))
 - 音量: WAVを個別にLUFS測定・正規化。正規化では元ファイルを保持し、同じフォルダーにコピーを出力
 - Translate: ソース SRT、元言語、多ターゲット選択、**絶対パス**出力フォルダ + ディレクトリ選択、glossary パス + Suggest、length mode、batch size、naming（`stem` / `gran_tenku`）、fail-fast、no-cache、dry-run
 - 共有: API キー（マスク）+ 読み込み元を示すステータス/プレースホルダ（env / keyring / DPAPI / session）+ **Save on this PC** / **Clear saved**

@@ -327,6 +327,7 @@ Main options:
 | `--voice-id` | Voice ID (or `lang=id` for build-all) | `leo` |
 | `--short-mode` | `pad` / `stretch` | `pad` |
 | `--max-speed` | Cap on atempo product; over → hard_trim | none |
+| `--tts-speed` | Grok synthesis speed multiplier (`0.7`–`1.5`); final cue-window fitting still applies | `1.0` |
 | `--tail-pad-ms` | Silence after last cue end (no base_wav) | `0` |
 | `--base-wav` | Mix narration onto this WAV (keeps base rate/ch) | none |
 | `--ja-yomi` / `--no-ja-yomi` | JA kanji→hiragana via Grok 4.7 Responses REST API | **on** |
@@ -468,8 +469,11 @@ If `--out` already exists and `--force` is not set, new suggestions are merged w
 srtspeak gui
 ```
 
-- Tabs: **Build** (TTS) and **Translate**
-- Build: SRT, language (BCP-47 + Detect), voice, **absolute** output folder + directory picker, base WAV, max cues, dry-run, ja_yomi, strip kaomoji, no-cache
+- Tabs: **Build** (TTS), **Translate**, and **Volume**
+- Build: SRT, language (BCP-47 + Detect), voice, **absolute** output folder + directory picker, base WAV, max cues, Grok speech speed, dry-run, ja_yomi, strip kaomoji, no-cache
+- **SRT edit / speech direction:** open the editor from the Build tab to edit cue text and timing, add/remove cues, and set TTS-only text, delivery style, or a per-cue speed. Use Ctrl/Shift to select multiple cues, then apply one style to the selection. Choose **Overwrite** (confirmation required) or **Save As**; the saved SRT gets a matching `.srtspeak.json`, and spoken directions do not appear in subtitle text. The companion file is tied to the exact SRT contents, so editing the SRT externally requires saving the profile again.
+- **Apply styles to translations:** after saving styles on a reference SRT, use **Apply speech styles to other languages** in the Build tab and select several translated SRTs at once. The app matches cue indices and timings, copies styles and per-cue speed, and preserves each target's TTS-text override. SRTs with different cue structure are skipped with an error; the translated text itself is never changed.
+- Grok styles use xAI speech tags such as `soft`, `whisper`, `higher-pitch`, `lower-pitch`, `slow`, `fast`, and `[pause]`. The API speed range is `0.7`–`1.5`; `--tts-speed` sets a global default and per-cue editor values override it. [xAI Text to Speech docs](https://docs.x.ai/developers/model-capabilities/audio/text-to-speech)
 - Translate: source SRT, source lang, multi-target checkboxes, **absolute** output folder + directory picker, glossary path + Suggest, length mode, batch size, naming (`stem` / `gran_tenku`), fail-fast, no-cache, dry-run
 - Shared: API key (masked) + status/placeholder showing load source (env / keyring / DPAPI / session) + **Save on this PC** / **Clear saved**
 - Key input: whitespace/newlines stripped (`normalize_api_key`); language detect uses the same resolve chain as build/translate

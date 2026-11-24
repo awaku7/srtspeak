@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -49,8 +50,13 @@ class BuildConfig:
             raise ValueError(f"invalid fit: {self.fit}")
         if self.sample_rate <= 0:
             raise ValueError("sample_rate must be positive")
-        if self.tts_speed != 1.0:
-            raise ValueError("tts_speed must be 1.0 (ffmpeg handles tempo)")
+        if (
+            isinstance(self.tts_speed, bool)
+            or not isinstance(self.tts_speed, (int, float))
+            or not math.isfinite(float(self.tts_speed))
+            or not 0.7 <= float(self.tts_speed) <= 1.5
+        ):
+            raise ValueError("tts_speed must be between 0.7 and 1.5")
         if self.limit is not None and self.limit < 1:
             raise ValueError("limit must be >= 1")
         if self.target_lufs is not None and not -36.0 <= self.target_lufs <= -5.0:

@@ -53,6 +53,28 @@ def test_build_tts_request_body_fixed_fields() -> None:
     assert "model" not in body
 
 
+def test_build_tts_request_body_honors_grok_speed() -> None:
+    body = build_tts_request_body(
+        text="hello",
+        voice_id="leo",
+        language_code="en",
+        tts_speed=1.25,
+    )
+
+    assert body["speed"] == 1.25
+
+
+@pytest.mark.parametrize("speed", [0.69, 1.51, float("nan"), float("inf"), True])
+def test_build_tts_request_body_rejects_invalid_speed(speed: float) -> None:
+    with pytest.raises(ValueError, match="tts_speed"):
+        build_tts_request_body(
+            text="hello",
+            voice_id="leo",
+            language_code="en",
+            tts_speed=speed,
+        )
+
+
 def test_build_rejects_empty_text() -> None:
     with pytest.raises(ValueError, match="empty"):
         build_tts_request_body(

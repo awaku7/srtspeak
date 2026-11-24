@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import time
 import urllib.error
 import urllib.request
@@ -57,13 +58,18 @@ def build_tts_request_body(
         raise ValueError("empty text")
     if len(cleaned) > 15_000:
         raise ValueError("text exceeds 15000 characters")
-    if tts_speed != 1.0:
-        raise ValueError("tts_speed must be 1.0 (ffmpeg handles tempo)")
+    if (
+        isinstance(tts_speed, bool)
+        or not isinstance(tts_speed, (int, float))
+        or not math.isfinite(float(tts_speed))
+        or not 0.7 <= float(tts_speed) <= 1.5
+    ):
+        raise ValueError("tts_speed must be between 0.7 and 1.5")
     return {
         "text": cleaned,
         "voice_id": normalize_voice_id(voice_id),
         "language": language_code,
-        "speed": 1.0,
+        "speed": float(tts_speed),
         "text_normalization": bool(text_normalization),
         "output_format": {
             "codec": codec,
